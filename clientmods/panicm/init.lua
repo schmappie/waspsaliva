@@ -74,8 +74,6 @@ end
 
 minetest.register_on_damage_taken(function(hp)
 	local hhp=minetest.localplayer:get_hp()
-	minetest.display_chat_message("hp:"..hp)
-	minetest.display_chat_message("hhp:"..hhp)
 	if (hp==0 ) then return end
 	if ( hhp < paniclimit ) and (hhp >= 3 ) then
 	cpos=panicm.find_target(check_target)
