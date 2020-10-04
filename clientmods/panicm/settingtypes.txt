@@ -1,0 +1,3 @@
+undying (Undying) bool false
+panicmode (Flightaura) bool false
+tprange (Teleport Range) int 50
