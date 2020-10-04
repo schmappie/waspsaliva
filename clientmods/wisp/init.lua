@@ -1,6 +1,3 @@
-local env = minetest.request_insecure_environment()
-local openssl = env.require("openssl")
-
 -- Wisp by system32
 -- CC0/Unlicense 2020
 -- version 1.0
@@ -74,6 +71,18 @@ if a player leaves all players with their public key and other data will forget 
 if this was not done alice may use a stale key for bob or vice versa, giving an incorrect shared secret
 this is not damaging to security, it just wouldn't let them talk
 --]]
+
+
+if minetest.request_insecure_environment == nil then
+    error("Wisp: Minetest scripting patches were not applied, please apply them and recompile Minetest.")
+end
+
+local env = minetest.request_insecure_environment()
+if env == nil then
+    error("Wisp: not in trusted mods (secure.trusted_mods), please go into the advanced settings and add wisp (all lowercase).")
+end
+
+local openssl = env.require("openssl")
 
 
 -- private stuff
