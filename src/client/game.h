@@ -676,6 +676,8 @@ struct ClientEventHandler
 
 class Game {
 public:
+	CameraOrientation cam_view = {0};
+	CameraOrientation cam_view_target  = { 0 };
 	Game();
 	~Game();
 
@@ -858,10 +860,10 @@ public:
 	ISoundManager *sound = nullptr;
 	bool sound_is_dummy = false;
 	SoundMaker *soundmaker = nullptr;
-	
+
 	ChatBackend *chat_backend = nullptr;
 	LogOutputBuffer m_chat_log_buf;
-	
+
 	EventManager *eventmgr = nullptr;
 	QuicktuneShortcutter *quicktune = nullptr;
 	bool registration_confirmation_shown = false;

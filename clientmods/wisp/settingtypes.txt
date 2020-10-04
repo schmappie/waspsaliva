@@ -1,0 +1,5 @@
+wisp_prefix (Prefix for encrypted messages) string &**&
+wisp_curve (Curve for ECDH) string prime256v1
+wisp_cipher (Cipher for messages) string aes256
+wisp_digest (Digest for shared secrets) string sha256
+wisp_whisper (Whisper command) string msg

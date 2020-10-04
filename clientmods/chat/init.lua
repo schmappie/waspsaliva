@@ -4,11 +4,11 @@ chat.rainbow = dofile(minetest.get_modpath("chat") .. "/rainbow.lua")
 
 function chat.send(message)
 	local starts_with = message:sub(1, 1)
-	
+
 	if starts_with == "/" or starts_with == "." then return end
 
 	local reverse = minetest.settings:get_bool("chat_reverse")
-	
+
 	if reverse then
 		local msg = ""
 		for i = 1, #message do
@@ -16,7 +16,7 @@ function chat.send(message)
 		end
 		message = msg
 	end
-	
+
 	local color = minetest.settings:get("chat_color")
 
 	if color then
@@ -28,7 +28,7 @@ function chat.send(message)
 		end
 		message = msg
 	end
-	
+
 	minetest.send_chat_message(message)
 	return true
 end

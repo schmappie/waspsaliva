@@ -1,0 +1,2 @@
+afly_autoaim (Autoaim) bool false
+afly_softlanding (Soft Landing) bool true

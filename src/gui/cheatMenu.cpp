@@ -15,8 +15,8 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License along
 with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-*/ 
- 
+*/
+
 #include "cheatMenu.h"
 #include "script/scripting_client.h"
 #include "client/client.h"
@@ -25,7 +25,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 CheatMenu::CheatMenu(Client *client):
 	m_client(client)
 {
-	m_font = g_fontengine->getFont(FONT_SIZE_UNSPECIFIED, FM_Fallback);
+	m_font = g_fontengine->getFont(FONT_SIZE_UNSPECIFIED);
 
 	if (!m_font) {
 		errorstream << "CheatMenu: Unable to load fallback font" << std::endl;
@@ -47,7 +47,7 @@ void CheatMenu::drawEntry(video::IVideoDriver* driver, std::string name, int num
 		height = m_head_height;
 	} else {
 		bool is_category = entry_type == CHEAT_MENU_ENTRY_TYPE_CATEGORY;
-		y += m_gap + m_head_height + (number + (is_category ? 0 : m_selected_category)) * (m_entry_height + m_gap);	
+		y += m_gap + m_head_height + (number + (is_category ? 0 : m_selected_category)) * (m_entry_height + m_gap);
 		x += (is_category ? 0 : m_gap + m_entry_width);
 		if (active)
 			bgcolor = &m_active_bg_color;
@@ -65,9 +65,9 @@ void CheatMenu::drawEntry(video::IVideoDriver* driver, std::string name, int num
 void CheatMenu::draw(video::IVideoDriver* driver, bool show_debug)
 {
 	CHEAT_MENU_GET_SCRIPTPTR
-	
+
 	if (! show_debug)
-		drawEntry(driver, "Dragonfireclient", 0, false, false, CHEAT_MENU_ENTRY_TYPE_HEAD);
+		drawEntry(driver, "waspsaliva", 0, false, false, CHEAT_MENU_ENTRY_TYPE_HEAD);
 	int category_count = 0;
 	for (auto category = script->m_cheat_categories.begin(); category != script->m_cheat_categories.end(); category++) {
 		bool is_selected = category_count == m_selected_category;
@@ -86,7 +86,7 @@ void CheatMenu::draw(video::IVideoDriver* driver, bool show_debug)
 void CheatMenu::selectUp()
 {
 	CHEAT_MENU_GET_SCRIPTPTR
-	
+
 	int max = (m_cheat_layer ? script->m_cheat_categories[m_selected_category]->m_cheats.size() : script->m_cheat_categories.size()) - 1;
 	int *selected = m_cheat_layer ? &m_selected_cheat : &m_selected_category;
 	--*selected;
@@ -97,7 +97,7 @@ void CheatMenu::selectUp()
 void CheatMenu::selectDown()
 {
 	CHEAT_MENU_GET_SCRIPTPTR
-	
+
 	int max = (m_cheat_layer ? script->m_cheat_categories[m_selected_category]->m_cheats.size() : script->m_cheat_categories.size()) - 1;
 	int *selected = m_cheat_layer ? &m_selected_cheat : &m_selected_category;
 	++*selected;
@@ -114,16 +114,16 @@ void CheatMenu::selectRight()
 }
 
 void CheatMenu::selectLeft()
-{	
+{
 	if (! m_cheat_layer)
 		return;
 	m_cheat_layer = false;
 }
 
 void CheatMenu::selectConfirm()
-{	
+{
 	CHEAT_MENU_GET_SCRIPTPTR
-	
+
 	if (m_cheat_layer)
 		script->toggle_cheat(script->m_cheat_categories[m_selected_category]->m_cheats[m_selected_cheat]);
 }

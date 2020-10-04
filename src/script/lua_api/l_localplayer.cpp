@@ -92,7 +92,7 @@ int LuaLocalPlayer::l_set_wield_index(lua_State *L)
 {
 	LocalPlayer *player = getobject(L, 1);
 	u32 index = luaL_checkinteger(L, 2);
-	
+
 	player->setWieldIndex(index);
 	g_game->processItemSelection(&g_game->runData.new_playeritem);
 	ItemStack selected_item, hand_item;
@@ -275,13 +275,35 @@ int LuaLocalPlayer::l_get_pos(lua_State *L)
 int LuaLocalPlayer::l_set_pos(lua_State *L)
 {
 	LocalPlayer *player = getobject(L, 1);
-	
+
 	v3f pos = checkFloatPos(L, 2);
 	player->setPosition(pos);
 	getClient(L)->sendPlayerPos();
 	return 0;
 }
 
+int LuaLocalPlayer::l_set_yaw(lua_State *L)
+{
+	LocalPlayer *player = getobject(L, 1);
+	f32 p = (float) luaL_checkinteger(L, 2);
+	player->setYaw(p);
+	//* 0.01745329252f;
+	g_game->cam_view.camera_yaw = p;
+	g_game->cam_view_target.camera_yaw = p;
+	player->setYaw(p);
+	return 0;
+}
+int LuaLocalPlayer::l_set_pitch(lua_State *L)
+{
+	LocalPlayer *player = getobject(L, 1);
+	f32 p = (float) luaL_checkinteger(L, 2);
+	player->setPitch(p);
+	//* 0.01745329252f ;
+	g_game->cam_view.camera_pitch = p;
+	g_game->cam_view_target.camera_pitch = p;
+	player->setPitch(p);
+	return 0;
+}
 // get_movement_acceleration(self)
 int LuaLocalPlayer::l_get_movement_acceleration(lua_State *L)
 {
@@ -503,6 +525,8 @@ const luaL_Reg LuaLocalPlayer::methods[] = {
 		luamethod(LuaLocalPlayer, get_breath),
 		luamethod(LuaLocalPlayer, get_pos),
 		luamethod(LuaLocalPlayer, set_pos),
+		luamethod(LuaLocalPlayer, set_yaw),
+		luamethod(LuaLocalPlayer, set_pitch),
 		luamethod(LuaLocalPlayer, get_movement_acceleration),
 		luamethod(LuaLocalPlayer, get_movement_speed),
 		luamethod(LuaLocalPlayer, get_movement),

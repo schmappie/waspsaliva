@@ -78,4 +78,3 @@ minetest.register_chatcommand("set", {
 		return false, "Invalid parameters (see .help set)."
 	end,
 })
- 

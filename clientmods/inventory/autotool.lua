@@ -15,6 +15,7 @@ local function check_tool(stack, node_groups, old_best_time)
 end
 
 minetest.register_on_punchnode(function(pos, node)
+	--minetest.display_chat_message(dump(node))
 	if not minetest.settings:get_bool("autotool") then return end
 	local player = minetest.localplayer
 	local inventory = minetest.get_inventory("current_player")
@@ -33,4 +34,3 @@ minetest.register_on_punchnode(function(pos, node)
 end)
 
 minetest.register_cheat("AutoTool", "Inventory", "autotool")
- 

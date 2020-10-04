@@ -15,7 +15,7 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License along
 with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-*/ 
+*/
 
 #pragma once
 
@@ -38,34 +38,35 @@ class CheatMenu
 {
 public:
 	CheatMenu(Client* client);
-	
+
 	void draw(video::IVideoDriver* driver, bool show_debug);
-				
+
 	void drawEntry(video::IVideoDriver* driver, std::string name, int number, bool selected, bool active, CheatMenuEntryType entry_type = CHEAT_MENU_ENTRY_TYPE_ENTRY);
-	
+
 	void selectUp();
 	void selectDown();
 	void selectLeft();
 	void selectRight();
 	void selectConfirm();
-	
+
 private:
 	bool m_cheat_layer = false;
 	int m_selected_cheat = 0;
 	int m_selected_category = 0;
-	
-	int m_head_height = 50;
-	int m_entry_height = 40;
-	int m_entry_width = 200;
-	int m_gap = 3;
-	
-	video::SColor m_bg_color = video::SColor(192, 255, 175, 191);
-	video::SColor m_active_bg_color = video::SColor(192, 255, 32, 76);
-	video::SColor m_font_color = video::SColor(255, 0, 0, 0);
-	video::SColor m_selected_font_color = video::SColor(255, 250, 32, 129); 
-	
+
+	int m_head_height = 30;
+	int m_entry_height = 30;
+	int m_entry_width = 125;
+	int m_gap = 1;
+
+	video::SColor m_bg_color = video::SColor(100, 10, 10, 10);
+	video::SColor m_active_bg_color = video::SColor(192, 10, 100, 10);
+	video::SColor m_font_color = video::SColor(255, 0, 255, 0);
+	video::SColor m_selected_font_color = video::SColor(255, 250, 250, 250);
+
+
 	Client *m_client;
-	
+
 	gui::IGUIFont *m_font = nullptr;
 	v2u32 m_fontsize;
 };

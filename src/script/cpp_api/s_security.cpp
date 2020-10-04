@@ -286,6 +286,9 @@ void ScriptApiSecurity::initializeSecurityClient()
 
 	lua_State *L = getStack();
 	int thread = getThread(L);
+    // Backup globals to the registry
+    lua_getglobal(L, "_G");
+    lua_rawseti(L, LUA_REGISTRYINDEX, CUSTOM_RIDX_GLOBALS_BACKUP);
 
 	// create an empty environment
 	createEmptyEnv(L);
@@ -317,7 +320,7 @@ void ScriptApiSecurity::initializeSecurityClient()
 	copy_safe(L, debug_whitelist, sizeof(debug_whitelist));
 	lua_setfield(L, -3, "debug");
 	lua_pop(L, 1);  // Pop old debug
-	
+
 
 #if USE_LUAJIT
 	// Copy safe jit functions, if they exist
@@ -801,4 +804,3 @@ int ScriptApiSecurity::sl_os_remove(lua_State *L)
 	lua_call(L, 1, 2);
 	return 2;
 }
-

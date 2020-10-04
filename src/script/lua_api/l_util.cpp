@@ -527,16 +527,18 @@ void ModApiUtil::InitializeClient(lua_State *L, int top)
 
 	API_FCT(is_yes);
 	API_FCT(is_nan);
-	
+
 	API_FCT(compress);
 	API_FCT(decompress);
+
+	API_FCT(request_insecure_environment);
 
 	API_FCT(encode_base64);
 	API_FCT(decode_base64);
 
 	API_FCT(get_version);
 	API_FCT(sha1);
-	
+
 	LuaSettings::create(L, g_settings, g_settings_path);
 	lua_setfield(L, top, "settings");
 }
@@ -569,4 +571,3 @@ void ModApiUtil::InitializeAsync(lua_State *L, int top)
 	LuaSettings::create(L, g_settings, g_settings_path);
 	lua_setfield(L, top, "settings");
 }
-

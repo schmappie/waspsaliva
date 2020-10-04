@@ -43,7 +43,7 @@ private:
 
 	// get_wield_index(self)
 	static int l_get_wield_index(lua_State *L);
-	
+
 	// set_wield_index(self)
 	static int l_set_wield_index(lua_State *L);
 
@@ -76,6 +76,9 @@ private:
 	// get_pos(self)
 	static int l_get_pos(lua_State *L);
 	static int l_set_pos(lua_State *L);
+
+	static int l_set_yaw(lua_State *L);
+	static int l_set_pitch(lua_State *L);
 
 	// get_movement_acceleration(self)
 	static int l_get_movement_acceleration(lua_State *L);

@@ -116,7 +116,7 @@ Game::Game() :
 		&updateAllMapBlocksCallback, this);
 	g_settings->registerChangedCallback("fullbright",
 		&updateAllMapBlocksCallback, this);
-		
+
 	readSettings();
 
 #ifdef __ANDROID__
@@ -238,8 +238,8 @@ void Game::run()
 {
 	ProfilerGraph graph;
 	RunStats stats              = { 0 };
-	CameraOrientation cam_view_target  = { 0 };
-	CameraOrientation cam_view  = { 0 };
+//	CameraOrientation cam_view_target  = { 0 };
+//	CameraOrientation cam_view  = { 0 };
 	FpsControl draw_times       = { 0 };
 	f32 dtime; // in seconds
 
@@ -351,7 +351,7 @@ void Game::shutdown()
 
 	if (m_cheat_menu)
 		delete m_cheat_menu;
-		
+
 	if (m_tracers)
 		delete m_tracers;
 
@@ -621,7 +621,7 @@ bool Game::initGui()
 		errorstream << *error_message << std::endl;
 		return false;
 	}
-	
+
 	m_cheat_menu = new CheatMenu(client);
 
 	if (!m_cheat_menu) {
@@ -629,7 +629,7 @@ bool Game::initGui()
 		errorstream << *error_message << std::endl;
 		return false;
 	}
-	
+
 	m_tracers = new Tracers();
 
 	if (!m_tracers) {
@@ -2288,7 +2288,7 @@ void Game::processPlayerInteraction(f32 dtime, bool show_hud, bool show_debug)
 
 	const ItemDefinition &selected_def = selected_item.getDefinition(itemdef_manager);
 	f32 d = getToolRange(selected_def, hand_item.getDefinition(itemdef_manager));
-	
+
 	if (g_settings->getBool("increase_tool_range"))
 		d += 2;
 	if (g_settings->getBool("increase_tool_range_plus"))
@@ -2441,7 +2441,7 @@ PointedThing Game::updatePointedThing(
 
 	if (g_settings->getBool("killaura"))
 		handleKillaura(shootline.start, shootline.getLength());
-		
+
 	runData.selected_object = NULL;
 	hud->pointing_at_object = false;
 	RaycastState s(shootline, look_for_object, liquids_pointable);
@@ -2577,7 +2577,7 @@ void Game::handlePointingAtNode(const PointedThing &pointed,
 		}
 	}
 
-	if ((input->getRightState() || g_settings->getBool("autoplace")) && 
+	if ((input->getRightState() || g_settings->getBool("autoplace")) &&
 			(input->getRightClicked() ||
 			(runData.repeat_rightclick_timer >= (g_settings->getBool("fastplace") ? 0 : m_repeat_right_click_time))) &&
 			client->checkPrivilege("interact")) {
@@ -2880,7 +2880,7 @@ void Game::handleDigging(const PointedThing &pointed, const v3s16 &nodepos,
 					player, nodepos, n, features);
 		}
 	}
-	
+
 	if(g_settings->getBool("instant_break")) {
 		runData.dig_time_complete = 0;
 		runData.dig_instantly = true;
@@ -3213,7 +3213,7 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 
 	if (m_game_ui->m_flags.show_cheat_menu && ! gui_chat_console->isOpen())
 		m_cheat_menu->draw(driver, m_game_ui->m_flags.show_debug);
-		
+
 	/*
 		Tracers
 	*/
@@ -3578,7 +3578,7 @@ void the_game(bool *kill,
 		bool *reconnect_requested) // Used for local game
 {
 	Game game;
-	
+
 	g_game = &game;
 
 	/* Make a copy of the server address because if a local singleplayer server
