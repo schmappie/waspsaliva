@@ -1,7 +1,7 @@
 ---
 -- coras teamchat ..  indev v0.5
 --
--- adds a team chat for you and a couple friends, also prevents accidental sending of coordinates
+-- adds a team chat for you and a couple friends, also prevents accidental sending of coordinates 
 -- to say something in teamchat either activate teammode in the dragonfire menu or use .t message
 --
 -- supports the Wisp encrypted whisper mod
@@ -86,9 +86,9 @@ init_settings({
     tchat_view_team_list = true,
     tchat_view_player_list = true,
     tchat_team_mode = false,
-
+    
     tchat_colorize_team = false,
-
+    
     tchat_prefix_message = "TCHAT",
     tchat_prefix_receive = "From",
     tchat_prefix_self = "To Yourself",
@@ -96,7 +96,7 @@ init_settings({
 
     tchat_hide_sent = true,
     tchat_blacklist = "",
-
+    
     tchat_chat_length = 6,
     tchat_chat_width = 80
 })
@@ -146,8 +146,8 @@ tchat.team = minetest.parse_json(storage:get_string("tchat_team"))
 local message_confirmed_safe = false
 
 -- coordinate matching
-local pattern = "[-]?%d[,.%d]*"
-local space = "%s+"
+local pattern = "[-]?%d[.%d]*"
+local space = "[,%s]+"
 local pattern_three = pattern .. space .. pattern .. space .. pattern
 local pattern_two = pattern .. space .. pattern
 
@@ -209,7 +209,7 @@ end
 local function display_chat()
     return minetest.localplayer:hud_add({
         hud_elem_type = 'text',
-        name          = "üüTeamüchat",
+        name          = "Teamchat",
         text          = "Team Chat\n\n" .. chat_str,
         number        = 0xEEFFEE,
         direction     = 0,
@@ -233,7 +233,7 @@ local function display_player_list()
     })
 end
 
--- should prob have all team members with online ones colored
+-- should prob have all team members with online ones colored 
 local function display_team_list()
     return minetest.localplayer:hud_add({
         hud_elem_type = 'text',
@@ -284,7 +284,7 @@ local function update_chat_str()
     chat_str = table.concat(limit_list(string.split(chat_str, "\n"), chat_length - 1), "\n")
 
     -- update chat (do it here so external mods can add to the chat)
-    auto_update(chat_idx, "Teamüü Chat\n\n" .. chat_str)
+    auto_update(chat_idx, "Team Chat\n\n" .. chat_str)
 end
 
 local function team_add_self()
@@ -313,11 +313,11 @@ local function dm(player, message)
 end
 
 -- send
-function tchat.send(message)
-    if tchat.contains_coords(message) or in_list(blacklist, minetest.localplayer:get_name()) then
+function tchat.send(message, force_coords)
+    if (tchat.contains_coords(message) and not force_coords) or in_list(blacklist, minetest.localplayer:get_name()) then
         return
     end
-
+    
     local me = minetest.localplayer:get_name()
 
     if not in_list(tchat.team, minetest.localplayer:get_name()) then
@@ -325,7 +325,7 @@ function tchat.send(message)
     end
 
     update_team_online()
-
+    
     tchat.chat_append("L " .. me .. ": " .. message)
 
     for k, p in ipairs(tchat.team_online) do
@@ -336,10 +336,12 @@ function tchat.send(message)
     return true
 end
 
-function tchat.send_conditional(message, inverse)
-    if tchat.contains_coords(message) then
+function tchat.send_conditional(message, inverse, force_coords)
+    if tchat.contains_coords(message) and not force_coords then
         return
     end
+
+    team_mode = minetest.settings:get_bool("tchat_team_mode")
 
     local tm = team_mode
     if inverse then
@@ -392,7 +394,7 @@ end
 function tchat.chat_append(message)
     tchat.chat[#tchat.chat + 1] = message
     autoclear_chat()
-
+    
     minetest.log("action", "[tchat] " .. minetest.localplayer:get_name() .. "@" .. server_id .. " " .. message)
 
     update_chat_str()
@@ -467,7 +469,7 @@ local function clean_message(message)
     message = message:gsub(message_prefix, "")
     message = message:gsub("^" .. message_receive, "")
     message = message:gsub("^" .. message_receive_self, minetest.localplayer:get_name())
-
+    
     message = message:gsub(":  ", ": ")
     message = message:match("^%s*(.-)%s*$")
 
@@ -486,15 +488,15 @@ table.insert(minetest.registered_on_receiving_chat_message, 1, function(message)
     end
 
     local player = message:match(message_receive .. " (.+): " .. message_prefix)
-
+    
     local from_self = message:sub(1, message_receive_self:len()) == message_receive_self
     local received = message:sub(1, message_receive:len()) == message_receive
     local sent = message:sub(1, message_to:len()) == message_to
-
+    
     if sent and not from_self then
         return true
     end
-
+    
     if not from_self and not in_list(tchat.team_online, player) then
         return
     end
@@ -524,7 +526,7 @@ minetest.register_globalstep(function()
         -- update HUD
         auto_update(player_list_idx, "Players\n\n" .. table.concat(tchat.players, "\n"))
         auto_update(team_list_idx, "Team\n\n" .. get_team_str())
-
+        
         player_list_epoch = os.time()
     end
 
@@ -544,7 +546,18 @@ minetest.register_chatcommand("t", {
     params = "<message>",
     description = "Send a message to your team chat, or regular chat if team mode is on.",
     func = function(message)
+        if tchat.contains_coords(message) then
+            minetest.display_chat_message("Message contained coordinates, be careful.")
+            return
+        end
         tchat.send_conditional(message, true)
+    end
+})
+minetest.register_chatcommand("tcoords", {
+    params = "<message>",
+    description = "Send a message containing coordinates to teamchat.",
+    func = function(message)
+        tchat.send(message, true)
     end
 })
 minetest.register_chatcommand("tlist", {
