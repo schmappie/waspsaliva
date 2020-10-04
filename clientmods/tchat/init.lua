@@ -94,6 +94,8 @@ init_settings({
     tchat_prefix_self = "To Yourself",
     tchat_prefix_send = "To",
 
+    tchat_use_wisp = false,
+
     tchat_hide_sent = true,
     tchat_blacklist = "",
     
@@ -127,8 +129,9 @@ local message_to = minetest.settings:get("tchat_prefix_send")
 
 local team_mode = minetest.settings:get_bool("tchat_team_mode")
 
-local hide_sent = minetest.settings:get_bool("tchat_hide_sent")
+local use_wisp = minetest.settings:get_bool("tchat_use_wisp")
 
+local hide_sent = minetest.settings:get_bool("tchat_hide_sent")
 local blacklist = string.split(minetest.settings:get("tchat_blacklist"))
 
 local chat_length = tonumber(minetest.settings:get("tchat_chat_length"))
@@ -305,7 +308,7 @@ end
 
 
 local function dm(player, message)
-    if wisp == nil or not minetest.settings:get_bool("tchat_use_wisp") then
+    if wisp == nil or not use_wisp then
         minetest.send_chat_message("/msg " .. player .." " .. message)
     else
         wisp.send(player, message, true)
@@ -325,8 +328,13 @@ function tchat.send(message, force_coords)
     end
 
     update_team_online()
+
+    local prepend = ""
+    if use_wisp then
+        prepend = "E "
+    end
     
-    tchat.chat_append("L " .. me .. ": " .. message)
+    tchat.chat_append(prepend .. me .. ": " .. message)
 
     for k, p in ipairs(tchat.team_online) do
         if p ~= me then
