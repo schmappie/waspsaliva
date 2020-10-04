@@ -106,7 +106,8 @@ init_settings({
     wisp_digest = "sha256",
     wisp_iv_size = 8,
     wisp_whisper = "msg",
-    wisp_hide_sent = true
+    wisp_hide_sent = true,
+    wisp_timeout = 10
 })
 
 -- players must agree on these
@@ -118,6 +119,8 @@ local digest = minetest.settings:get("wisp_digest")
 local iv_size = minetest.settings:get("wisp_iv_size")
 local whisper = minetest.settings:get("wisp_whisper")
 local hide_sent = minetest.settings:get_bool("wisp_hide_sent")
+
+local timeout = tonumber(minetest.settings:get("wisp_timeout"))
 
 local my_key = openssl.pkey.new("ec", curve)
 local my_ec = my_key:parse().ec
@@ -333,7 +336,8 @@ local function enqueue(player, message, hide_to, force_send)
         player = player,
         message = message,
         hide_to = hide_to,
-        force_send = force_send
+        force_send = force_send,
+        time = os.time()
     })
     wisp.players = minetest.get_player_names()
 end
@@ -424,7 +428,13 @@ minetest.register_globalstep(
         local p = peek()
         if p then
             if not in_list(wisp.players, peek().player) then
-                minetest.display_chat_message("Player " .. peek().player .. " is not online. If they are please resend the message.")
+                minetest.display_chat_message("Player " .. p.player .. " is not online. If they are please resend the message.")
+                dequeue()
+                return
+            end
+
+            if os.time() > p.time + timeout then
+                minetest.display_chat_message("Player " .. p.player .. " is not responsive.")
                 dequeue()
                 return
             end
