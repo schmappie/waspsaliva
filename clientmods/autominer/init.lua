@@ -93,8 +93,9 @@ local function rwarp()
         minetest.display_chat_message('lava detected. stop.')
         return
     end
-    minetest.localplayer:set_pos(vector.add(nod,{x=0.5,y=-1.5,z=0.5}))
-    minetest.after(0.05, dighead)
+    minetest.localplayer:set_pos(vector.add(nod,{x=0.2,y=-1.5,z=0.2}))
+    dighead()
+    --minetest.after(0.05, dighead)
 end
 
 local function relwarp(rpos)
