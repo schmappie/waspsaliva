@@ -1,3 +1,4 @@
+hpchange = {}
 local widget
 local last_hp
 
@@ -75,3 +76,7 @@ minetest.register_on_hp_modification(function(hp)
         update_hud(hp - last_hp)
     end
 end)
+
+function hpchange.get_status()
+    return dmg
+end
