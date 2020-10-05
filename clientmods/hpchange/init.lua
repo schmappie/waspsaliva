@@ -1,6 +1,7 @@
 hpchange = {}
 local widget
 local last_hp
+local dmg
 
 local function show_widget()
     widget = minetest.localplayer:hud_add({
@@ -25,8 +26,10 @@ local function update_hud(delta, potential)
         local num = tostring(math.abs(delta))
         if delta < 0 then
             num = "-" .. num
+            dmg=true
         else
             num = "+" .. num
+            dmg=false
         end
 
         if potential then
