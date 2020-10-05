@@ -30,6 +30,42 @@ local function checkgravel(pos)
     if n == nil then return false end
     return true
 end
+
+-- shamelessly stolen from dragonfire autotool
+local function check_tool(stack, node_groups, old_best_time)
+	local toolcaps = stack:get_tool_capabilities()
+	if not toolcaps then return end
+	local best_time = old_best_time
+	for group, groupdef in pairs(toolcaps.groupcaps) do
+		local level = node_groups[group]
+		if level then
+			local this_time = groupdef.times[level]
+			if this_time < best_time then
+				best_time = this_time
+			end
+		end
+	end
+	return best_time < old_best_time, best_time
+end
+
+local function amautotool(pos)
+	local player = minetest.localplayer
+	local inventory = minetest.get_inventory("current_player")
+    local node=minetest.get_node_or_nil(pos)
+	local node_groups = minetest.get_node_def(node.name).groups
+	local new_index = player:get_wield_index()
+	local is_better, best_time = false, math.huge
+	is_better, best_time = check_tool(player:get_wielded_item(), node_groups, best_time)
+	is_better, best_time = check_tool(inventory.hand[1], node_groups, best_time)
+	for index, stack in pairs(inventory.main) do
+		is_better, best_time = check_tool(stack, node_groups, best_time)
+		if is_better then
+			new_index = index - 1
+		end
+	end
+	player:set_wield_index(new_index)
+end
+
 local function find_tnod()
     local rr=false
     local pos = minetest.localplayer:get_pos()
@@ -55,16 +91,15 @@ local function get_hnode()
 end
 local function dighead()
             if not minetest.localplayer then return end
-            minetest.settings:set_bool("autotool",true)
             local ppos=vector.add(minetest.localplayer:get_pos(),{x=0,y=1,z=0})
-            --minetest.display_chat_message(dump(ppos))
+            amautotool(ppos)
             minetest.dig_node(ppos)
             minetest.dig_node(vector.add(ppos,{x=0,y=1,z=0}))
             digging=false
             if (minetest.settings:get_bool('aminer_active')) then
                 local hp=minetest.localplayer:get_hp()
                 local hn=get_hnode()
-                if (hp > 15) then
+                if (hp > 17) then
                     autominer.aminer()
                 else
                         minetest.display_chat_message("taken too much damage. stop.")
@@ -73,19 +108,16 @@ local function dighead()
                         minetest.dig_node(vector.add(ppos,{x=1,y=0,z=0}))
                         minetest.dig_node(vector.add(ppos,{x=0,y=0,z=1}))
                         minetest.dig_node(vector.add(ppos,{x=0,y=1,z=0}))
-                        --minetest.dig_node(vector.add(ppos,{x=0,y=2,z=0}))
                         minetest.dig_node(vector.add(ppos,{x=0,y=-1,z=0}))
-                        minetest.dig_node(vector.add(ppos,{x=0,y=1,z=0}))
+                        minetest.after(1.0,function() minetest.dig_node(vector.add(ppos,{x=0,y=0,z=0})) end )
+                        minetest.after(1.0,function() minetest.dig_node(vector.add(ppos,{x=0,y=1,z=0})) end )
+                        minetest.after(1.0,function() minetest.dig_node(vector.add(ppos,{x=0,y=2,z=0})) end )
+                        minetest.after(1.5,function() minetest.dig_node(vector.add(ppos,{x=0,y=0,z=0})) end )
+                        minetest.after(1.5,function() minetest.dig_node(vector.add(ppos,{x=0,y=1,z=0})) end )
+                        minetest.after(1.5,function() minetest.dig_node(vector.add(ppos,{x=0,y=2,z=0})) end )
                         minetest.settings:set_bool("aminer_active",false)
                 end
             end
-end
-
-
-
-local function abswarp(pos)
-	minetest.localplayer:set_pos(vector.add(pos,{x=0,y=-1,z=0}))
-    minetest.display_chat_message("Warped to " .. minetest.pos_to_string(pos) )
 end
 
 local function rwarp()
@@ -101,28 +133,17 @@ local function rwarp()
     --minetest.after(0.05, dighead)
 end
 
-local function relwarp(rpos)
-		local success, pos = minetest.parse_relative_pos(rpos)
-		if success then
-			minetest.localplayer:set_pos(pos)
-        minetest.display_chat_message("Warped to ".. minetest.pos_to_string(pos) )
-		end
-		return false, pos
-end
-
 local function amine()
-            minetest.settings:set_bool("autotool",true)
             minetest.after(1.0,rwarp)
 end
 function autominer.aminer()
         if not digging then
             digging=true
-            minetest.settings:set_bool("autotool",true)
+            dmg=hpchange.get_status()
             if dmg then
-                dmg=hpchange.get_status()
-                minetest.after(2.0,rwarp)
+                minetest.after(3.0,rwarp)
             else
-                minetest.after(0.8,rwarp)
+                minetest.after(0.5,rwarp)
             end
         end
 end
