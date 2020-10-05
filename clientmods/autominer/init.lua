@@ -1,16 +1,13 @@
 ---
--- coras esp ..  indev
+-- autominer
 
 
 autominer = {}
 local dmg=false
 local digging=false
-local radius=10 -- limit is 4,096,000 nodes (i.e. 160^3 -> a number > 79 won't work)
-local esplimit=30; -- display at most this many waypoints
-local espinterval=1 --number of seconds to wait between scans (a lower number can induce clientside lag)
+local radius=15
 
---nodes={"group:chest",'mcl_chests:chest','mcl_chests:chest_left','mcl_chests:ender_chest','group:shulker_box','mcl_crafting_table:crafting_table','mcl_furnaces:furnace'}
-nodes={'mcl_core:stone_with_coal','mcl_core:stone_with_gold','mcl_core:stone_with_iron','mcl_core:stone_with_diamond','mcl_core:stone_with_redstone'}
+nodes={'mcl_core:stone_with_coal','mcl_core:stone_with_gold','mcl_core:stone_with_iron','mcl_core:stone_with_diamond','mcl_core:stone_with_redstone','mcl_core:stone_with_lapis'}
 nextpos={}
 local function sleep(n)  -- seconds
   local t0 = os.clock()
@@ -28,6 +25,11 @@ local function checklava(pos)
     if n == nil then return false end
     return true
 end
+local function checkgravel(pos)
+    local n=minetest.find_node_near(pos, 1, {'mcl_core:gravel'}, true)
+    if n == nil then return false end
+    return true
+end
 local function find_tnod()
     local rr=false
     local pos = minetest.localplayer:get_pos()
@@ -37,7 +39,7 @@ local function find_tnod()
     for k,v in pairs(rt) do
         for kk,vv in pairs(shuffle(v)) do
        -- minetest.display_chat_message("Found nodes:" ..dump(rt))
-            if not checklava(vv) and ( vv.y > -57 ) then
+            if ( vv.y > -57 ) and not checkgravel(vv) and not checklava(vv) then
                 rr=vv
                 break
             end
