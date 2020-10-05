@@ -5,7 +5,7 @@
 autominer = {}
 local dmg=false
 local digging=false
-local radius=15
+local radius=6
 
 --nodes={'mcl_core:stone_with_coal','mcl_core:stone_with_gold','mcl_core:stone_with_iron','mcl_core:stone_with_diamond','mcl_core:stone_with_redstone','mcl_core:stone_with_lapislazuli'}
 nodes={'mcl_core:stone_with_coal','mcl_core:stone_with_gold','mcl_core:stone_with_iron','mcl_core:stone_with_diamond','mcl_core:stone_with_lapis_lazuli','mcl_core:stone_with_lapislazuli'}
