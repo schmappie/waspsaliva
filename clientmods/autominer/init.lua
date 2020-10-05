@@ -7,7 +7,8 @@ local dmg=false
 local digging=false
 local radius=15
 
-nodes={'mcl_core:stone_with_coal','mcl_core:stone_with_gold','mcl_core:stone_with_iron','mcl_core:stone_with_diamond','mcl_core:stone_with_redstone','mcl_core:stone_with_lapis'}
+--nodes={'mcl_core:stone_with_coal','mcl_core:stone_with_gold','mcl_core:stone_with_iron','mcl_core:stone_with_diamond','mcl_core:stone_with_redstone','mcl_core:stone_with_lapislazuli'}
+nodes={'mcl_core:stone_with_coal','mcl_core:stone_with_gold','mcl_core:stone_with_iron','mcl_core:stone_with_diamond','mcl_core:stone_with_lapis_lazuli','mcl_core:stone_with_lapislazuli'}
 nextpos={}
 local function sleep(n)  -- seconds
   local t0 = os.clock()
@@ -100,7 +101,7 @@ local function dighead()
                 local hp=minetest.localplayer:get_hp()
                 local hn=get_hnode()
                 if (hp > 17) then
-                    autominer.aminer()
+                    minetest.after(0.2,autominer.aminer )
                 else
                         minetest.display_chat_message("taken too much damage. stop.")
                         local ppos=vector.add(minetest.localplayer:get_pos(),{x=0,y=1,z=0})
