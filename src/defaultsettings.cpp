@@ -63,7 +63,7 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("max_out_chat_queue_size", "20");
 	settings->setDefault("pause_on_lost_focus", "false");
 	settings->setDefault("enable_register_confirmation", "true");
-	
+
 	// Cheats
 	settings->setDefault("xray", "false");
 	settings->setDefault("xray_node", "default:stone");
@@ -88,7 +88,12 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("no_night", "false");
 	settings->setDefault("coords", "false");
 	settings->setDefault("point_liquids", "false");
-	
+	settings->setDefault("log_particles", "false");
+	settings->setDefault("spamclick", "false");
+	settings->setDefault("no_force_rotate", "false");
+	settings->setDefault("enable_tracers", "false");
+	settings->setDefault("no_slow", "false");
+
 	// Keymap
 	settings->setDefault("remote_port", "30000");
 	settings->setDefault("keymap_forward", "KEY_KEY_W");

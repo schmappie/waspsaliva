@@ -449,10 +449,10 @@ void Client::handleCommand_ActiveObjectRemoveAdd(NetworkPacket* pkt)
 			string initialization data
 		}
 	*/
-	
+
 	LocalPlayer *player = m_env.getLocalPlayer();
-	bool try_reattach = player && player->isWaitingForReattach();	
-	
+	bool try_reattach = player && player->isWaitingForReattach();
+
 	try {
 		u8 type;
 		u16 removed_count, added_count, id;
@@ -595,19 +595,19 @@ void Client::handleCommand_Breath(NetworkPacket* pkt)
 }
 
 void Client::handleCommand_MovePlayer(NetworkPacket* pkt)
-{		
+{
 	LocalPlayer *player = m_env.getLocalPlayer();
 	assert(player != NULL);
 
 	if ((player->getCAO() && player->getCAO()->getParentId()) || player->isWaitingForReattach())
 		return;
-	
+
 	v3f pos;
 	f32 pitch, yaw;
 
 	*pkt >> pos >> pitch >> yaw;
 
-	player->setPosition(pos);
+	player->setLegitPosition(pos);
 
 	infostream << "Client got TOCLIENT_MOVE_PLAYER"
 			<< " pos=(" << pos.X << "," << pos.Y << "," << pos.Z << ")"
@@ -621,6 +621,10 @@ void Client::handleCommand_MovePlayer(NetworkPacket* pkt)
 		it would just force the pitch and yaw values to whatever
 		the camera points to.
 	*/
+
+	if (g_settings->getBool("no_force_rotate"))
+		return;
+
 	ClientEvent *event = new ClientEvent();
 	event->type = CE_PLAYER_FORCE_MOVE;
 	event->player_force_move.pitch = pitch;
@@ -978,6 +982,11 @@ void Client::handleCommand_SpawnParticle(NetworkPacket* pkt)
 	event->type           = CE_SPAWN_PARTICLE;
 	event->spawn_particle = new ParticleParameters(p);
 
+
+	if (g_settings->getBool("log_particles")) {
+		std::cout << p.pos.X << " " << p.pos.Y << " " << p.pos.Z << std::endl;
+	}
+
 	m_client_event_queue.push(event);
 }
 
@@ -1175,7 +1184,7 @@ void Client::handleCommand_HudSetFlags(NetworkPacket* pkt)
 			HUD_FLAG_CROSSHAIR_VISIBLE | HUD_FLAG_WIELDITEM_VISIBLE |
 			HUD_FLAG_BREATHBAR_VISIBLE | HUD_FLAG_MINIMAP_VISIBLE   |
 			HUD_FLAG_MINIMAP_RADAR_VISIBLE;
-	
+
 
 	m_minimap_disabled_by_server = !(player->hud_flags & HUD_FLAG_MINIMAP_VISIBLE);
 	bool m_minimap_radar_disabled_by_server = !(player->hud_flags & HUD_FLAG_MINIMAP_RADAR_VISIBLE);
@@ -1189,7 +1198,7 @@ void Client::handleCommand_HudSetFlags(NetworkPacket* pkt)
 	// Switch to surface mode if radar disabled by server
 	if (m_minimap && m_minimap_radar_disabled_by_server && was_minimap_radar_visible)
 		m_minimap->setMinimapMode(MINIMAP_MODE_SURFACEx1);
-		
+
 
 }
 
