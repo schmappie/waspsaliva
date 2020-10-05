@@ -75,6 +75,7 @@ local function dighead()
                         minetest.dig_node(vector.add(ppos,{x=0,y=1,z=0}))
                         --minetest.dig_node(vector.add(ppos,{x=0,y=2,z=0}))
                         minetest.dig_node(vector.add(ppos,{x=0,y=-1,z=0}))
+                        minetest.dig_node(vector.add(ppos,{x=0,y=1,z=0}))
                         minetest.settings:set_bool("aminer_active",false)
                 end
             end
