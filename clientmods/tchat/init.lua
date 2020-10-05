@@ -402,7 +402,8 @@ local function autoclear_chat()
 end
 
 function tchat.chat_clear()
-    chat = {}
+    tchat.chat = {}
+    update_chat_str()
 end
 
 function tchat.chat_set(message_list)
@@ -599,6 +600,15 @@ minetest.register_chatcommand("tdel", {
     params = "<player>",
     description = "Remove player from your team.",
     func = tchat.team_remove_player
+})
+minetest.register_chatcommand("tclear", {
+    description = "Clear team list.",
+    func = tchat.team_clear
+})
+
+minetest.register_chatcommand("tchat_clear", {
+    description = "Clear team chat widget.",
+    func = tchat.chat_clear
 })
 
 minetest.register_chatcommand("coords", {
