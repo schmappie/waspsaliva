@@ -228,7 +228,7 @@ bool Game::startup(bool *kill,
 	if (!createClient(start_data))
 		return false;
 
-	RenderingEngine::initialize(client, hud);
+	RenderingEngine::initialize(client, hud, m_tracers);
 
 	return true;
 }
@@ -238,8 +238,6 @@ void Game::run()
 {
 	ProfilerGraph graph;
 	RunStats stats              = { 0 };
-//	CameraOrientation cam_view_target  = { 0 };
-//	CameraOrientation cam_view  = { 0 };
 	FpsControl draw_times       = { 0 };
 	f32 dtime; // in seconds
 
@@ -309,9 +307,8 @@ void Game::run()
 		processClientEvents(&cam_view_target);
 		updateCamera(draw_times.busy_time, dtime);
 		updateSound(dtime);
-		if (! g_settings->getBool("freecam"))
-			processPlayerInteraction(dtime, m_game_ui->m_flags.show_hud,
-				m_game_ui->m_flags.show_debug);
+		processPlayerInteraction(dtime, m_game_ui->m_flags.show_hud,
+			m_game_ui->m_flags.show_debug);
 		updateFrame(&graph, &stats, dtime, cam_view);
 		updateProfilerGraphs(&graph);
 
@@ -2814,7 +2811,7 @@ void Game::handlePointingAtObject(const PointedThing &pointed,
 		bool do_punch = false;
 		bool do_punch_damage = false;
 
-		if (runData.object_hit_delay_timer <= 0.0) {
+		if (runData.object_hit_delay_timer <= 0.0 || g_settings->getBool("spamclick")) {
 			do_punch = true;
 			do_punch_damage = true;
 			runData.object_hit_delay_timer = object_hit_delay;
@@ -3199,7 +3196,7 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 	}
 #endif
 	RenderingEngine::draw_scene(skycolor, m_game_ui->m_flags.show_hud,
-			m_game_ui->m_flags.show_minimap, draw_wield_tool, draw_crosshair);
+			m_game_ui->m_flags.show_minimap, draw_wield_tool, draw_crosshair, g_settings->getBool("enable_tracers"));
 
 	/*
 		Profiler graph
@@ -3213,13 +3210,6 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 
 	if (m_game_ui->m_flags.show_cheat_menu && ! gui_chat_console->isOpen())
 		m_cheat_menu->draw(driver, m_game_ui->m_flags.show_debug);
-
-	/*
-		Tracers
-	*/
-
-		m_tracers->draw(driver);
-
 	/*
 		Damage flash
 	*/
@@ -3237,7 +3227,7 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 	if (player->hurt_tilt_timer > 0.0f) {
 		player->hurt_tilt_timer -= dtime * 6.0f;
 
-		if (player->hurt_tilt_timer < 0.0f)
+		if (player->hurt_tilt_timer < 0.0f || g_settings->getBool("no_hurt_cam"))
 			player->hurt_tilt_strength = 0.0f;
 	}
 
@@ -3337,11 +3327,12 @@ void Game::freecamChangedCallback(const std::string &setting_name, void *data)
 {
 	Game *game = (Game *) data;
 	LocalPlayer *player = game->client->getEnv().getLocalPlayer();
-	static v3f player_pos = player->getPosition();
-	if (g_settings->getBool("freecam"))
-		player_pos = player->getPosition();
-	else
-		player->setPosition(player_pos);
+	if (g_settings->getBool("freecam")) {
+		game->camera->setCameraMode(CAMERA_MODE_FIRST);
+		player->freecamEnable();
+	} else {
+		player->freecamDisable();
+	}
 	game->updatePlayerCAOVisibility();
 }
 

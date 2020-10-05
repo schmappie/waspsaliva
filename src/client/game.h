@@ -676,8 +676,6 @@ struct ClientEventHandler
 
 class Game {
 public:
-	CameraOrientation cam_view = {0};
-	CameraOrientation cam_view_target  = { 0 };
 	Game();
 	~Game();
 
@@ -928,6 +926,9 @@ public:
 	bool m_camera_offset_changed = false;
 
 	bool m_does_lost_focus_pause_game = false;
+
+	CameraOrientation cam_view_target  = { 0 };
+	CameraOrientation cam_view  = { 0 };
 
 #ifdef __ANDROID__
 	bool m_cache_hold_aux1;

@@ -62,6 +62,24 @@ int LuaLocalPlayer::l_get_velocity(lua_State *L)
 	return 1;
 }
 
+int LuaLocalPlayer::l_set_velocity(lua_State *L)
+{
+	LocalPlayer *player = getobject(L, 1);
+
+	v3f pos = checkFloatPos(L, 2);
+	player->setSpeed(pos);
+
+	return 0;
+}
+
+int LuaLocalPlayer::l_get_yaw(lua_State *L)
+{
+	LocalPlayer *player = getobject(L, 1);
+
+	lua_pushinteger(L, player->getYaw());
+	return 1;
+}
+
 int LuaLocalPlayer::l_get_hp(lua_State *L)
 {
 	LocalPlayer *player = getobject(L, 1);
@@ -502,6 +520,7 @@ void LuaLocalPlayer::Register(lua_State *L)
 const char LuaLocalPlayer::className[] = "LocalPlayer";
 const luaL_Reg LuaLocalPlayer::methods[] = {
 		luamethod(LuaLocalPlayer, get_velocity),
+		luamethod(LuaLocalPlayer, set_velocity),
 		luamethod(LuaLocalPlayer, get_hp),
 		luamethod(LuaLocalPlayer, get_name),
 		luamethod(LuaLocalPlayer, get_wield_index),
@@ -525,6 +544,7 @@ const luaL_Reg LuaLocalPlayer::methods[] = {
 		luamethod(LuaLocalPlayer, get_breath),
 		luamethod(LuaLocalPlayer, get_pos),
 		luamethod(LuaLocalPlayer, set_pos),
+		luamethod(LuaLocalPlayer, get_yaw),
 		luamethod(LuaLocalPlayer, set_yaw),
 		luamethod(LuaLocalPlayer, set_pitch),
 		luamethod(LuaLocalPlayer, get_movement_acceleration),

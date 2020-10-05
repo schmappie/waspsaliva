@@ -2,16 +2,16 @@ core.cheats = {
 	["Combat"] = {
 		["Killaura"] = "killaura",
 		["AntiKnockback"] = "antiknockback",
-		["NoFallDamage"] = "prevent_natural_damage",
+		["FastHit"] = "spamclick",
 	},
 	["Movement"] = {
-		["GodMode"] = "entity_speed",
 		["Freecam"] = "freecam",
 		["PrivBypass"] = "priv_bypass",
 		["AutoForward"] = "continuous_forward",
 		["PitchMove"] = "pitch_move",
 		["AutoJump"] = "autojump",
 		["Jesus"] = "jesus",
+		["NoSlow"] = "no_slow",
 	},
 	["Render"] = {
 		["Xray"] = "xray",
@@ -20,7 +20,7 @@ core.cheats = {
 		["NoHurtCam"] = "no_hurt_cam",
 		["BrightNight"] = "no_night",
 		["Coords"] = "coords",
-		["Clouds"] = "enable_clouds",
+		["Tracers"] = "enable_tracers",
 	},
 	["World"] = {
 		["FastDig"] = "fastdig",
@@ -31,6 +31,14 @@ core.cheats = {
 		["IncreasedRange"] = "increase_tool_range",
 		["UnlimitedRange"] = "increase_tool_range_plus",
 		["PointLiquids"] = "point_liquids",
+	},
+	["Exploit"] = {
+		["EntitySpeed"] = "entity_speed",
+		["ParticleExploit"] = "log_particles",
+	},
+	["Player"] = {
+		["NoFallDamage"] = "prevent_natural_damage",
+		["NoForceRotate"] = "no_force_rotate",
 	},
 }
 

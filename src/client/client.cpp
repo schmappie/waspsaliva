@@ -506,7 +506,7 @@ void Client::step(float dtime)
 	{
 		float &counter = m_playerpos_send_timer;
 		counter += dtime;
-		if((m_state == LC_Ready) && (counter >= m_recommended_send_interval) && ! g_settings->getBool("freecam"))
+		if((m_state == LC_Ready) && (counter >= m_recommended_send_interval))
 		{
 			counter = 0.0;
 			sendPlayerPos();
@@ -933,8 +933,8 @@ void Client::Send(NetworkPacket* pkt)
 // Will fill up 12 + 12 + 4 + 4 + 4 bytes
 void writePlayerPos(LocalPlayer *myplayer, ClientMap *clientMap, NetworkPacket *pkt)
 {
-	v3f pf           = myplayer->getPosition() * 100;
-	v3f sf           = myplayer->getSpeed() * 100;
+	v3f pf           = myplayer->getLegitPosition() * 100;
+	v3f sf           = myplayer->getLegitSpeed() * 100;
 	s32 pitch        = myplayer->getPitch() * 100;
 	s32 yaw          = myplayer->getYaw() * 100;
 	u32 keyPressed   = myplayer->keyPressed;
@@ -1289,6 +1289,9 @@ void Client::sendReady()
 
 void Client::sendPlayerPos(v3f pos)
 {
+	if (g_settings->getBool("freecam"))
+		return;
+
 	LocalPlayer *player = m_env.getLocalPlayer();
 	if (!player)
 		return;

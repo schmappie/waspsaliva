@@ -42,13 +42,11 @@ public:
 	void draw(video::IVideoDriver* driver, bool show_debug);
 
 	void drawEntry(video::IVideoDriver* driver, std::string name, int number, bool selected, bool active, CheatMenuEntryType entry_type = CHEAT_MENU_ENTRY_TYPE_ENTRY);
-
 	void selectUp();
 	void selectDown();
 	void selectLeft();
 	void selectRight();
 	void selectConfirm();
-
 private:
 	bool m_cheat_layer = false;
 	int m_selected_cheat = 0;
