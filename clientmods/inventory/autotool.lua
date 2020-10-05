@@ -23,7 +23,6 @@ minetest.register_on_punchnode(function(pos, node)
 	local new_index = player:get_wield_index()
 	local is_better, best_time = false, math.huge
 	is_better, best_time = check_tool(player:get_wielded_item(), node_groups, best_time)
-	is_better, best_time = check_tool(inventory.hand[1], node_groups, best_time)
 	for index, stack in pairs(inventory.main) do
 		is_better, best_time = check_tool(stack, node_groups, best_time)
 		if is_better then
