@@ -68,6 +68,8 @@ local function dighead()
                         minetest.display_chat_message("taken too much damage. stop.")
                         local ppos=vector.add(minetest.localplayer:get_pos(),{x=0,y=1,z=0})
                         minetest.dig_node(ppos)
+                        minetest.dig_node(vector.add(ppos,{x=1,y=0,z=0}))
+                        minetest.dig_node(vector.add(ppos,{x=0,y=0,z=1}))
                         minetest.dig_node(vector.add(ppos,{x=0,y=1,z=0}))
                         --minetest.dig_node(vector.add(ppos,{x=0,y=2,z=0}))
                         minetest.dig_node(vector.add(ppos,{x=0,y=-1,z=0}))
@@ -91,7 +93,7 @@ local function rwarp()
         minetest.display_chat_message('lava detected. stop.')
         return
     end
-    minetest.localplayer:set_pos(vector.add(nod,{x=0,y=-1,z=0}))
+    minetest.localplayer:set_pos(vector.add(nod,{x=0.5,y=-1.5,z=0.5}))
     minetest.after(0.05, dighead)
 end
 
@@ -230,5 +232,5 @@ end)
 if (_G["minetest"]["register_cheat"] ~= nil) then
     minetest.register_cheat("active    (!!! ALPHA!! this will lead to you dying!!!)", "Autominer", "aminer_active")
 else
-    minetest.settings:set_bool('aminer_active',false)
+    minetest.settings:set_bool('aminer_active',true)
 end
