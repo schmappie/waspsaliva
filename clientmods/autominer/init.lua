@@ -7,9 +7,12 @@ local dmg=false
 local digging=false
 local radius=6
 
---nodes={'mcl_core:stone_with_coal','mcl_core:stone_with_gold','mcl_core:stone_with_iron','mcl_core:stone_with_diamond','mcl_core:stone_with_redstone','mcl_core:stone_with_lapislazuli'}
-nodes={'mcl_core:stone_with_coal','mcl_core:stone_with_gold','mcl_core:stone_with_iron','mcl_core:stone_with_diamond','mcl_core:stone_with_lapis_lazuli','mcl_core:stone_with_lapislazuli'}
-nextpos={}
+
+local nodes={'mcl_core:stone_with_coal','mcl_core:stone_with_gold','mcl_core:stone_with_iron','mcl_core:stone_with_diamond','mcl_core:stone_with_lapis_lazuli','mcl_core:stone_with_lapislazuli'}
+--local nodes={'mcl_core:stone_with_gold','mcl_core:stone_with_iron','mcl_core:stone_with_diamond','mcl_core:stone_with_lapis_lazuli','mcl_core:stone_with_lapislazuli'}
+--local nodes={'mcl_core:stone_with_coal','mcl_core:stone_with_gold','mcl_core:stone_with_iron','mcl_core:stone_with_diamond','mcl_core:stone_with_redstone','mcl_core:stone_with_lapislazuli'}
+--local nodes={'mcl_core:tree'}
+
 local function sleep(n)  -- seconds
   local t0 = os.clock()
   while os.clock() - t0 <= n do end
@@ -22,7 +25,7 @@ local function shuffle(tbl)
   return tbl
 end
 local function checklava(pos)
-    local n=minetest.find_node_near(pos, 3, {'mcl_core:lava_source','mcl_core:lava_flowing'}, true)
+    local n=minetest.find_node_near(pos, 2, {'mcl_core:lava_source','mcl_core:lava_flowing'}, true)
     if n == nil then return false end
     return true
 end
@@ -68,8 +71,8 @@ local function amautotool(pos)
 end
 
 local function find_tnod()
-    local rr=false
     local pos = minetest.localplayer:get_pos()
+	local rr = vector.add(pos,{x=0,y=0,z=radius})
 	local pos1 = vector.add(pos,{x=radius,y=radius,z=radius})
     local pos2 = vector.add(pos,{x=-radius,y=-radius,z=-radius})
     local rt=shuffle(minetest.find_nodes_in_area(pos1, pos2, shuffle(nodes), true))
@@ -82,6 +85,7 @@ local function find_tnod()
             end
         end
     end
+    if (checkgravel(rr) or checklava(rr)) then return find_tnod() end
     return rr
 --    return rt
 end
@@ -93,6 +97,8 @@ end
 local function dighead()
             if not minetest.localplayer then return end
             local ppos=vector.add(minetest.localplayer:get_pos(),{x=0,y=1,z=0})
+            local n=get_hnode()
+            if n==nil or n['name'] == 'air' then return end
             amautotool(ppos)
             minetest.dig_node(ppos)
             minetest.dig_node(vector.add(ppos,{x=0,y=1,z=0}))
@@ -103,20 +109,15 @@ local function dighead()
                 if (hp > 17) then
                     minetest.after(0.2,autominer.aminer )
                 else
-                        minetest.display_chat_message("taken too much damage. stop.")
+                        minetest.display_chat_message("taken too much damage. wait.")
                         local ppos=vector.add(minetest.localplayer:get_pos(),{x=0,y=1,z=0})
                         minetest.dig_node(ppos)
-                        minetest.dig_node(vector.add(ppos,{x=1,y=0,z=0}))
-                        minetest.dig_node(vector.add(ppos,{x=0,y=0,z=1}))
                         minetest.dig_node(vector.add(ppos,{x=0,y=1,z=0}))
-                        minetest.dig_node(vector.add(ppos,{x=0,y=-1,z=0}))
                         minetest.after(1.0,function() minetest.dig_node(vector.add(ppos,{x=0,y=0,z=0})) end )
-                        minetest.after(1.0,function() minetest.dig_node(vector.add(ppos,{x=0,y=1,z=0})) end )
-                        minetest.after(1.0,function() minetest.dig_node(vector.add(ppos,{x=0,y=2,z=0})) end )
-                        minetest.after(1.5,function() minetest.dig_node(vector.add(ppos,{x=0,y=0,z=0})) end )
-                        minetest.after(1.5,function() minetest.dig_node(vector.add(ppos,{x=0,y=1,z=0})) end )
-                        minetest.after(1.5,function() minetest.dig_node(vector.add(ppos,{x=0,y=2,z=0})) end )
-                        minetest.settings:set_bool("aminer_active",false)
+                        minetest.after(1.4,function() minetest.dig_node(vector.add(ppos,{x=0,y=1,z=0})) end )
+                        minetest.after(1.8,function() minetest.dig_node(vector.add(ppos,{x=0,y=0,z=0})) end )
+                        minetest.after(2.5,function() minetest.dig_node(vector.add(ppos,{x=0,y=1,z=0})) end )
+                       -- minetest.settings:set_bool("aminer_active",false)
                 end
             end
 end
