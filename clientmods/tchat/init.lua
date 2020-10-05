@@ -175,6 +175,18 @@ local function apply(list, func, filter)
     return out
 end
 
+local function uniq(list)
+    local last
+    local out = {}
+    for k, v in ipairs(list) do
+        if last ~= v then
+            out[#out + 1] = v
+        end
+        last = v
+    end
+    return out
+end
+
 -- limit a list to the last size elements
 local function limit_list(list, size)
     local out = {}
@@ -528,7 +540,11 @@ end
 minetest.register_globalstep(function()
     -- update data
     if player_list_epoch < os.time() + 2 then
+        -- update players, remove duplicates
         tchat.players = minetest.get_player_names()
+        table.sort(tchat.players)
+        tchat.players = uniq(tchat.players)
+
         update_team_online()
 
         -- update HUD
