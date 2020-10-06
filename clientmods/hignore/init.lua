@@ -3,7 +3,6 @@
 local storage = minetest.get_mod_storage()
 
 local function storage_init_table(key)
-    minetest.log("init key: " .. key .. " value: " .. storage:get_string(key))
     if storage:get(key) == nil or storage:get(key) == "null" then
         storage:set_string(key, "{}")
     end
@@ -12,9 +11,7 @@ local function storage_init_table(key)
 end
 
 local function storage_save_json(key, value)
-    minetest.log("get key: " .. key .. " value: " .. storage:get_string(key))
     storage:set_string(key, minetest.write_json(value))
-    minetest.log("save key: " .. key .. " value: " .. storage:get_string(key))
 end
 
 
