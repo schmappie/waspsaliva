@@ -359,7 +359,7 @@ if minetest.settings:get_bool("quotebot_export") then
     end
 
     function quotebot.export(file)
-        fdesc = io.open(file, "w)
+        fdesc = io.open(file, "w")
         fdesc:write(minetest.write_json({
             quotes = quotebot.quotes,
             chance = quotebot.chance,
