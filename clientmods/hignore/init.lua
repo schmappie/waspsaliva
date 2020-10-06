@@ -24,10 +24,14 @@ hignore.highlight = storage_init_table("hignore_highlight")
 -- name: mode
 hignore.ignore = storage_init_table("hignore_ignore")
 
+-- strip: mode
+hignore.strip = storage_init_table("hignore_strip")
+
 
 function hignore.save()
     storage_save_json("hignore_highlight", hignore.higlight)
     storage_save_json("hignore_ignore", hignore.ignore)
+    storage_save_json("hignore_strip", hignore.strip)
 end
 
 
@@ -51,14 +55,32 @@ minetest.register_on_receiving_chat_message(function(message)
 
     if player then
         player = localize_player(dm or pub)
+    else
+        return
     end
 
+    -- ignore and hide
     if hignore.ignore[player] then
         if hignore.ignore[player] == "summarize" then
-            minetest.display_chat_message(player .. " sent a message.")
+            if dm then
+                minetest.display_chat_message(player .. " sent you a DM.")
+            else
+                minetest.display_chat_message(player .. " sent a message.")
+            end
         end
         return true
-    elseif hignore.highlight[player] then
+    end
+
+    -- strip title
+    if hignore.strip[player] then
+        message = message:match(".- | (.*)")
+        if hignore.highlight[player] == nil then
+            minetest.display_chat_message(message)
+        end
+    end
+
+    -- highlight message
+    if hignore.highlight[player] then
         minetest.display_chat_message(minetest.colorize(hignore.highlight[player], message))
         return true
     end
@@ -140,5 +162,33 @@ minetest.register_chatcommand("highlight_list", {
     description = "List highlighted players.",
     func = function(params)
         minetest.display_chat_message(string_table(hignore.highlight))
+    end
+})
+
+minetest.register_chatcommand("strip", {
+    params = "<player>",
+    description = "Toggle stripping of a player's titles.",
+    func = function(params)
+        local plist = string.split(params, " ")
+        if plist[1] == nil then
+            noplayer()
+            return
+        end
+
+        local player = localize_player(plist[1])
+
+        if hignore.strip[player] then
+            hignore.strip[player] = nil
+        else
+            hignore.strip[player] = "remove"
+        end
+        hignore.save()
+    end
+})
+
+minetest.register_chatcommand("strip_list", {
+    description = "List players with stripped titles.",
+    func = function(params)
+        minetest.display_chat_message(string_table(hignore.strip))
     end
 })
