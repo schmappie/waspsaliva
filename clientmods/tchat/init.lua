@@ -175,6 +175,18 @@ local function apply(list, func, filter)
     return out
 end
 
+local function uniq(list)
+    local last
+    local out = {}
+    for k, v in ipairs(list) do
+        if last ~= v then
+            out[#out + 1] = v
+        end
+        last = v
+    end
+    return out
+end
+
 -- limit a list to the last size elements
 local function limit_list(list, size)
     local out = {}
@@ -390,7 +402,8 @@ local function autoclear_chat()
 end
 
 function tchat.chat_clear()
-    chat = {}
+    tchat.chat = {}
+    update_chat_str()
 end
 
 function tchat.chat_set(message_list)
@@ -528,7 +541,11 @@ end
 minetest.register_globalstep(function()
     -- update data
     if player_list_epoch < os.time() + 2 then
+        -- update players, remove duplicates
         tchat.players = minetest.get_player_names()
+        table.sort(tchat.players)
+        tchat.players = uniq(tchat.players)
+
         update_team_online()
 
         -- update HUD
@@ -583,6 +600,15 @@ minetest.register_chatcommand("tdel", {
     params = "<player>",
     description = "Remove player from your team.",
     func = tchat.team_remove_player
+})
+minetest.register_chatcommand("tclear", {
+    description = "Clear team list.",
+    func = tchat.team_clear
+})
+
+minetest.register_chatcommand("tchat_clear", {
+    description = "Clear team chat widget.",
+    func = tchat.chat_clear
 })
 
 minetest.register_chatcommand("coords", {
