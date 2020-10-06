@@ -8,10 +8,11 @@ local digging=false
 local radius=6
 
 
-local nodes={'mcl_core:stone_with_coal','mcl_core:stone_with_gold','mcl_core:stone_with_iron','mcl_core:stone_with_diamond','mcl_core:stone_with_lapis_lazuli','mcl_core:stone_with_lapislazuli'}
---local nodes={'mcl_core:stone_with_gold','mcl_core:stone_with_iron','mcl_core:stone_with_diamond','mcl_core:stone_with_lapis_lazuli','mcl_core:stone_with_lapislazuli'}
+--local nodes={'mcl_core:stone_with_coal','mcl_core:stone_with_gold','mcl_core:stone_with_iron','mcl_core:stone_with_diamond','mcl_core:stone_with_lapis_lazuli','mcl_core:stone_with_lapislazuli'}
+local nodes={'mcl_core:stone_with_gold','mcl_core:stone_with_iron','mcl_core:stone_with_diamond','mcl_core:stone_with_lapis'}
 --local nodes={'mcl_core:stone_with_coal','mcl_core:stone_with_gold','mcl_core:stone_with_iron','mcl_core:stone_with_diamond','mcl_core:stone_with_redstone','mcl_core:stone_with_lapislazuli'}
 --local nodes={'mcl_core:tree'}
+--local nodes={'mcl_core:stone_with_diamond'}
 
 local function sleep(n)  -- seconds
   local t0 = os.clock()
@@ -30,7 +31,7 @@ local function checklava(pos)
     return true
 end
 local function checkgravel(pos)
-    local n=minetest.find_node_near(pos, 1, {'mcl_core:gravel'}, true)
+    local n=minetest.find_node_near(pos, 1, {'mcl_core:gravel','mcl_core:sand'}, true)
     if n == nil then return false end
     return true
 end
@@ -85,7 +86,7 @@ local function find_tnod()
             end
         end
     end
-    if (checkgravel(rr) or checklava(rr)) then return find_tnod() end
+    if (checkgravel(rr) or checklava(rr)) then return minetest.after(0.2,find_tnod) end
     return rr
 --    return rt
 end
@@ -130,9 +131,9 @@ local function rwarp()
         minetest.display_chat_message('lava detected. stop.')
         return
     end
-    minetest.localplayer:set_pos(vector.add(nod,{x=0.2,y=-1.5,z=0.2}))
+    minetest.localplayer:set_pos(vector.add(nod,{x=0.3,y=-1.2,z=0.3}))
     dighead()
-    --minetest.after(0.05, dighead)
+    minetest.after(0.2, dighead)
 end
 
 local function amine()
@@ -181,83 +182,9 @@ minetest.register_on_damage_taken(function(hp)
     dmg=true
 end)
 
---[[]
-local wps={}
-local hud2=nil
-local hud;
-local lastch=0
-
-minetest.register_globalstep(function()
-    if not minetest.settings:get_bool("espactive") then
-        if hud2 then minetest.localplayer:hud_remove(hud2) hud2=nil end
-        for k,v in pairs(wps) do
-                minetest.localplayer:hud_remove(v)
-                table.remove(wps,k)
-        end
-        return
-    end
-
-    if os.time() < lastch + espinterval then return end
-    lastch=os.time()
-
-    local pos = minetest.localplayer:get_pos()
-	local pos1 = vector.add(pos,{x=radius,y=radius,z=radius})
-    local pos2 = vector.add(pos,{x=-radius,y=-radius,z=-radius})
-    local fpos,cnt=minetest.find_nodes_in_area(pos1, pos2, nodes, false)
-    local epos=minetest.find_nodes_in_area(pos1, pos2, nodes, true)
-
-    for k,v in pairs(wps) do --clear waypoints out of range
-        local hd=minetest.localplayer:hud_get(v)
-        local dst=vector.distance(pos,hd.world_pos)
-        if (dst > radius + 50 ) then
-            minetest.localplayer:hud_remove(v)
-            table.remove(wps,k)
-            end
-    end
-
-    if epos then
-        if(hud2) then minetest.localplayer:hud_remove(hud2) end
-        local infotxt=""
-        for k,v in pairs(cnt) do -- display a summary
-            if not ( v == 0 ) then
-                if minetest.settings:get_bool("espautostop") then minetest.settings:set("continuous_forward", "false") end
-                infotxt=infotxt.."\n"..k..":"..v
-            end
-        end
-        if infotxt ~= "" then
-            hud2=minetest.localplayer:hud_add({
-                hud_elem_type = 'text',
-                name          = "ESP info",
-                text          = "NOIs in range ("..radius..")\n"..infotxt,
-                number        = 0x00ff00,
-                direction   = 0,
-                position = {x=0.75,y=0.4},
-                alignment ={x=1,y=1},
-                offset = {x=0, y=0}
-               })
-        end
-
-        local ii=0;
-        for m,xx in pairs(epos) do -- display found nodes as WPs
-            for kk,vv in pairs(xx) do
-                if ( ii > esplimit ) then break end
-                ii=ii+1
-                table.insert(wps,minetest.localplayer:hud_add({
-                    hud_elem_type = 'waypoint',
-                    name          = m,
-                    text          = "m",
-                    number        = 0x00ff00,
-                    world_pos     = vv
-                    })
-                )
-            end
-       end
-    end
-end)
---]]
 
 if (_G["minetest"]["register_cheat"] ~= nil) then
-    minetest.register_cheat("active    (!!! ALPHA!! this will lead to you dying!!!)", "Autominer", "aminer_active")
+    minetest.register_cheat("Autominer    (!!! ALPHA!! this will lead to you dying!!!)", "Player", "aminer_active")
 else
     minetest.settings:set_bool('aminer_active',true)
 end
