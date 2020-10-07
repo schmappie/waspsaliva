@@ -29,7 +29,7 @@ hignore.strip = storage_init_table("hignore_strip")
 
 
 function hignore.save()
-    storage_save_json("hignore_highlight", hignore.higlight)
+    storage_save_json("hignore_highlight", hignore.highlight)
     storage_save_json("hignore_ignore", hignore.ignore)
     storage_save_json("hignore_strip", hignore.strip)
 end
