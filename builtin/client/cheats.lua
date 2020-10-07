@@ -21,6 +21,7 @@ core.cheats = {
 		["BrightNight"] = "no_night",
 		["Coords"] = "coords",
 		["Tracers"] = "enable_tracers",
+		["ESP"] = "enable_esp",
 	},
 	["World"] = {
 		["FastDig"] = "fastdig",

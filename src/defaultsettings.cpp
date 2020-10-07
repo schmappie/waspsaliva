@@ -66,7 +66,7 @@ void set_default_settings(Settings *settings)
 
 	// Cheats
 	settings->setDefault("xray", "false");
-	settings->setDefault("xray_node", "default:stone");
+	settings->setDefault("xray_nodes", "default:stone,mcl_core:stone");
 	settings->setDefault("fullbright", "false");
 	settings->setDefault("priv_bypass", "true");
 	settings->setDefault("fastdig", "false");
@@ -92,6 +92,7 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("spamclick", "false");
 	settings->setDefault("no_force_rotate", "false");
 	settings->setDefault("enable_tracers", "false");
+	settings->setDefault("enable_esp", "false");
 	settings->setDefault("no_slow", "false");
 	settings->setDefault("trace_players_only", "true");
 

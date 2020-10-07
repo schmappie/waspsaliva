@@ -1289,9 +1289,6 @@ void Client::sendReady()
 
 void Client::sendPlayerPos(v3f pos)
 {
-	if (g_settings->getBool("freecam"))
-		return;
-
 	LocalPlayer *player = m_env.getLocalPlayer();
 	if (!player)
 		return;
@@ -1309,7 +1306,7 @@ void Client::sendPlayerPos(v3f pos)
 
 	if (
 			player->last_position     == pos &&
-			player->last_speed        == player->getSpeed()    &&
+			player->last_speed        == player->getLegitSpeed()    &&
 			player->last_pitch        == player->getPitch()    &&
 			player->last_yaw          == player->getYaw()      &&
 			player->last_keyPressed   == player->keyPressed    &&
@@ -1318,7 +1315,7 @@ void Client::sendPlayerPos(v3f pos)
 		return;
 
 	player->last_position     = pos;
-	player->last_speed        = player->getSpeed();
+	player->last_speed        = player->getLegitSpeed();
 	player->last_pitch        = player->getPitch();
 	player->last_yaw          = player->getYaw();
 	player->last_keyPressed   = player->keyPressed;
@@ -1337,7 +1334,7 @@ void Client::sendPlayerPos()
 	LocalPlayer *player = m_env.getLocalPlayer();
 	if (!player)
 		return;
-	sendPlayerPos(player->getPosition());
+	sendPlayerPos(player->getLegitPosition());
 }
 
 void Client::removeNode(v3s16 p)
@@ -1667,15 +1664,23 @@ void Client::addUpdateMeshTaskForNode(v3s16 nodepos, bool ack_to_server, bool ur
 
 void Client::updateAllMapBlocks()
 {
+	v3s16 currentBlock = getNodeBlockPos(floatToInt(m_env.getLocalPlayer()->getPosition(), BS));
+	
+	for (s16 X = currentBlock.X - 2; X <= currentBlock.X + 2; X++)
+	for (s16 Y = currentBlock.Y - 2; Y <= currentBlock.Y + 2; Y++)
+	for (s16 Z = currentBlock.Z - 2; Z <= currentBlock.Z + 2; Z++)
+		addUpdateMeshTask(v3s16(X, Y, Z), false, true);
+	
 	std::map<v2s16, MapSector*> *sectors = m_env.getMap().getSectorsPtr();
+	
 	for (auto &sector_it : *sectors) {
 		MapSector *sector = sector_it.second;
 		MapBlockVect blocks;
 		sector->getBlocks(blocks);
-		for (MapBlock *block : blocks)
+		for (MapBlock *block : blocks) {
 			addUpdateMeshTask(block->getPos(), false, false);
+		}
 	}
-	//addUpdateMeshTaskWithEdge(getObjectBlockPos(m_env.getLocalPlayer()->getPosition()), false, false);
 }
 
 ClientEvent *Client::getClientEvent()
