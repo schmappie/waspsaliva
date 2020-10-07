@@ -200,6 +200,11 @@ public:
 		return m_prop.stepheight;
 	}
 
+	inline bool isPlayer() const
+	{
+		return m_is_player;
+	}
+
 	inline bool isLocalPlayer() const
 	{
 		return m_is_local_player;
@@ -276,6 +281,6 @@ public:
 	{
 		return m_prop.infotext;
 	}
-	
+
 	float m_waiting_for_reattach;
 };

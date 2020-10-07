@@ -2272,3 +2272,5 @@ no_force_rotate (NoForceRotate) bool false
 enable_tracers (Tracers) bool false
 
 no_slow (NoSlow) bool false
+
+trace_players_only (Only trace to players) bool true
