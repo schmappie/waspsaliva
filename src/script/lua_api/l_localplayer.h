@@ -111,6 +111,9 @@ private:
 	// hud_get(self, id)
 	static int l_hud_get(lua_State *L);
 
+	// get_nearby_objects(self, radius)
+	static int l_get_nearby_objects(lua_State *L);
+
 	LocalPlayer *m_localplayer = nullptr;
 
 public:

@@ -27,6 +27,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "client/client.h"
 #include "client/content_cao.h"
 #include "client/game.h"
+#include "l_clientobject.h"
+#include <vector>
 
 LuaLocalPlayer::LuaLocalPlayer(LocalPlayer *m) : m_localplayer(m)
 {
@@ -460,6 +462,30 @@ int LuaLocalPlayer::l_hud_get(lua_State *L)
 	return 1;
 }
 
+// get_nearby_objects(self, radius)
+int LuaLocalPlayer::l_get_nearby_objects(lua_State *L)
+{
+	// should this be a double?
+	float radius = readParam<float>(L, 1) * BS;
+	std::vector<DistanceSortedActiveObject> objs;
+
+	ClientEnvironment &env = getClient(L)->getEnv();
+	v3f pos = env.getLocalPlayer()->getPosition();
+	env.getActiveObjects(pos, radius, objs);
+
+	lua_newtable(L);
+
+	int i = 0;
+	lua_createtable(L, objs.size(), 0);
+	for (const auto obj : objs) {
+		ClientObjectRef::create(L, obj.obj);
+		lua_rawseti(L, -2, ++i);
+	}
+
+	return 1;
+}
+
+
 LuaLocalPlayer *LuaLocalPlayer::checkobject(lua_State *L, int narg)
 {
 	luaL_checktype(L, narg, LUA_TUSERDATA);
@@ -555,6 +581,8 @@ const luaL_Reg LuaLocalPlayer::methods[] = {
 		luamethod(LuaLocalPlayer, hud_remove),
 		luamethod(LuaLocalPlayer, hud_change),
 		luamethod(LuaLocalPlayer, hud_get),
+
+		luamethod(LuaLocalPlayer, get_nearby_objects),
 
 		{0, 0}
 };

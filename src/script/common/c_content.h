@@ -118,7 +118,7 @@ void               push_object_properties    (lua_State *L,
 
 void               push_inventory       	 (lua_State *L,
                                               Inventory *inventory);
-                                              
+
 void               push_inventory_list       (lua_State *L,
                                               Inventory *inv,
                                               const char *name);
