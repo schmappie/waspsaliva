@@ -33,7 +33,7 @@ int ClientObjectRef::l_get_pos(lua_State *L)
 {
     ClientObjectRef *ref = checkobject(L, 1);
     ClientActiveObject *cao = get_cao(ref);
-    push_v3f(L, cao->getPosition());
+    push_v3f(L, cao->getPosition() / BS);
     return 1;
 }
 
