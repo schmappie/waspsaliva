@@ -93,6 +93,7 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("no_force_rotate", "false");
 	settings->setDefault("enable_tracers", "false");
 	settings->setDefault("no_slow", "false");
+	settings->setDefault("trace_players_only", "true");
 
 	// Keymap
 	settings->setDefault("remote_port", "30000");

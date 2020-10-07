@@ -22,6 +22,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "client/camera.h"
 #include "tracers.h"
 #include "constants.h"
+#include "settings.h"
+#include "client/content_cao.h"
+#include <iostream>
 
 void Tracers::draw(video::IVideoDriver* driver, Client *client)
 {
@@ -36,6 +39,9 @@ void Tracers::draw(video::IVideoDriver* driver, Client *client)
 		ClientActiveObject *obj = allObject.obj;
 		if (obj->isLocalPlayer() || obj->getParent())
 			continue;
-		driver->draw3DLine(head_pos, obj->getPosition(), video::SColor(255, 255, 255, 255));
+
+		GenericCAO *cao = env.getGenericCAO(obj->getId());
+		if (!g_settings->getBool("trace_players_only") || (cao && cao->isPlayer()))
+			driver->draw3DLine(head_pos, obj->getPosition(), video::SColor(255, 255, 255, 255));
 	}
 }
