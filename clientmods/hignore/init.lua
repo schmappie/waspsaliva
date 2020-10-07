@@ -43,7 +43,7 @@ local function localize_player(player)
         name = info.address
     end
 
-    return player .. "@" .. info.ip .. ":" .. info.port
+    return player .. "@" .. name .. ":" .. info.port
 end
 
 
@@ -76,6 +76,7 @@ minetest.register_on_receiving_chat_message(function(message)
         message = message:match(".- | (.*)")
         if hignore.highlight[player] == nil then
             minetest.display_chat_message(message)
+            return true
         end
     end
 
