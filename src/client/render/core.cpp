@@ -110,7 +110,7 @@ void RenderingCore::drawTracersAndESP()
 		pos = box.getCenter();
 		if (draw_esp)
 			driver->draw3DBox(box, video::SColor(255, 255, 255, 255));
-		if (draw_tracers && (!g_settings->getBool("trace_players_only") || cao->isPlayer()))
+		if (draw_tracers && (!g_settings->getBool("trace_players_only") || obj->isPlayer()))
 			driver->draw3DLine(eye_pos, pos, video::SColor(255, 255, 255, 255));
 	}
 	
