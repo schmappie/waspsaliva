@@ -200,6 +200,11 @@ public:
 		return m_prop.stepheight;
 	}
 
+	inline std::string getName() const
+	{
+		return m_name;
+	}
+
 	inline bool isPlayer() const
 	{
 		return m_is_player;
