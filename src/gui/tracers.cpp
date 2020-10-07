@@ -24,7 +24,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "constants.h"
 #include "settings.h"
 #include "client/content_cao.h"
-#include <iostream>
 
 void Tracers::draw(video::IVideoDriver* driver, Client *client)
 {
