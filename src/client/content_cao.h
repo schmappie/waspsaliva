@@ -288,4 +288,9 @@ public:
 	}
 
 	float m_waiting_for_reattach;
+
+	ObjectProperties *getProperties()
+	{
+		return &m_prop;
+	}
 };
