@@ -36,4 +36,13 @@ private:
 
     // get_name(self)
     static int l_get_name(lua_State *L);
+
+    // get_parent(self)
+    static int l_get_parent(lua_State *L);
+
+    // get_nametag(self)
+    static int l_get_nametag(lua_State *L);
+
+    // get_textures(self)
+    static int l_get_textures(lua_State *L);
 };

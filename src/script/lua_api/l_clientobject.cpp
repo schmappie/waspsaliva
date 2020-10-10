@@ -4,6 +4,7 @@
 #include "l_internal.h"
 #include "common/c_converter.h"
 #include "client/client.h"
+#include "object_properties.h"
 
 
 ClientObjectRef *ClientObjectRef::checkobject(lua_State *L, int narg)
@@ -53,6 +54,36 @@ int ClientObjectRef::l_get_name(lua_State *L)
     return 1;
 }
 
+int ClientObjectRef::l_get_parent(lua_State *L)
+{
+    ClientObjectRef *ref = checkobject(L, 1);
+    GenericCAO *gcao = get_generic_cao(ref, L);
+    create(L, gcao->getParent());
+    return 1;
+}
+
+int ClientObjectRef::l_get_nametag(lua_State *L)
+{
+    ClientObjectRef *ref = checkobject(L, 1);
+    GenericCAO *gcao = get_generic_cao(ref, L);
+    ObjectProperties *props = gcao->getProperties();
+    lua_pushstring(L, props->nametag.c_str());
+    return 1;
+}
+
+int ClientObjectRef::l_get_textures(lua_State *L)
+{
+    ClientObjectRef *ref = checkobject(L, 1);
+    GenericCAO *gcao = get_generic_cao(ref, L);
+    ObjectProperties *props = gcao->getProperties();
+    lua_newtable(L);
+
+    for (std::string &texture : props->textures) {
+        lua_pushstring(L, texture.c_str());
+    }
+    return 1;
+}
+
 ClientObjectRef::ClientObjectRef(ClientActiveObject *object):
     m_object(object)
 {
@@ -60,10 +91,12 @@ ClientObjectRef::ClientObjectRef(ClientActiveObject *object):
 
 void ClientObjectRef::create(lua_State *L, ClientActiveObject *object)
 {
-    ClientObjectRef *o = new ClientObjectRef(object);
-    *(void **)(lua_newuserdata(L, sizeof(void *))) = o;
-    luaL_getmetatable(L, className);
-    lua_setmetatable(L, -2);
+    if (object) {
+        ClientObjectRef *o = new ClientObjectRef(object);
+        *(void **)(lua_newuserdata(L, sizeof(void *))) = o;
+        luaL_getmetatable(L, className);
+        lua_setmetatable(L, -2);
+    }
 }
 
 int ClientObjectRef::gc_object(lua_State *L) {
@@ -103,5 +136,8 @@ luaL_Reg ClientObjectRef::methods[] = {
     luamethod(ClientObjectRef, get_pos),
     luamethod(ClientObjectRef, is_player),
     luamethod(ClientObjectRef, get_name),
+    luamethod(ClientObjectRef, get_parent),
+    luamethod(ClientObjectRef, get_nametag),
+    luamethod(ClientObjectRef, get_textures),
     {0, 0}
 };
