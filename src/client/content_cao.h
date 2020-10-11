@@ -169,6 +169,16 @@ public:
 
 	inline const v3f &getRotation() const { return m_rotation; }
 
+	inline const v3f getAcceleration() const
+	{
+		return m_acceleration;
+	}
+
+	inline const v3f getVelocity() const
+	{
+		return m_velocity;
+	}
+
 	const bool isImmortal();
 
 	scene::ISceneNode *getSceneNode() const;
