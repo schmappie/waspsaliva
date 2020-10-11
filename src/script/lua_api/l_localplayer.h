@@ -114,6 +114,9 @@ private:
 	// get_nearby_objects(self, radius)
 	static int l_get_nearby_objects(lua_State *L);
 
+	// get_object(self)
+	static int l_get_object(lua_State *L);
+
 	LocalPlayer *m_localplayer = nullptr;
 
 public:

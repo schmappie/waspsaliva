@@ -485,6 +485,17 @@ int LuaLocalPlayer::l_get_nearby_objects(lua_State *L)
 	return 1;
 }
 
+int LuaLocalPlayer::l_get_object(lua_State *L)
+{
+	LocalPlayer *player = getobject(L, 1);
+	ClientEnvironment &env = getClient(L)->getEnv();
+	ClientActiveObject *obj = env.getGenericCAO(player->getCAO()->getId());
+
+	ClientObjectRef::create(L, obj);
+
+	return 1;
+}
+
 
 LuaLocalPlayer *LuaLocalPlayer::checkobject(lua_State *L, int narg)
 {
@@ -583,6 +594,7 @@ const luaL_Reg LuaLocalPlayer::methods[] = {
 		luamethod(LuaLocalPlayer, hud_get),
 
 		luamethod(LuaLocalPlayer, get_nearby_objects),
+		luamethod(LuaLocalPlayer, get_object),
 
 		{0, 0}
 };
