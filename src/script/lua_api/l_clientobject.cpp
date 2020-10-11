@@ -6,6 +6,8 @@
 #include "client/client.h"
 #include "object_properties.h"
 
+// should prob do some more NULL checking
+
 
 ClientObjectRef *ClientObjectRef::checkobject(lua_State *L, int narg)
 {
@@ -35,6 +37,30 @@ int ClientObjectRef::l_get_pos(lua_State *L)
     ClientObjectRef *ref = checkobject(L, 1);
     ClientActiveObject *cao = get_cao(ref);
     push_v3f(L, cao->getPosition() / BS);
+    return 1;
+}
+
+int ClientObjectRef::l_get_velocity(lua_State *L)
+{
+    ClientObjectRef *ref = checkobject(L, 1);
+    GenericCAO *gcao = get_generic_cao(ref, L);
+    push_v3f(L, gcao->getVelocity() / BS);
+    return 1;
+}
+
+int ClientObjectRef::l_get_acceleration(lua_State *L)
+{
+    ClientObjectRef *ref = checkobject(L, 1);
+    GenericCAO *gcao = get_generic_cao(ref, L);
+    push_v3f(L, gcao->getAcceleration() / BS);
+    return 1;
+}
+
+int ClientObjectRef::l_get_rotation(lua_State *L)
+{
+    ClientObjectRef *ref = checkobject(L, 1);
+    GenericCAO *gcao = get_generic_cao(ref, L);
+    push_v3f(L, gcao->getRotation());
     return 1;
 }
 
@@ -71,7 +97,7 @@ int ClientObjectRef::l_get_nametag(lua_State *L)
     return 1;
 }
 
-int ClientObjectRef::l_get_textures(lua_State *L)
+int ClientObjectRef::l_get_item_textures(lua_State *L)
 {
     ClientObjectRef *ref = checkobject(L, 1);
     GenericCAO *gcao = get_generic_cao(ref, L);
@@ -81,6 +107,15 @@ int ClientObjectRef::l_get_textures(lua_State *L)
     for (std::string &texture : props->textures) {
         lua_pushstring(L, texture.c_str());
     }
+    return 1;
+}
+
+int ClientObjectRef::l_get_max_hp(lua_State *L)
+{
+    ClientObjectRef *ref = checkobject(L, 1);
+    GenericCAO *gcao = get_generic_cao(ref, L);
+    ObjectProperties *props = gcao->getProperties();
+    lua_pushnumber(L, props->hp_max);
     return 1;
 }
 
@@ -134,10 +169,14 @@ void ClientObjectRef::Register(lua_State *L)
 const char ClientObjectRef::className[] = "ClientObjectRef";
 luaL_Reg ClientObjectRef::methods[] = {
     luamethod(ClientObjectRef, get_pos),
+    luamethod(ClientObjectRef, get_velocity),
+    luamethod(ClientObjectRef, get_acceleration),
+    luamethod(ClientObjectRef, get_rotation),
     luamethod(ClientObjectRef, is_player),
     luamethod(ClientObjectRef, get_name),
     luamethod(ClientObjectRef, get_parent),
     luamethod(ClientObjectRef, get_nametag),
-    luamethod(ClientObjectRef, get_textures),
+    luamethod(ClientObjectRef, get_item_textures),
+    luamethod(ClientObjectRef, get_max_hp),
     {0, 0}
 };

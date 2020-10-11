@@ -31,6 +31,15 @@ private:
     // returns: {x=num, y=num, z=num}
     static int l_get_pos(lua_State *L);
 
+    // get_velocity(self)
+    static int l_get_velocity(lua_State *L);
+
+    // get_acceleration(self)
+    static int l_get_acceleration(lua_State *L);
+
+    // get_rotation(self)
+    static int l_get_rotation(lua_State *L);
+
     // is_player(self)
     static int l_is_player(lua_State *L);
 
@@ -44,5 +53,8 @@ private:
     static int l_get_nametag(lua_State *L);
 
     // get_textures(self)
-    static int l_get_textures(lua_State *L);
+    static int l_get_item_textures(lua_State *L);
+
+    // get_hp(self)
+    static int l_get_max_hp(lua_State *L);
 };
