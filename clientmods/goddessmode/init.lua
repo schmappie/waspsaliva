@@ -18,27 +18,26 @@ end
 local tprangeh=20
 local tprangepy=50
 local tprangeny=60
-local karange=7
+local karange=10
 
 local function gettarget(epos)
 	--local mpos=minetest.localplayer:get_pos()
 	math.randomseed(os.time())
-	local angle=math.random(0,360)
+	local angle=math.random(90,270)
 	local tg={x=0,y=0,z=0}
-	tg.x=karange * math.sin(angle)
-	tg.z=karange * math.cos(angle)
+	tg.x=( karange + 2 ) * math.sin(angle)
+	tg.z=( karange + 2 ) * math.cos(angle)
 	return vector.add(epos,tg)
 end
 
 local function rro() -- reverse restraining order
-    for k, v in ipairs(minetest.localplayer.get_nearby_objects(10)) do
+    for k, v in ipairs(minetest.localplayer.get_nearby_objects(karange+5)) do
         if (v:is_player() and v:get_name() ~= minetest.localplayer:get_name()) then
             local pos = v:get_pos()
             pos.y = pos.y - 1
 			local mpos=minetest.localplayer:get_pos()
             local distance=vector.distance(mpos,pos)
-            if distance < karange then mwarp(gettarget(pos)) end
-            --autofly.aim(pos)
+            if distance < karange then mwarp(gettarget(pos)) minetest.after(0.2,function() autofly.aim(pos) end) end
             return
         end
     end
