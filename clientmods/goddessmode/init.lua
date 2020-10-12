@@ -20,25 +20,10 @@ local tprangepy=50
 local tprangeny=60
 local karange=10
 
-local function get_target(epos)
-	math.randomseed(os.time())
-	local angle=math.random(110,250)
-	local tg={x=0,y=0,z=0}
-	tg.x=( karange + 2 ) * math.sin(angle)
-	tg.z=( karange + 2 ) * math.cos(angle)
-	local t=vector.add(epos,tg)
-	if (checklava(t) or checkgravel(t)) then
-		return get_target(epos)
-	elseif checkair(t) then
-		return t
-	else
-		amautotool(t)
-	end
-	return t
-end
+
 
 local function checkair(pos)
-	local n=get_node_or_nil(pos)
+	local n=minetest.get_node_or_nil(pos)
 	if n==nil or n['name'] == 'air' then return true end
     return false
 end
@@ -52,6 +37,9 @@ local function checkgravel(pos)
     if n == nil then return false end
     return true
 end
+
+
+
 local function check_tool(stack, node_groups, old_best_time)
 	local toolcaps = stack:get_tool_capabilities()
 	if not toolcaps then return end
@@ -88,12 +76,27 @@ end
 local function dhfree()
             if not minetest.localplayer then return end
             local n=vector.add(minetest.localplayer:get_pos(),{x=0,y=2,z=0})
-            if n==nil or n['name'] == 'air' then return end
+            --if n==nil or n['name'] == 'air' then return end
             amautotool(n)
             minetest.dig_node(n)
-            --minetest.dig_node(vector.add(ppos,{x=0,y=1,z=0}))
+            minetest.dig_node(vector.add(n,{x=0,y=-1,z=0}))
 end
-
+local function get_target(epos)
+	math.randomseed(os.time())
+	local angle=math.random(110,250)
+	local tg={x=0,y=0,z=0}
+	tg.x=( karange + 2 ) * math.sin(angle)
+	tg.z=( karange + 2 ) * math.cos(angle)
+	local t=vector.add(epos,tg)
+	if (checklava(t) or checkgravel(t)) then
+		return get_target(epos)
+	elseif checkair(t) then
+		return t
+	else
+		amautotool(t)
+	end
+	return t
+end
 local function rro() -- reverse restraining order
     for k, v in ipairs(minetest.localplayer.get_nearby_objects(karange+5)) do
         if (v:is_player() and v:get_name() ~= minetest.localplayer:get_name()) then
