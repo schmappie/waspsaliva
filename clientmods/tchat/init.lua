@@ -328,11 +328,16 @@ local function dm(player, message)
 end
 
 -- send
-function tchat.send(message, force_coords)
+function tchat.send(message, force_coords, force_commands)
     if (tchat.contains_coords(message) and not force_coords) or in_list(blacklist, minetest.localplayer:get_name()) then
         return
     end
     
+    if message:sub(1,1) == "/" and not force_commands then
+        minetest.display_chat_message("A /command was scheduled to be sent to team chat but wasn't sent.")
+        return
+    end
+
     local me = minetest.localplayer:get_name()
 
     if not in_list(tchat.team, minetest.localplayer:get_name()) then
