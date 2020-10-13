@@ -22,9 +22,7 @@ local function checkgravel(pos)
     if n == nil then return false end
     return true
 end
-local function evadelava(ppos)
-	mwarp(get_target(ppos))
-end
+
 
 local function checkarrow()
     for k, v in ipairs(minetest.localplayer.get_nearby_objects(karange)) do
@@ -61,7 +59,7 @@ local function amautotool(pos)
 	local is_better, best_time = false, math.huge
 		is_better, best_time = check_tool(player:get_wielded_item(), node_groups, best_time)
 	is_better, best_time = check_tool(inventory.hand[1], node_groups, best_time)
-	fo sr index, stack in pairs(inventory.main) do
+	for index, stack in pairs(inventory.main) do
 		is_better, best_time = check_tool(stack, node_groups, best_time)
 		if is_better then
 			new_index = index - 1
@@ -88,6 +86,9 @@ local function dhfree()
             amautotool(n)
             minetest.dig_node(n)
             minetest.dig_node(vector.add(n,{x=0,y=-1,z=0}))
+end
+local function evadelava(ppos)
+	mwarp(get_target(ppos))
 end
 local function get_target(epos)
 	math.randomseed(os.time())
