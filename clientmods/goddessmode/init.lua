@@ -1,9 +1,7 @@
 --
 -- cora's defensive combat hax
 
-local function mwarp(pos)
-	minetest.localplayer:set_pos(pos)
-end
+
 
 local karange=14
 
@@ -14,7 +12,7 @@ local function checkair(pos)
 end
 
 local function checkbadblocks(pos)
-    local n=minetest.find_node_near(pos, 1, {'mcl_core:gravel','mcl_core:sand','mcl_core:lava_source','mcl_core:lava_flowing','mcl_core:water_source','mcl_core:water_flowing',
+    local n=minetest.find_node_near(pos, 2, {'mcl_core:gravel','mcl_core:sand','mcl_core:lava_source','mcl_core:lava_flowing','mcl_core:water_source','mcl_core:water_flowing',
     'mcl_core:obsidian','mcl_core:bedrock'}, true)
     if n == nil then return false end
     return true
@@ -23,8 +21,8 @@ end
 
 local function checkarrow()
     for k, v in ipairs(minetest.localplayer.get_nearby_objects(karange)) do
-		if ( v:get_item_textures() == "mcl_bows:arrow_box" or v:get_item_textures() == "mcl_potions:harming_2_arrow_box" or v:get_item_textures() == "mcl_potions:harming_arrow_box") then
-			minetest.display_chat_message(dump(v:get_item_textures()))
+		--if ( v:get_item_textures() == "mcl_bows:arrow_box" or v:get_item_textures() == "mcl_potions:harming_2_arrow_box" or v:get_item_textures() == "mcl_potions:harming_arrow_box") thenw
+		if ( v:get_item_textures():sub(-9) == "arrow_box") then
 			return true
         end
     end
@@ -85,6 +83,11 @@ local function dhfree()
             minetest.dig_node(n)
             minetest.dig_node(vector.add(n,{x=0,y=-1,z=0}))
 end
+local function mwarp(pos)
+	minetest.localplayer:set_pos(pos)
+	minetest.after(0.2,function() autofly.aim(pos) end)
+	minetest.after(0.2,function() dhfree() end)
+end
 
 local function get_target(epos)
 	math.randomseed(os.time())
@@ -100,7 +103,9 @@ local function get_target(epos)
 end
 
 
-
+local function evade(ppos)
+	mwarp(get_target(ppos))
+end
 local function rro() -- reverse restraining order
     for k, v in ipairs(minetest.localplayer.get_nearby_objects(karange+5)) do
         if (v:is_player() and v:get_name() ~= minetest.localplayer:get_name()) then
@@ -110,8 +115,6 @@ local function rro() -- reverse restraining order
             local distance=vector.distance(mpos,pos)
             if distance < karange then
 				mwarp(get_target(pos))
-				minetest.after(0.2,function() autofly.aim(pos) end)
-				minetest.after(0.05,function() dhfree() end)
 				return
 			end
         end
@@ -122,7 +125,7 @@ minetest.register_globalstep(function()
     if minetest.settings:get_bool("goddess") then
 		local ppos=minetest.localplayer:get_pos()
         rro()
-        if(checkbadblocks(ppos) or checkarrow()) then mwarp(get_target(ppos)) end
+        if(checkbadblocks(ppos) or checkarrow()) then evade(ppos)  end
     end
 end)
 minetest.register_chatcommand("dhf", {	description = "",	func = dhfree })
