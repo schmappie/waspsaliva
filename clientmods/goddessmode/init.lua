@@ -12,13 +12,10 @@ local function checkair(pos)
 	if n==nil or n['name'] == 'air' then return true end
     return false
 end
-local function checklava(pos)
-    local n=minetest.find_node_near(pos, 2, {'mcl_core:lava_source','mcl_core:lava_flowing'}, true)
-    if n == nil then return false end
-    return true
-end
-local function checkgravel(pos)
-    local n=minetest.find_node_near(pos, 1, {'mcl_core:gravel','mcl_core:sand'}, true)
+
+local function checkbadblocks(pos)
+    local n=minetest.find_node_near(pos, 1, {'mcl_core:gravel','mcl_core:sand','mcl_core:lava_source','mcl_core:lava_flowing','mcl_core:water_source','mcl_core:water_flowing',
+    'mcl_core:obsidian','mcl_core:bedrock'}, true)
     if n == nil then return false end
     return true
 end
@@ -26,7 +23,8 @@ end
 
 local function checkarrow()
     for k, v in ipairs(minetest.localplayer.get_nearby_objects(karange)) do
-        if ( v:get_item_textures() == "mcl_bows:arrow_box") then
+		if ( v:get_item_textures() == "mcl_bows:arrow_box" or v:get_item_textures() == "mcl_potions:harming_2_arrow_box" or v:get_item_textures() == "mcl_potions:harming_arrow_box") then
+			minetest.display_chat_message(dump(v:get_item_textures()))
 			return true
         end
     end
@@ -87,13 +85,11 @@ local function dhfree()
             minetest.dig_node(n)
             minetest.dig_node(vector.add(n,{x=0,y=-1,z=0}))
 end
-local function evadelava(ppos)
-	mwarp(get_target(ppos))
-end
+
 local function get_target(epos)
 	math.randomseed(os.time())
 	local t=vector.add(epos,get_3dpos_from_yaw_and_pitch(karange,math.random(120,240),math.random(270,359)))
-	if (checklava(t) or checkgravel(t)) then
+	if (checkbadblocks(t)) then
 		return get_target(epos)
 	elseif checkair(t) then
 		return t
@@ -126,7 +122,7 @@ minetest.register_globalstep(function()
     if minetest.settings:get_bool("goddess") then
 		local ppos=minetest.localplayer:get_pos()
         rro()
-        if(checklava(ppos) or checkgravel(ppos) or checkarrow()) then evadelava(ppos) end
+        if(checkbadblocks(ppos) or checkarrow()) then mwarp(get_target(ppos)) end
     end
 end)
 minetest.register_chatcommand("dhf", {	description = "",	func = dhfree })
