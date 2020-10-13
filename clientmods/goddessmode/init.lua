@@ -7,8 +7,6 @@ end
 
 local karange=14
 
-
-
 local function checkair(pos)
 	local n=minetest.get_node_or_nil(pos)
 	if n==nil or n['name'] == 'air' then return true end
@@ -24,8 +22,18 @@ local function checkgravel(pos)
     if n == nil then return false end
     return true
 end
+local function evadelava(ppos)
+	mwarp(get_target(ppos))
+end
 
-
+local function checkarrow()
+    for k, v in ipairs(minetest.localplayer.get_nearby_objects(karange)) do
+        if ( v:get_item_textures() == "mcl_bows:arrow_box") then
+			return true
+        end
+    end
+	return false
+end
 
 local function check_tool(stack, node_groups, old_best_time)
 	local toolcaps = stack:get_tool_capabilities()
@@ -47,12 +55,13 @@ local function amautotool(pos)
 	local player = minetest.localplayer
 	local inventory = minetest.get_inventory("current_player")
     local node=minetest.get_node_or_nil(pos)
+    if node == nil then return end
 	local node_groups = minetest.get_node_def(node.name).groups
 	local new_index = player:get_wield_index()
 	local is_better, best_time = false, math.huge
 		is_better, best_time = check_tool(player:get_wielded_item(), node_groups, best_time)
 	is_better, best_time = check_tool(inventory.hand[1], node_groups, best_time)
-	for index, stack in pairs(inventory.main) do
+	fo sr index, stack in pairs(inventory.main) do
 		is_better, best_time = check_tool(stack, node_groups, best_time)
 		if is_better then
 			new_index = index - 1
@@ -110,20 +119,6 @@ local function rro() -- reverse restraining order
 			end
         end
     end
-end
-function evadelava(ppos)
-	mwarp(get_target(ppos))
-end
-local function log(level, message)
-    minetest.log(level, ('[%s] %s'):format(mod_name, message))
-end
-function checkarrow()
-    for k, v in ipairs(minetest.localplayer.get_nearby_objects(karange)) do
-        if ( v:get_item_textures() == "mcl_bows:arrow_box") then
-			return true
-        end
-    end
-	return false
 end
 
 minetest.register_globalstep(function()
