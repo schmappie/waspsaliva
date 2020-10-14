@@ -1,4 +1,5 @@
-local function check_tool(stack, node_groups, old_best_time)
+autotool={}
+function autotool.check_tool(stack, node_groups, old_best_time)
 	local toolcaps = stack:get_tool_capabilities()
 	if not toolcaps then return end
 	local best_time = old_best_time
@@ -22,9 +23,9 @@ minetest.register_on_punchnode(function(pos, node)
 	local node_groups = minetest.get_node_def(node.name).groups
 	local new_index = player:get_wield_index()
 	local is_better, best_time = false, math.huge
-	is_better, best_time = check_tool(player:get_wielded_item(), node_groups, best_time)
+	is_better, best_time = autotool.check_tool(player:get_wielded_item(), node_groups, best_time)
 	for index, stack in pairs(inventory.main) do
-		is_better, best_time = check_tool(stack, node_groups, best_time)
+		is_better, best_time = autotool.check_tool(stack, node_groups, best_time)
 		if is_better then
 			new_index = index - 1
 		end

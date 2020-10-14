@@ -19,10 +19,9 @@ local function checkbadblocks(pos)
 end
 
 
-local function checkarrow()
+local function checkprojectile()
     for k, v in ipairs(minetest.localplayer.get_nearby_objects(karange)) do
-		--if ( v:get_item_textures() == "mcl_bows:arrow_box" or v:get_item_textures() == "mcl_potions:harming_2_arrow_box" or v:get_item_textures() == "mcl_potions:harming_arrow_box") thenw
-		if ( v:get_item_textures():sub(-9) == "arrow_box") then
+		if ( v:get_item_textures():sub(-9) == "arrow_box") or ( v:get_item_textures():sub(-7) == "_splash")  then
 			return true
         end
     end
@@ -125,7 +124,7 @@ minetest.register_globalstep(function()
     if minetest.settings:get_bool("goddess") then
 		local ppos=minetest.localplayer:get_pos()
         rro()
-        if(checkbadblocks(ppos) or checkarrow()) then evade(ppos)  end
+        if(checkbadblocks(ppos) or checkprojectile()) then evade(ppos)  end
     end
 end)
 minetest.register_chatcommand("dhf", {	description = "",	func = dhfree })
