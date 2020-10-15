@@ -1,5 +1,27 @@
 -- CC0/Unlicense system32 2020
 
+local function parse_coord(c)
+    c = string.split(c)
+    return {x = tonumber(c[1] or 0), y = tonumber(c[2] or 0), z = tonumber(c[3] or 0)}
+end
+
+minetest.register_chatcommand("cpeek", {
+    func = function(params)
+        local oldpos = minetest.localplayer:get_pos()
+
+        local c = parse_coord(params)
+        local dist = vector.distance(c, oldpos)
+        local d = tostring(c.x) .. "," .. tostring(c.y) .. "," .. tostring(c.z)
+        local f = "size[10,10]\nlabel[0,0;Can access: " .. tostring(dist < 6) .. "(" .. tostring(dist) .. ")]\nlist[nodemeta:" .. d .. ";main;0,0.5;9,3;]"
+
+        minetest.localplayer:set_pos(c)
+        minetest.show_formspec("ChestPeek", f)
+        minetest.localplayer:set_pos(oldpos)
+    end
+})
+
+
+
 local formspec_base = "size[9,3]"
 
 local formspec_base_label = "size[9,3.5]"
