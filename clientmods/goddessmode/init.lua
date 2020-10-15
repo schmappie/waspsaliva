@@ -17,51 +17,51 @@ local function checkbadblocks(pos)
     if n == nil then return false end
     return true
 end
+local function checktrap()
+    local pos=vector.add(minetest.localplayer:get_pos(),{x=0,y=1,z=0})
+    local n=minetest.find_node_near(pos, 2, {'mcl_core:lava_source','mcl_core:lava_flowing','mcl_core:water_source','mcl_core:water_flowing','mcl_core:obsidian'}, true)
+    if n == nil then return false end
+    return true
+end
+
+local function checkhead()
+	local ppos=vector.add(minetest.localplayer:get_pos(),{x=0,y=1,z=0})
+	if (checkair(ppos)) then return true end
+	return false
+end
 
 
 local function checkprojectile()
     for k, v in ipairs(minetest.localplayer.get_nearby_objects(karange)) do
 		if ( v:get_item_textures():sub(-9) == "arrow_box") or ( v:get_item_textures():sub(-7) == "_splash")  then
+			local vel=v:get_velocity()
+			local vadd=vel.x+vel.y+vel.z
+			if (vadd == 0) then return false end
 			return true
         end
     end
 	return false
 end
 
-local function check_tool(stack, node_groups, old_best_time)
-	local toolcaps = stack:get_tool_capabilities()
-	if not toolcaps then return end
-	local best_time = old_best_time
-	for group, groupdef in pairs(toolcaps.groupcaps) do
-		local level = node_groups[group]
-		if level then
-			local this_time = groupdef.times[level]
-			if this_time < best_time then
-				best_time = this_time
-			end
-		end
-	end
-	return best_time < old_best_time, best_time
-end
 
 local function amautotool(pos)
+	local node=minetest.get_node_or_nil(pos)
+	if node == nil then return end
 	local player = minetest.localplayer
 	local inventory = minetest.get_inventory("current_player")
-    local node=minetest.get_node_or_nil(pos)
-    if node == nil then return end
 	local node_groups = minetest.get_node_def(node.name).groups
 	local new_index = player:get_wield_index()
 	local is_better, best_time = false, math.huge
-		is_better, best_time = check_tool(player:get_wielded_item(), node_groups, best_time)
-	is_better, best_time = check_tool(inventory.hand[1], node_groups, best_time)
+	is_better, best_time = autotool.check_tool(player:get_wielded_item(), node_groups, best_time)
 	for index, stack in pairs(inventory.main) do
-		is_better, best_time = check_tool(stack, node_groups, best_time)
+		is_better, best_time = autotool.check_tool(stack, node_groups, best_time)
 		if is_better then
 			new_index = index - 1
 		end
 	end
 	player:set_wield_index(new_index)
 end
+
 local function get_2dpos_from_yaw(r,yaw)
 	local tg={x=0,y=0,z=0}
 	tg.x= r * math.sin(yaw)
@@ -124,7 +124,9 @@ minetest.register_globalstep(function()
     if minetest.settings:get_bool("goddess") then
 		local ppos=minetest.localplayer:get_pos()
         rro()
-        if(checkbadblocks(ppos) or checkprojectile()) then evade(ppos)  end
+        if(checkprojectile()) then evade(ppos)  end
+        if(checktrap()) then evade(ppos)  end
+        if(not checkhead()) then dhfree()  end
     end
 end)
 minetest.register_chatcommand("dhf", {	description = "",	func = dhfree })
