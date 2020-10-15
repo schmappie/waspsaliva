@@ -3,6 +3,23 @@
 turtle = {}
 
 
+local function schedule_run(idx, t)
+    if t[idx] then
+        if t[idx] == "wait" then
+            minetest.after(t[idx + 1], in_schedule, idx + 2, t)
+        else
+            t[idx](unpack(t[idx + 1]))
+            schedule_run(idx + 2, t)
+        end
+    end
+end
+
+
+function turtle.schedule(...)
+    schedule_run(1, {...})
+end
+
+
 -- needs to be replaced with a scheduling system
 local function busysleep(time)
     local tgt = os.clock() + time
