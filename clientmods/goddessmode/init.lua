@@ -35,8 +35,7 @@ local function checkprojectile()
     for k, v in ipairs(minetest.localplayer.get_nearby_objects(karange)) do
 		if ( v:get_item_textures():sub(-9) == "arrow_box") or ( v:get_item_textures():sub(-7) == "_splash")  then
 			local vel=v:get_velocity()
-			local vadd=vel.x+vel.y+vel.z
-			if (vadd == 0) then return false end
+			if (vel.x == 0 and vel.y == 0 and vel.z ==0 ) then return false end
 			return true
         end
     end
