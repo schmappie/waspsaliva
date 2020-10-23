@@ -86,6 +86,9 @@ end
 
 minetest.register_globalstep(function()
     autofly.checkfall()
+    if minetest.settings:get_bool("continuous_forward") and minetest.settings:get_bool("autosprint") then
+        core.set_keypress("special1", true)
+    end
     if not minetest.localplayer then return end
     if not twpname then
          autofly.set_hud_info("")
@@ -103,6 +106,7 @@ minetest.register_globalstep(function()
     end
     if twpname and (minetest.settings:get_bool('afly_autoaim')) then
         autofly.aim(autofly.get_waypoint(twpname))
+        core.set_keypress("special1", true)
     end
 
     if ( os.time() < ltime + 1 ) then return end
@@ -200,10 +204,11 @@ end
 function autofly.display_waypoint(name)
         autofly.last_coords = autofly.get_waypoint(name)
         autofly.last_name = name
-        minetest.display_chat_message(name)
         autofly.set_hud_info(name)
-        minetest.settings:set("movement_speed_walk", "5")
-        if (minetest.settings:get_bool("afly_autoaim")) then autofly.aim(autofly.last_coords) end
+        --minetest.settings:set("movement_speed_walk", "5")
+        core.set_keypress("special1", true)
+        if (minetest.settings:get_bool("afly_autoaim")) then autofly.aim(autofly.last_coords)
+        end
         minetest.settings:set_bool("pitch_move",true)
         minetest.settings:set_bool("continuous_forward",true)
     return autofly.set_hud_wp(autofly.get_waypoint(name), name)
@@ -211,6 +216,7 @@ end
 
 function autofly.arrived()
         minetest.settings:set("continuous_forward", "false")
+         core.set_keypress("special1", false)
         autofly.set_hud_info("Arrived at destination")
         minetest.localplayer:hud_change(hud_info,'text',twpname .. "\n" .. "Arrived at destination.")
         minetest.sound_play({name = "sounds/autofly_arrived", gain = 1.0})
@@ -222,14 +228,14 @@ function autofly.checkfall()
     if(speed > 30) then
         local nod=minetest.get_node_or_nil(vector.add(minetest.localplayer:get_pos(),{x=0,y=-100,z=0}))
         if nod and not ( nod['name'] == "air" ) then
-            minetest.display_chat_message("Autofly: Fall to ground detected!")
-            minetest.display_chat_message("Deactivating noclip.")
+          --  minetest.display_chat_message("Autofly: Fall to ground detected!")
+         --   minetest.display_chat_message("Deactivating noclip.")
             minetest.settings:set("noclip", "false")
             if(minetest.settings:get_bool("afly_softlanding")) then
-                minetest.display_chat_message("Soft landing engaged.")
+             --   minetest.display_chat_message("Soft landing engaged.")
                 minetest.settings:set("free_move", "true")
             else
-                minetest.display_chat_message("Lithobreak imminent – maybe turn on soft landing next time")
+               -- minetest.display_chat_message("Lithobreak imminent – maybe turn on soft landing next time")
             end
 
         end
@@ -425,6 +431,7 @@ register_chatcommand_alias('clear_waypoint', 'cwp','cls')
 
 if (_G["minetest"]["register_cheat"] ~= nil) then
     minetest.register_cheat("AutoAim", "Autofly", "afly_autoaim")
+    minetest.register_cheat("AutoSprint", "Movement", "autosprint")
     minetest.register_cheat("SoftLanding", "Autofly", "afly_softlanding")
     minetest.register_cheat("Display GUI", "Autofly", autofly.display_formspec)
 else
