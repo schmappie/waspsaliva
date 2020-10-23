@@ -86,7 +86,9 @@ end
 
 minetest.register_globalstep(function()
     autofly.checkfall()
-    if minetest.settings:get_bool("continuous_forward") and minetest.settings:get_bool("autosprint") then
+    if minetest.settings:get_bool("autosprint") then
+        core.set_keypress("special1", true)
+    elseif minetest.settings:get_bool("continuous_forward") and minetest.settings:get_bool("autofsprint") then
         core.set_keypress("special1", true)
     end
     if not minetest.localplayer then return end
@@ -205,10 +207,17 @@ function autofly.display_waypoint(name)
         autofly.last_coords = autofly.get_waypoint(name)
         autofly.last_name = name
         autofly.set_hud_info(name)
+        autofly.aim(autofly.last_coords)
+    return autofly.set_hud_wp(autofly.get_waypoint(name), name)
+end
+
+function autofly.goto_waypoint(name)
+        autofly.last_coords = autofly.get_waypoint(name)
+        autofly.last_name = name
+        autofly.set_hud_info(name)
         --minetest.settings:set("movement_speed_walk", "5")
         core.set_keypress("special1", true)
-        if (minetest.settings:get_bool("afly_autoaim")) then autofly.aim(autofly.last_coords)
-        end
+        autofly.aim(autofly.last_coords)
         minetest.settings:set_bool("pitch_move",true)
         minetest.settings:set_bool("continuous_forward",true)
     return autofly.set_hud_wp(autofly.get_waypoint(name), name)
@@ -432,6 +441,7 @@ register_chatcommand_alias('clear_waypoint', 'cwp','cls')
 if (_G["minetest"]["register_cheat"] ~= nil) then
     minetest.register_cheat("AutoAim", "Autofly", "afly_autoaim")
     minetest.register_cheat("AutoSprint", "Movement", "autosprint")
+    minetest.register_cheat("AutoForwardSprint", "Movement", "autofsprint")
     minetest.register_cheat("SoftLanding", "Autofly", "afly_softlanding")
     minetest.register_cheat("Display GUI", "Autofly", autofly.display_formspec)
 else
