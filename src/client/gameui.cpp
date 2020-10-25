@@ -158,10 +158,15 @@ void GameUI::update(const RunStats &stats, Client *client, MapDrawControl *draw_
 			ClientMap &map = client->getEnv().getClientMap();
 			const NodeDefManager *nodedef = client->getNodeDefManager();
 			MapNode n = map.getNode(pointed_old.node_undersurface);
+			v3s16 nodepos = pointed_old.node_undersurface;
 
 			if (n.getContent() != CONTENT_IGNORE && nodedef->get(n).name != "unknown") {
 				os << ", pointed: " << nodedef->get(n).name
-					<< ", param2: " << (u64) n.getParam2();
+					<< ", param2: " << (u64) n.getParam2()
+					<< ", pos: (" << nodepos.X
+					<< ", " << nodepos.Y
+					<< ", " << nodepos.Z
+					<< ")";
 			}
 		}
 
