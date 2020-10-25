@@ -4,9 +4,9 @@
 
 esp = {}
 
-local radius=79 -- limit is 4,096,000 nodes (i.e. 160^3 -> a number > 79 won't work)
+local radius=60 -- limit is 4,096,000 nodes (i.e. 160^3 -> a number > 79 won't work)
 local esplimit=30; -- display at most this many waypoints
-local espinterval=1 --number of seconds to wait between scans (a lower number can induce clientside lag)
+local espinterval=4 --number of seconds to wait between scans (a lower number can induce clientside lag)
 
 --nodes={"group:chest",'mcl_chests:chest','mcl_chests:chest_left','mcl_chests:ender_chest','group:shulker_box','mcl_crafting_table:crafting_table','mcl_furnaces:furnace'}
 nodes={'mcl_chests:chest','mcl_chests:chest_left','mcl_chests:ender_chest','group:shulker_box','mcl_furnaces:furnace','mcl_chests:violet_shulker_box'}
@@ -32,7 +32,6 @@ minetest.register_globalstep(function()
     local pos = minetest.localplayer:get_pos()
 	local pos1 = vector.add(pos,{x=radius,y=radius,z=radius})
     local pos2 = vector.add(pos,{x=-radius,y=-radius,z=-radius})
-    local fpos,cnt=minetest.find_nodes_in_area(pos1, pos2, nodes, false)
     local epos=minetest.find_nodes_in_area(pos1, pos2, nodes, true)
 
     for k,v in pairs(wps) do --clear waypoints out of range
@@ -46,30 +45,11 @@ minetest.register_globalstep(function()
 
     if epos then
         if(hud2) then minetest.localplayer:hud_remove(hud2) end
-        local infotxt=""
-        for k,v in pairs(cnt) do -- display a summary
-            if not ( v == 0 ) then
-                if minetest.settings:get_bool("espautostop") then minetest.settings:set("continuous_forward", "false") end
-                infotxt=infotxt.."\n"..k..":"..v
-            end
-        end
-        if infotxt ~= "" then
-            hud2=minetest.localplayer:hud_add({
-                hud_elem_type = 'text',
-                name          = "ESP info",
-                text          = "NOIs in range ("..radius..")\n"..infotxt,
-                number        = 0x00ff00,
-                direction   = 0,
-                position = {x=0.75,y=0.4},
-                alignment ={x=1,y=1},
-                offset = {x=0, y=0}
-               })
-        end
-
         local ii=0;
         for m,xx in pairs(epos) do -- display found nodes as WPs
             for kk,vv in pairs(xx) do
                 if ( ii > esplimit ) then break end
+                if minetest.settings:get_bool("espautostop") then minetest.settings:set("continuous_forward", "false") end
                 ii=ii+1
                 table.insert(wps,minetest.localplayer:hud_add({
                     hud_elem_type = 'waypoint',

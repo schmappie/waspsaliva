@@ -20,9 +20,10 @@ local ltime=0
 function autofly.display_formspec()
     local formspec = 'size[5.25,8]' ..
                      'label[0,0;Waypoint list]' ..
-                     'button_exit[0,7.5;1.3125,0.5;display;GO]' ..
-                     'button[1.1125,7.5;0.9,0.5;warp;wrp]' ..
-                     'button[1.6125,7.5;1.2,0.5;warpae;w+e]' ..
+                     'button_exit[0,7.5;1,0.5;display;GO]' ..
+                     'button_exit[0.8,7.5;1,0.5;display;SHO]' ..
+                     'button[1.5125,7.5;0.9,0.5;warp;wrp]' ..
+                     'button[2.125,7.5;1.2,0.5;warpae;w+e]' ..
                      'button[2.625,7.5;1.3,0.5;rename;Rename]' ..
                      'button[3.9375,7.5;1.3,0.5;delete;Delete]' ..
                      'textlist[0,0.75;5,6;marker;'
