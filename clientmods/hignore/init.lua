@@ -46,12 +46,16 @@ local function localize_player(player)
     return player .. "@" .. name .. ":" .. info.port
 end
 
-
+-- TODO: log messages
 minetest.register_on_receiving_chat_message(function(message)
     local dm = message:match(".*rom (.*): .*")
     local pub = message:match("<(.*)>.*")
+    local is_dm = false
 
     local player = dm or pub
+    if dm then
+        is_dm = true
+    end
 
     if player then
         player = localize_player(dm or pub)
@@ -72,7 +76,7 @@ minetest.register_on_receiving_chat_message(function(message)
     end
 
     -- strip title
-    if hignore.strip[player] then
+    if not is_dm and hignore.strip[player] then
         message = message:match(".- | (.*)")
         if hignore.highlight[player] == nil then
             minetest.display_chat_message(message)
