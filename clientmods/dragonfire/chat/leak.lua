@@ -1,4 +1,3 @@
-local etime = 0
 
 --[[minetest.register_globalstep(function(dtime)
 	if not minetest.settings:get_bool("leak") then return end
@@ -9,7 +8,7 @@ local etime = 0
 	minetest.send_chat_message(minetest.pos_to_string(vector.floor(player:get_pos())))
 end)--]]
 function cleak()
-	minetest.send_chat_message(minetest.pos_to_string(vector.floor(player:get_pos())))
+	minetest.send_chat_message(minetest.pos_to_string(vector.floor(minetest.localplayer:get_pos())))
 end  
 minetest.register_chatcommand("cleak", {
         params = "<pos>",
