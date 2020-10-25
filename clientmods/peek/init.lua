@@ -9,9 +9,7 @@ minetest.register_chatcommand("cpeek", {
     func = function(params)
         local oldpos = minetest.localplayer:get_pos()
 
-        minetest.log(params)
         local c = parse_coord(params)
-        minetest.log(tostring(c.x) .. "," .. tostring(c.y) .. "," .. tostring(c.z))
         local dist = vector.distance(c, oldpos)
         local d = tostring(c.x) .. "," .. tostring(c.y) .. "," .. tostring(c.z)
         local f = "size[10,10]\nlabel[0,0;Can access: " .. tostring(dist < 6) .. "(" .. tostring(dist) .. ")]\nlist[nodemeta:" .. d .. ";main;0,0.5;9,3;]"
