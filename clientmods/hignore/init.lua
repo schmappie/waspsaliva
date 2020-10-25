@@ -1,5 +1,25 @@
 -- CC0/Unlicense system32 2020
 
+local function init_settings(setting_table)
+    for k, v in pairs(setting_table) do
+        if minetest.settings:get(k) == nil then
+            if type(v) == "boolean" then
+                minetest.settings:set_bool(k, v)
+            else
+                minetest.settings:set(k, v)
+            end
+        end
+    end
+end
+
+init_settings({
+    hignore_ignore_all = false,
+    hignore_highlight_all = false,
+    hignore_highlight_all_color = "#FFFFFF",
+    hignore_strip_all = false,
+    hignore_log = true
+})
+
 local storage = minetest.get_mod_storage()
 
 local function storage_init_table(key)
@@ -46,6 +66,17 @@ local function localize_player(player)
     return player .. "@" .. name .. ":" .. info.port
 end
 
+local playerat
+
+local function log(message)
+    if minetest.settings:get_bool("hignore_log") then
+        if playerat == nil then
+            playerat = localize_player(minetest.localplayer:get_name())
+        end
+        minetest.log("action", "[hignore] " .. playerat .. " " .. message)
+    end
+end
+
 -- TODO: log messages
 minetest.register_on_receiving_chat_message(function(message)
     local dm = message:match(".*rom (.*): .*")
@@ -64,7 +95,8 @@ minetest.register_on_receiving_chat_message(function(message)
     end
 
     -- ignore and hide
-    if hignore.ignore[player] then
+    if hignore.ignore[player] or minetest.settings:get_bool("hignore_ignore_all") then
+        log(message)
         if hignore.ignore[player] == "summarize" then
             if dm then
                 minetest.display_chat_message(player .. " sent you a DM.")
@@ -76,7 +108,7 @@ minetest.register_on_receiving_chat_message(function(message)
     end
 
     -- strip title
-    if not is_dm and hignore.strip[player] then
+    if not is_dm and (hignore.strip[player] or minetest.settings:get_bool("hignore_strip_all")) then
         message = message:match(".- | (.*)")
         if hignore.highlight[player] == nil then
             minetest.display_chat_message(message)
@@ -87,6 +119,14 @@ minetest.register_on_receiving_chat_message(function(message)
     -- highlight message
     if hignore.highlight[player] then
         minetest.display_chat_message(minetest.colorize(hignore.highlight[player], message))
+        return true
+    end
+
+    if minetest.settings:get_bool("hignore_highlight_all") then
+        minetest.display_chat_message(
+            minetest.colorize(
+                minetest.settings:get("hignore_highlight_all_color"),
+                message))
         return true
     end
 end)
