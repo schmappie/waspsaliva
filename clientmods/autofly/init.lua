@@ -53,6 +53,7 @@ local ltime=0
 local storage = minetest.get_mod_storage()
 local wpr=false;
 local twpname=nil
+local oldpm=false
 local info=minetest.get_server_info()
 local stprefix="autofly-".. info['address']  .. '-'
 
@@ -212,23 +213,24 @@ function autofly.display_waypoint(name)
 end
 
 function autofly.goto_waypoint(name)
+        oldpm=minetest.settings:get_bool("pitch_move")
+        minetest.settings:set_bool("pitch_move",true)
+        minetest.settings:set_bool("continuous_forward",true)
         autofly.last_coords = autofly.get_waypoint(name)
         autofly.last_name = name
         autofly.set_hud_info(name)
         --minetest.settings:set("movement_speed_walk", "5")
-        core.set_keypress("special1", true)
         autofly.aim(autofly.last_coords)
-        minetest.settings:set_bool("pitch_move",true)
-        minetest.settings:set_bool("continuous_forward",true)
+        core.set_keypress("special1", true)
     return autofly.set_hud_wp(autofly.get_waypoint(name), name)
 end
 
 function autofly.arrived()
         minetest.settings:set("continuous_forward", "false")
+        minetest.settings:set_bool("pitch_move",oldpm)
          core.set_keypress("special1", false)
         autofly.set_hud_info("Arrived at destination")
         minetest.localplayer:hud_change(hud_info,'text',twpname .. "\n" .. "Arrived at destination.")
-        minetest.sound_play({name = "sounds/autofly_arrived", gain = 1.0})
         wpr=false
         twpname=nil
 end
