@@ -20,7 +20,7 @@ local ltime=0
 function autofly.display_formspec()
     local formspec = 'size[5.25,8]' ..
                      'label[0,0;Waypoint list]' ..
-                     'button_exit[0,7.5;1,0.5;display;GO]' ..
+                     'button_exit[0,7.5;1,0.5;goto;GO]' ..
                      'button_exit[0.8,7.5;1,0.5;display;SHO]' ..
                      'button[1.5125,7.5;0.9,0.5;warp;wrp]' ..
                      'button[2.125,7.5;1.2,0.5;warpae;w+e]' ..
@@ -88,6 +88,10 @@ minetest.register_on_formspec_input(function(formname, fields)
     if name then
         if fields.display then
             if not autofly.display_waypoint(name) then
+                minetest.display_chat_message('Error displaying waypoint!')
+            end
+        elseif fields.goto then
+            if not autofly.goto_waypoint(name) then
                 minetest.display_chat_message('Error displaying waypoint!')
             end
         elseif fields.warp then
