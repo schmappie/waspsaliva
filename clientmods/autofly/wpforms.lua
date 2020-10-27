@@ -26,6 +26,7 @@ function autofly.display_formspec()
                      'button[2.125,7.5;1.2,0.5;warpae;w+e]' ..
                      'button[2.625,7.5;1.3,0.5;rename;Rename]' ..
                      'button[3.9375,7.5;1.3,0.5;delete;Delete]' ..
+                     'image[50,50;100,100;"test"]'..
                      'textlist[0,0.75;5,6;marker;'
 
     -- Iterate over all the waypoints
