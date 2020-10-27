@@ -30,6 +30,12 @@ minetest.register_chatcommand("place", {
 		return false, pos
 	end,
 })
+minetest.register_chatcommand("screenshot", {
+	description = "Place wielded item",
+	func = function()
+		minetest.take_screenshot()
+	end,
+})
 
 minetest.register_chatcommand("dig", {
 	params = "<X>,<Y>,<Z>",
