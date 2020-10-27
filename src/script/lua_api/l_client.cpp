@@ -503,6 +503,14 @@ int ModApiClient::l_drop_selected_item(lua_State *L)
 	return 0;
 }
 
+//take_screenshot()
+int ModApiClient::l_take_screenshot(lua_State *L)
+{
+	getClient(L)->makeScreenshot();
+	lua_pushboolean(L, true);
+	return 1;
+}
+
 void ModApiClient::Initialize(lua_State *L, int top)
 {
 	API_FCT(get_current_modname);
@@ -536,4 +544,5 @@ void ModApiClient::Initialize(lua_State *L, int top)
 	API_FCT(get_inventory);
 	API_FCT(set_keypress);
 	API_FCT(drop_selected_item);
+	API_FCT(take_screenshot);
 }
