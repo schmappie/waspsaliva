@@ -1,0 +1,1 @@
+randomsc (Enable Autoscreenshot) bool false

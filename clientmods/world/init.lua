@@ -31,7 +31,7 @@ minetest.register_chatcommand("place", {
 	end,
 })
 minetest.register_chatcommand("screenshot", {
-	description = "Place wielded item",
+	description = "asdf",
 	func = function()
 		minetest.take_screenshot()
 	end,
