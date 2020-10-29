@@ -1,0 +1,10 @@
+#!/bin/sh
+if [ -z $1 ] || [ -z $2 ] || [ -z $3 ]; then echo "usage: automat server username password"; exit 1; fi 
+srv=$1
+usr=$2
+pas=$3
+mtpath=$(dirname $0)
+while true; do
+    $mtpath/bin/minetest --go --server $srv --name $usr --password $pas
+    sleep 2
+done
