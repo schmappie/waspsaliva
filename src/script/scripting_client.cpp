@@ -39,6 +39,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "lua_api/l_settings.h"
 #include "lua_api/l_http.h"
 #include "lua_api/l_clientobject.h"
+#include "lua_api/l_inventoryaction.h"
 
 ClientScripting::ClientScripting(Client *client):
 	ScriptApiBase(ScriptingType::Client)
@@ -80,6 +81,7 @@ void ClientScripting::InitializeModApi(lua_State *L, int top)
 	ModChannelRef::Register(L);
 	LuaSettings::Register(L);
 	ClientObjectRef::Register(L);
+	LuaInventoryAction::Register(L);
 
 	ModApiItemMod::Initialize(L, top);
 	ModApiUtil::InitializeClient(L, top);
