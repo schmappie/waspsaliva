@@ -1,7 +1,7 @@
 ---
 -- coras teamchat ..  indev v0.5
 --
--- adds a team chat for you and a couple friends, also prevents accidental sending of coordinates 
+-- adds a team chat for you and a couple friends, also prevents accidental sending of coordinates
 -- to say something in teamchat either activate teammode in the dragonfire menu or use .t message
 --
 -- supports the Wisp encrypted whisper mod
@@ -86,9 +86,9 @@ init_settings({
     tchat_view_team_list = true,
     tchat_view_player_list = true,
     tchat_team_mode = false,
-    
+
     tchat_colorize_team = false,
-    
+
     tchat_prefix_message = "TCHAT",
     tchat_prefix_receive = "From",
     tchat_prefix_self = "To Yourself",
@@ -98,7 +98,7 @@ init_settings({
 
     tchat_hide_sent = true,
     tchat_blacklist = "",
-    
+
     tchat_chat_length = 6,
     tchat_chat_width = 80
 })
@@ -248,7 +248,7 @@ local function display_player_list()
     })
 end
 
--- should prob have all team members with online ones colored 
+-- should prob have all team members with online ones colored
 local function display_team_list()
     return minetest.localplayer:hud_add({
         hud_elem_type = 'text',
@@ -332,7 +332,7 @@ function tchat.send(message, force_coords, force_commands)
     if (tchat.contains_coords(message) and not force_coords) or in_list(blacklist, minetest.localplayer:get_name()) then
         return
     end
-    
+
     if message:sub(1,1) == "/" and not force_commands then
         minetest.display_chat_message("A /command was scheduled to be sent to team chat but wasn't sent.")
         return
@@ -350,7 +350,7 @@ function tchat.send(message, force_coords, force_commands)
     if use_wisp then
         prepend = "E "
     end
-    
+
     tchat.chat_append(prepend .. me .. ": " .. message)
 
     for k, p in ipairs(tchat.team_online) do
@@ -420,7 +420,7 @@ end
 function tchat.chat_append(message)
     tchat.chat[#tchat.chat + 1] = message
     autoclear_chat()
-    
+
     minetest.log("action", "[tchat] " .. minetest.localplayer:get_name() .. "@" .. server_id .. " " .. message)
 
     update_chat_str()
@@ -495,7 +495,7 @@ local function clean_message(message)
     message = message:gsub(message_prefix, "")
     message = message:gsub("^" .. message_receive, "")
     message = message:gsub("^" .. message_receive_self, minetest.localplayer:get_name())
-    
+
     message = message:gsub(":  ", ": ")
     message = message:match("^%s*(.-)%s*$")
 
@@ -514,15 +514,15 @@ table.insert(minetest.registered_on_receiving_chat_message, 1, function(message)
     end
 
     local player = message:match(message_receive .. " (.+): " .. message_prefix)
-    
+
     local from_self = message:sub(1, message_receive_self:len()) == message_receive_self
     local received = message:sub(1, message_receive:len()) == message_receive
     local sent = message:sub(1, message_to:len()) == message_to
-    
+
     if sent and not from_self then
         return true
     end
-    
+
     if not from_self and not in_list(tchat.team_online, player) then
         return
     end
@@ -556,7 +556,7 @@ minetest.register_globalstep(function()
         -- update HUD
         auto_update(player_list_idx, "Players\n\n" .. table.concat(tchat.players, "\n"))
         auto_update(team_list_idx, "Team\n\n" .. get_team_str())
-        
+
         player_list_epoch = os.time()
     end
 
@@ -630,12 +630,7 @@ minetest.register_chatcommand("mcoord", {
 
 -- this fallbacks to showing everything if the cheat menu is unavailable
 -- use advanced settings instead :]
-if (_G["minetest"]["register_cheat"] ~= nil) then
-    minetest.register_cheat("Teamchat mode", "Team", "tchat_team_mode")
-    minetest.register_cheat("Show Teamlist", "Team", "tchat_view_team_list")
-    minetest.register_cheat("Show Playerlist", "Team", "tchat_view_player_list")
-    minetest.register_cheat("Show Teamchat", "Team", "tchat_view_chat")
-else
+if (_G["minetest"]["register_cheat"] == nil) then
     minetest.settings:set_bool('tchat_team_mode', true)
     minetest.settings:set_bool('tchat_view_team_list', true)
     minetest.settings:set_bool('tchat_view_player_list', true)

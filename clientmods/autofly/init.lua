@@ -440,13 +440,8 @@ end
 
 register_chatcommand_alias('clear_waypoint', 'cwp','cls')
 
-if (_G["minetest"]["register_cheat"] ~= nil) then
-    minetest.register_cheat("AutoAim", "Autofly", "afly_autoaim")
-    minetest.register_cheat("AutoSprint", "Movement", "autosprint")
-    minetest.register_cheat("AutoForwardSprint", "Movement", "autofsprint")
-    minetest.register_cheat("SoftLanding", "Autofly", "afly_softlanding")
-    minetest.register_cheat("Display GUI", "Autofly", autofly.display_formspec)
-else
+if (_G["minetest"]["register_cheat"] == nil) then
+
     minetest.settings:set_bool("afly_autoaim",false)
     minetest.settings:set_bool("afly_softlanding",true)
 end
