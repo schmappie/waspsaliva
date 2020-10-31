@@ -64,9 +64,6 @@ minetest.register_globalstep(function()
     end
 end)
 
-if (_G["minetest"]["register_cheat"] ~= nil) then
-    minetest.register_cheat("ESP active", "ESP", "espactive")
-    minetest.register_cheat("autostop", "ESP", "espautostop")
-else
+if (_G["minetest"]["register_cheat"] == nil) then
     minetest.settings:set_bool('espactive',true)
 end

@@ -16,7 +16,8 @@ core.cheats = {
 		["Jesus"] = "jesus",
 		["NoSlow"] = "no_slow",
 		["AutoSneak"] = "autosneak",
-	},
+		["Autosprint"] = 'autosprint',
+		["AutoForwSprint"] = 'autofsprint'	},
 	["Render"] = {
 		["Xray"] = "xray",
 		["Fullbright"] = "fullbright",
@@ -54,7 +55,11 @@ core.cheats = {
 	},
 	["Chat"] = {
 		["IgnoreStatus"] = "ignore_status_messages",
-		["Deathmessages"] = "mark_deathmessages"
+		["Deathmessages"] = "mark_deathmessages",
+		["Teamchat Mode"] = 'tchat_team_mode',
+		["Show Team list"] = 'tchat_view_team_list',
+		["Show Playerlist"] = 'tchat_view_player_list',
+		["Show Teamchat"] = 'tchat_view_chat',
 	},
 	["Inventory"] = {
 		["AutoEject"] = "autoeject",
@@ -62,6 +67,15 @@ core.cheats = {
 		["Enderchest"] = function() core.open_enderchest() end,
 		["HandSlot"] = function() core.open_handslot() end,
 		["NextItem"] = "next_item",
+	},
+	["Autofly"] = {
+		["Aim"] = "afly_autoaim",
+		["Softlanding"] = "afly_softlanding",
+		["Waypoints"] = function() autofly.display_formspec() end,
+	},
+	["ESP"] = {
+		["Active"] = "espactive",
+		["Autostop"] = "espautostop",
 	}
 }
 
@@ -69,5 +83,6 @@ function core.register_cheat(cheatname, category, func)
 	core.cheats[category] = core.cheats[category] or {}
 	core.cheats[category][cheatname] = func
 end
+minetest.register_cheat=core.register_cheat
 
 local cheatpath = core.get_builtin_path() .. "client" .. DIR_DELIM .. "cheats" .. DIR_DELIM
