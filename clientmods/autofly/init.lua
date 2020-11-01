@@ -54,6 +54,7 @@ local storage = minetest.get_mod_storage()
 local wpr=false;
 local twpname=nil
 local oldpm=false
+local lpos={x=0,y=0,z=0}
 local info=minetest.get_server_info()
 local stprefix="autofly-".. info['address']  .. '-'
 
@@ -117,6 +118,7 @@ minetest.register_globalstep(function()
     if lpos then
         local dst=vector.distance(minetest.localplayer:get_pos(),lpos)
         speed=round2(dst,1)
+        autofly.speed=speed
     end
     lpos=minetest.localplayer:get_pos()
 end)
