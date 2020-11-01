@@ -1,7 +1,7 @@
 autoeat = {}
 autoeat.last = 0
 local last_step_eating = false
-local interval = 1
+local interval = 5
 
 function autoeat.eat()
 	local player = minetest.localplayer
