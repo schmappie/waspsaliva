@@ -1,7 +1,7 @@
 autoeat = {}
 autoeat.last = 0
 local last_step_eating = false
-local interval = 5
+autoeat.interval = 1
 
 function autoeat.eat()
 	local player = minetest.localplayer
@@ -15,7 +15,7 @@ function autoeat.eat()
 end
 
 function autoeat.conditional()
-		if os.time() < autoeat.last + ( interval * 60 ) then return	end
+		if os.time() < autoeat.last + ( autoeat.interval * 60 ) then return	end
 		autoeat.last = os.time()
 		autoeat.eat()
 end
@@ -32,9 +32,9 @@ minetest.register_globalstep(function()
 		last_step_eating = true
 	end
 
-	if not autoeat_timed then return end
+	if not minetest.settings:get_bool("autoeat_timed") then return end
 	if ( autofly.speed ~= 0 and minetest.settings:get_bool("autosprint") )
-	or (minetest.settings:get_bool("autosprintfsprint") and minetest.settings:get_bool("continuous_forward")  )
+	or (minetest.settings:get_bool("autofsprint") and minetest.settings:get_bool("continuous_forward")  )
 	or (minetest.settings:get_bool("killaura")) then
 		autoeat.conditional()
 	end
