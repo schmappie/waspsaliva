@@ -6,6 +6,7 @@ core.cheats = {
 		["AttachmentFloat"] = "float_above_parent",
 		["CrystalPvP"] = "crystal_pvp",
 		["AutoTotem"] = "autototem",
+		["GoddessMode"] = "goddess",
 		["ThroughWalls"] = "dont_point_nodes",
 	},
 	["Movement"] = {
@@ -39,6 +40,7 @@ core.cheats = {
 		["BlockWater"] = "block_water",
 		["PlaceOnTop"] = "autotnt",
 		["Replace"] = "replace"
+		["Random SC"] = "randomsc"
 	},
 	["Exploit"] = {
 		["EntitySpeed"] = "entity_speed",
