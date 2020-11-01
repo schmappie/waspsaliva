@@ -1,5 +1,5 @@
 -- Minetest: builtin/common/chatcommands.lua
-
+--[[
 core.registered_chatcommands = {}
 
 function core.register_chatcommand(cmd, def)
@@ -148,7 +148,7 @@ if INIT == "client" then
 			return do_help_cmd(nil, param)
 		end,
 	})
-
+--]]
 core.register_chatcommand("say", {
 	description = "Send raw text",
 	func = function(text)
@@ -236,7 +236,7 @@ core.register_chatcommand("set", {
 		return false, "Invalid parameters (see .help set)."
 	end,
 })
-
+--[[]
 else
 	core.register_chatcommand("help", {
 		params = "[all | privs | <cmd>]",
@@ -244,3 +244,4 @@ else
 		func = do_help_cmd,
 	})
 end
+--]]
