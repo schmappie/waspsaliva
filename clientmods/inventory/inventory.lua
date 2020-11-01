@@ -30,7 +30,7 @@ core.register_globalstep(function(dtime)
 	end
 end)
 
-core.register_list_command("eject", "Configure AutoEject", "eject_items")
+--core.register_list_command("eject", "Configure AutoEject", "eject_items")
 
 -- AutoTool
 
