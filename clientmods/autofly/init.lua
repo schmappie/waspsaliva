@@ -232,6 +232,8 @@ end
 function autofly.arrived()
         minetest.settings:set("continuous_forward", "false")
         minetest.settings:set_bool("pitch_move",oldpm)
+        minetest.settings:set_bool("afly_autoaim",false)
+        minetest.settings:set_bool("autoeat_timed",false)
         core.set_keypress("special1", false)
         autofly.set_hud_info("Arrived at destination")
         minetest.localplayer:hud_change(hud_info,'text',twpname .. "\n" .. "Arrived at destination.")
