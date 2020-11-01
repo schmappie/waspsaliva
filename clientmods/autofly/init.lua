@@ -88,11 +88,13 @@ end
 
 minetest.register_globalstep(function()
     autofly.checkfall()
-    if minetest.settings:get_bool("autosprint") then
+    if minetest.settings:get_bool("autosprint") or (minetest.settings:get_bool("continuous_forward") and minetest.settings:get_bool("autofsprint")) then
         core.set_keypress("special1", true)
-    elseif minetest.settings:get_bool("continuous_forward") and minetest.settings:get_bool("autofsprint") then
-        core.set_keypress("special1", true)
+    else
+        core.set_keypress("special1", false)
     end
+
+
     if not minetest.localplayer then return end
     if not twpname then
          autofly.set_hud_info("")
