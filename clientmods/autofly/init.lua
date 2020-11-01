@@ -218,6 +218,8 @@ function autofly.goto_waypoint(name)
         oldpm=minetest.settings:get_bool("pitch_move")
         minetest.settings:set_bool("pitch_move",true)
         minetest.settings:set_bool("continuous_forward",true)
+        minetest.settings:set_bool("afly_autoaim",true)
+        minetest.settings:set_bool("autoeat_timed",true)
         autofly.last_coords = autofly.get_waypoint(name)
         autofly.last_name = name
         autofly.set_hud_info(name)
@@ -230,7 +232,7 @@ end
 function autofly.arrived()
         minetest.settings:set("continuous_forward", "false")
         minetest.settings:set_bool("pitch_move",oldpm)
-         core.set_keypress("special1", false)
+        core.set_keypress("special1", false)
         autofly.set_hud_info("Arrived at destination")
         minetest.localplayer:hud_change(hud_info,'text',twpname .. "\n" .. "Arrived at destination.")
         wpr=false
