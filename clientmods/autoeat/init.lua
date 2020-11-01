@@ -31,6 +31,7 @@ minetest.register_globalstep(function()
 	elseif autoeat.eating then
 		last_step_eating = true
 	end
+
 	if not autoeat_timed then return end
 	if ( autofly.speed ~= 0 and minetest.settings:get_bool("autosprint") )
 	or (minetest.settings:get_bool("autosprintfsprint") and minetest.settings:get_bool("continuous_forward")  )
