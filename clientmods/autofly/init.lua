@@ -54,6 +54,7 @@ local storage = minetest.get_mod_storage()
 local wpr=false;
 local twpname=nil
 local oldpm=false
+local lpos={x=0,y=0,z=0}
 local info=minetest.get_server_info()
 local stprefix="autofly-".. info['address']  .. '-'
 
@@ -87,11 +88,13 @@ end
 
 minetest.register_globalstep(function()
     autofly.checkfall()
-    if minetest.settings:get_bool("autosprint") then
+    if minetest.settings:get_bool("autosprint") or (minetest.settings:get_bool("continuous_forward") and minetest.settings:get_bool("autofsprint")) then
         core.set_keypress("special1", true)
-    elseif minetest.settings:get_bool("continuous_forward") and minetest.settings:get_bool("autofsprint") then
-        core.set_keypress("special1", true)
+    else
+        core.set_keypress("special1", false)
     end
+
+
     if not minetest.localplayer then return end
     if not twpname then
          autofly.set_hud_info("")
@@ -117,6 +120,7 @@ minetest.register_globalstep(function()
     if lpos then
         local dst=vector.distance(minetest.localplayer:get_pos(),lpos)
         speed=round2(dst,1)
+        autofly.speed=speed
     end
     lpos=minetest.localplayer:get_pos()
 end)
@@ -216,6 +220,8 @@ function autofly.goto_waypoint(name)
         oldpm=minetest.settings:get_bool("pitch_move")
         minetest.settings:set_bool("pitch_move",true)
         minetest.settings:set_bool("continuous_forward",true)
+        minetest.settings:set_bool("afly_autoaim",true)
+        minetest.settings:set_bool("autoeat_timed",true)
         autofly.last_coords = autofly.get_waypoint(name)
         autofly.last_name = name
         autofly.set_hud_info(name)
@@ -228,7 +234,9 @@ end
 function autofly.arrived()
         minetest.settings:set("continuous_forward", "false")
         minetest.settings:set_bool("pitch_move",oldpm)
-         core.set_keypress("special1", false)
+        minetest.settings:set_bool("afly_autoaim",false)
+        minetest.settings:set_bool("autoeat_timed",false)
+        core.set_keypress("special1", false)
         autofly.set_hud_info("Arrived at destination")
         minetest.localplayer:hud_change(hud_info,'text',twpname .. "\n" .. "Arrived at destination.")
         wpr=false

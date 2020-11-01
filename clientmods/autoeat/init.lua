@@ -1,10 +1,12 @@
 autoeat = {}
-
+autoeat.last = 0
 local last_step_eating = false
+autoeat.interval = 1
 
 function autoeat.eat()
 	local player = minetest.localplayer
 	local owx=player:get_wield_index()
+	autoeat.eating = true
 	player:set_wield_index(8)
 	minetest.place_node(player:get_pos())
 	minetest.after("0.2",function()
@@ -12,10 +14,15 @@ function autoeat.eat()
 	end)
 end
 
+function autoeat.conditional()
+		if os.time() < autoeat.last + ( autoeat.interval * 60 ) then return	end
+		autoeat.last = os.time()
+		autoeat.eat()
+end
+
 minetest.register_on_damage_taken(function()
 	if not minetest.settings:get_bool("autoeat") then return end
 	autoeat.eat()
-	autoeat.eating = true
 end)
 
 minetest.register_globalstep(function()
@@ -25,6 +32,15 @@ minetest.register_globalstep(function()
 		last_step_eating = true
 	end
 
+	if not minetest.settings:get_bool("autoeat_timed") then return end
+	if ( autofly.speed ~= 0 and minetest.settings:get_bool("autosprint") )
+	or (minetest.settings:get_bool("autofsprint") and minetest.settings:get_bool("continuous_forward")  )
+	or (minetest.settings:get_bool("killaura")) then
+		autoeat.conditional()
+	end
+
+
 end)
 
 minetest.register_cheat("AutoEat", "Player", "autoeat")
+minetest.register_cheat("AutoEatTimed", "Player", "autoeat_timed")
