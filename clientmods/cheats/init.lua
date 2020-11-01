@@ -39,7 +39,7 @@ core.cheats = {
 		["ScaffoldPlus"] = "scaffold_plus",
 		["BlockWater"] = "block_water",
 		["PlaceOnTop"] = "autotnt",
-		["Replace"] = "replace"
+		["Replace"] = "replace",
 		["Random SC"] = "randomsc"
 	},
 	["Exploit"] = {
