@@ -194,14 +194,11 @@ local function lex_number(state)
 
         while true do
             n = lex_peek(state)
+
             if n == "." and not used_sep then
                 used_sep = true
-            elseif in_list(n, number_values) then
-
-            elseif in_list(n, whitespace) then
+            elseif not in_list(n, number_values) then
                 return {type = "literal", subtype = "number", value = table.concat(num)}
-            else
-                return nil -- ERROR
             end
 
             num[numi] = lex_next(state)
