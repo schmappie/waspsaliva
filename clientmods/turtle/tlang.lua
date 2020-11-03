@@ -64,10 +64,10 @@ function tlang.get_state(code)
             v__lex__ = tlang.valconv(lexed),
             v__ast__ = {type = "code", value = parsed}}},
         stack = {},
+        code_stack = {},
         builtins = tlang.builtins,
         wait_target = nil,
-        nextpop = false,
-        tree = parse_state
+        nextpop = false
     }
 end
 
@@ -80,21 +80,20 @@ end
 local complex = [[{dup *} `square =
 -5.42 square
 "Hello, world!" print
-[ 1 2 3 str:"String" ]
+[1 2 3 str:"String"]
 ]]
 
-local number = [[-4.2123
-]]
+local number = "-4.2123"
 
-local simple = [[{dup *}
-]]
+local simple = "{dup *}"
 
-local map = [[
-[ "thing":1 ]
-]]
+local map = "[this:2 that:3]"
 
-tlang.exec([[{dup *} `square =
-5 square print
-]])
+local square = [[{dup *} `square =
+5 square print]]
+
+local square_run = "5 {dup *} run print"
+
+tlang.exec(square_run)
 
 return tlang
