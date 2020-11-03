@@ -22,7 +22,10 @@ end
     {
         locals = {},
         stack = {},
-        tree = {}
+        builtins = {},
+        code_stack = {},
+        wait_target = int,
+        nextpop = f/t
     }
 --]]
 
@@ -44,6 +47,12 @@ local literals = {
 
 
 local function call(state, target)
+    if target.sg == 0 then
+        state.code_stack[#state.code_stack + 1] = state.stack[target.pos]
+        table.remove(state.stack, target.pos)
+        target.pos = #state.code_stack
+    end
+
     state.locals[#state.locals + 1] = {pc = target}
 end
 
@@ -71,7 +80,7 @@ end
 local function accesspc(state, pc)
     local code
     if pc.sg == 0 then -- stack
-        code = state.stack[pc.pos]
+        code = state.code_stack[pc.pos]
     elseif pc.sg == 1 then -- global
         code = access(state, pc.pos)
     end
@@ -94,6 +103,12 @@ local function getnext(state)
         state.locals[#state.locals] = nil
         if #state.locals == 0 then
             return nil
+        end
+
+        -- pop code stack
+        local pc = getpc(state)
+        if pc.sg == 0 then
+            state.code_stack[pc.pos] = nil
         end
         state.nextpop = false
     end
@@ -137,6 +152,10 @@ end
 
 
 local builtins = {}
+
+function builtins.run(state)
+    call(state, {sg = 0, pos = #state.stack, elem = 1})
+end
 
 builtins["="] = function(state)
     local name = statepop_type(state, "quote")
