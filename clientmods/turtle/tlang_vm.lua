@@ -58,7 +58,10 @@ end
 
 local function access(state, name)
     name = "v" .. name
-    for i, v in ipairs(state.locals) do
+    local slen = #state.locals
+
+    for i = 1, slen do
+        local v = state.locals[slen + 1 - i]
         if in_keys(name, v) then
             return v[name]
         end

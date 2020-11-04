@@ -112,9 +112,18 @@ local forever_test = [[
 forever   # run loop
 ]]
 
+local local_test = [[
+'outside' `var =
+{
+    'inside' `var =
+    var print
+} run
+var print
+]]
+
 
 local stack_test = "5 5 == print"
 
-tlang.exec(forever_test)
+tlang.exec(local_test)
 
 return tlang
