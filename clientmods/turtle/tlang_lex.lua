@@ -57,11 +57,15 @@ local number_values = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
 local escape_values = {n = "\n", r = "\r", v = "\v", t = "\t", ['"'] = '"'}
 local symbols = {
     "!", "-", "+", "=", "&", "*", "/", "^", "%", ">", "<", "?", "~",
-    "&&", "||", "==", "!=", ">=", "<="
+    "&&", "||", "==", "!=", ">=", "<=", "--", "++"
 }
 
 local function lex_peek(state)
-    return state.code:sub(state.position, state.position)
+    local out = state.code:sub(state.position, state.position)
+    if out == "" then
+        return nil
+    end
+    return out
 end
 
 local function lex_next(state)
@@ -167,7 +171,7 @@ local function lex_string(state)
     while true do
         local n = lex_next(state)
 
-        if n == "\"" then
+        if in_list(n, string_start) then
             return {type = "literal", subtype = "string", value = table.concat(string)}
         elseif n == "\\" then
             n = lex_string_escape(state)
@@ -238,6 +242,15 @@ local function lex_number_or_symbol(state)
     end
 end
 
+local function lex_comment(state)
+    while true do
+        local n = lex_next(state)
+        if n == nil or n == "\n" then
+            return false
+        end
+    end
+end
+
 local function lex_step(state)
     local cur = lex_peek(state)
 
@@ -277,6 +290,8 @@ local function lex_step(state)
         return lex_string(state)
     elseif in_list(cur, number_start) then
         return lex_number(state)
+    elseif cur == "#" then
+        return lex_comment(state)
     end
 end
 
@@ -297,7 +312,10 @@ return function(code)
             end
         end
 
-        lexed[lexi] = n
-        lexi = lexi + 1
+        -- comment lexer returns false
+        if n ~= false then
+            lexed[lexi] = n
+            lexi = lexi + 1
+        end
     end
 end
