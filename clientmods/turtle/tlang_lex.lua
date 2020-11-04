@@ -54,7 +54,7 @@ local symbol_values = {
 local string_start = {"\"", "'"}
 local number_start = {"-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
 local number_values = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
-local escape_values = {n = "\n", r = "\r", v = "\v", t = "\t", ['"'] = '"'}
+local escape_values = {n = "\n", r = "\r", v = "\v", t = "\t", ['"'] = '"', ["'"] = "'"}
 local symbols = {
     "!", "-", "+", "=", "&", "*", "/", "^", "%", ">", "<", "?", "~",
     "&&", "||", "==", "!=", ">=", "<=", "--", "++"
@@ -163,7 +163,8 @@ local function lex_string_escape(state)
 end
 
 local function lex_string(state)
-    lex_next(state)
+    local bchar = lex_next(state)
+
     local escaped = false
     local string = {}
     local stringi = 1
@@ -171,7 +172,7 @@ local function lex_string(state)
     while true do
         local n = lex_next(state)
 
-        if in_list(n, string_start) then
+        if n == bchar then
             return {type = "literal", subtype = "string", value = table.concat(string)}
         elseif n == "\\" then
             n = lex_string_escape(state)
