@@ -99,7 +99,7 @@ local function incpc(state, pc)
 end
 
 local function getnext(state)
-    if state.nextpop then
+    if state.locals[#state.locals].nextpop then
         state.locals[#state.locals] = nil
         if #state.locals == 0 then
             return nil
@@ -110,15 +110,15 @@ local function getnext(state)
         if pc.sg == 0 then
             state.code_stack[pc.pos] = nil
         end
-        state.nextpop = false
     end
 
-    local current = accesspc(state, getpc(state))
+    state.current_pc = getpc(state)
+    local current = accesspc(state, state.current_pc)
 
     local incd = incpc(state, getpc(state))
     state.locals[#state.locals].pc = incd
     if not incd then
-        state.nextpop = true
+        state.locals[#state.locals].nextpop = true
     end
 
     return current
@@ -135,6 +135,16 @@ local function statepop(state)
     return tos
 end
 
+local function statepeek_type(state, t)
+    local tos = statepeek(state)
+
+    if tos.type == t then
+        return tos
+    else
+        return nil -- ERROR
+    end
+end
+
 local function statepop_type(state, t)
     local tos = statepeek(state)
 
@@ -145,8 +155,16 @@ local function statepop_type(state, t)
     end
 end
 
+local function statepop_num(state)
+    return statepop_type(state, "number")
+end
+
 local function statepush(state, value)
     state.stack[#state.stack + 1] = value
+end
+
+local function statepush_num(state, number)
+    statepush(state, {type = "number", value = number})
 end
 
 
@@ -158,17 +176,61 @@ function builtins.run(state)
 end
 
 builtins["="] = function(state)
-    local name = statepop_type(state, "quote")
+    local tos = statepop_num(state)
     local value = statepop(state)
 
     assign(state, name.value, value)
 end
 
-builtins["*"] = function(state)
-    local tos = statepop_type(state, "number")
-    local tos1 = statepop_type(state, "number")
+builtins["--"] = function(state)
+    local tos = statepop_num(state)
+    statepush_num(state, tos.value - 1)
+end
 
-    statepush(state, {type = "number", value = tos.value * tos.value})
+builtins["++"] = function(state)
+    local tos = statepop_num(state)
+    statepush_num(state, tos.value + 1)
+end
+
+builtins["*"] = function(state)
+    local tos = statepop_num(state)
+    local tos1 = statepop_num(state)
+
+    statepush_num(state, tos.value * tos1.value)
+end
+
+local function boolnum(b)
+    if b then
+        return 1
+    else
+        return 0
+    end
+end
+
+builtins["=="] = function(state)
+    local tos = statepop_num(state)
+    local tos1 = statepop_num(state)
+
+    statepush_num(state, boolnum(tos.value == tos1.value))
+end
+
+builtins["!="] = function(state)
+    local tos = statepop_num(state)
+    local tos1 = statepop_num(state)
+
+    statepush_num(state, boolnum(tos.value ~= tos1.value))
+end
+
+builtins["if"] = function(state)
+    local tos = statepop_type(state, "code")
+    local tos1 = statepop(state)
+
+    if tos1.type == "number" then
+        if tos1.value ~= 0 then
+            statepush(state, tos)
+            call(state, {sg = 0, pos = #state.stack, elem = 1})
+        end
+    end
 end
 
 function builtins.print(state)
@@ -183,6 +245,64 @@ end
 
 function builtins.popoff(state)
     state.stack[#state.stack] = nil
+end
+
+function builtins.wait(state)
+    local tos = statepop_type(state, "number")
+    state.wait_target = os.clock() + tos.value
+end
+
+builtins["forever"] = function(state)
+    local slen = #state.locals
+
+    if state.locals[slen].broke == true then
+        state.locals[slen].broke = nil
+        state.locals[slen].loop_code = nil
+
+        return
+    end
+
+    if state.locals[slen].loop_code == nil then
+        local tos = statepop_type(state, "code")
+
+        state.locals[slen].loop_code = tos
+    end
+
+    statepush(state, state.locals[slen].loop_code)
+
+    state.locals[slen].pc = state.current_pc
+
+    call(state, {sg = 0, pos = #state.stack, elem = 1})
+end
+
+builtins["break"] = function(state)
+    local slen = #state.locals
+    local pos = 0
+    local found = false
+
+    -- find highest loop_code
+    -- slen - i to perform basically bitwise inverse
+    -- it allows it to count down the list effectively
+    for i = 1, slen do
+        if state.locals[slen + 1 - i].loop_code then
+            pos = slen + 1 - i
+            found = true
+        end
+    end
+
+    if found then
+        -- pop the top layers
+        for i = pos + 1, #state.locals do
+            state.locals[i] = nil
+        end
+
+        -- break in the lower layer
+        state.locals[#state.locals].broke = true
+    end
+end
+
+builtins["return"] = function(state)
+    state.locals[#state.locals] = nil
 end
 
 
