@@ -176,7 +176,7 @@ function builtins.run(state)
 end
 
 builtins["="] = function(state)
-    local tos = statepop_num(state)
+    local name = statepop_type(state, "quote")
     local value = statepop(state)
 
     assign(state, name.value, value)
