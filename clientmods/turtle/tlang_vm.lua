@@ -278,6 +278,50 @@ builtins["forever"] = function(state)
     call(state, {sg = 0, pos = #state.stack, elem = 1})
 end
 
+builtins["while"] = function(state)
+    local slen = #state.locals
+
+    if state.locals[slen].broke == true then
+        state.locals[slen].broke = nil
+        state.locals[slen].loop_code = nil
+        state.locals[slen].test_code = nil
+        state.locals[slen].loop_stage = nil
+
+        return
+    end
+
+    if state.locals[slen].loop_code == nil then
+        local while_block = statepop_type(state, "code")
+        local test_block = statepop_type(state, "code")
+
+        state.locals[slen].test_code = test_block
+        state.locals[slen].loop_code = while_block
+        state.locals[slen].loop_stage = 0
+    end
+
+    -- stage 0, run test
+    if state.locals[slen].loop_stage == 0 then
+        statepush(state, state.locals[slen].test_code)
+        state.locals[slen].pc = state.current_pc
+        call(state, {sg = 0, pos = #state.stack, elem = 1})
+
+        state.locals[slen].loop_stage = 1
+    -- stage 1, run while
+    elseif state.locals[slen].loop_stage == 1 then
+        local tos = statepop(state)
+        if tos and tos.value ~= 0 then
+            statepush(state, state.locals[slen].loop_code)
+            state.locals[slen].pc = state.current_pc
+            call(state, {sg = 0, pos = #state.stack, elem = 1})
+        else
+            state.locals[slen].pc = state.current_pc
+            state.locals[slen].broke = true
+        end
+
+        state.locals[slen].loop_stage = 0
+    end
+end
+
 builtins["break"] = function(state)
     local slen = #state.locals
     local pos = 0
