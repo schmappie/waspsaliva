@@ -635,4 +635,9 @@ if (_G["minetest"]["register_cheat"] == nil) then
     minetest.settings:set_bool('tchat_view_team_list', true)
     minetest.settings:set_bool('tchat_view_player_list', true)
     minetest.settings:set_bool('tchat_view_chat', true)
+else
+    minetest.register_cheat("Teamchat Mode", "Chat", "tchat_team_mode")
+    minetest.register_cheat("Show Team List", "Chat", "tchat_view_team_list")
+    minetest.register_cheat("Show Player List", "Chat", "tchat_view_player_list")
+    minetest.register_cheat("Show Teamchat", "Chat", "tchat_view_chat")
 end
