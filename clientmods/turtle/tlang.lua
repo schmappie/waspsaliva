@@ -1,17 +1,21 @@
 local tlang = {}
 
-tlang.lex = dofile("tlang_lex.lua")
-tlang.parse = dofile("tlang_parse.lua")
-tlang.builtins, tlang.gassign, tlang.step = dofile("tlang_vm.lua")
+dof = dofile
+if minetest ~= nil then
+    dof = do_file
+end
+
+tlang.lex = dof("tlang_lex.lua")
+tlang.parse = dof("tlang_parse.lua")
+tlang.builtins, tlang.gassign, tlang.step = dof("tlang_vm.lua")
 
 -- TODO
 --[[
-code shouldnt require a final whitespace
 lexer should include line/character number in symbols
 error messages
-maps shouldnt require whitespace around [ and ]
 maps should be able to have out of order number indexes (like [1 2 3 10:"Out of order"])
 map.key accessing syntax
+    parse as identifier, include . as identifier character, split on . and thats the indexing tree
 --]]
 
 function tlang.run(state)
@@ -94,6 +98,23 @@ local square = [[{dup *} `square =
 
 local square_run = "5 {dup *} run print"
 
-tlang.exec(square_run)
+local comment_test = "'asd' print # 'aft' print"
+
+local forever_test = [[
+5  # iteration count
+{
+    dup     # duplicate iter count
+    print   # print countdown
+    --      # decrement
+    dup 0 ==    # check if TOS is 0
+    {break} if  # break if TOS == 0
+}
+forever   # run loop
+]]
+
+
+local stack_test = "5 5 == print"
+
+tlang.exec(forever_test)
 
 return tlang
