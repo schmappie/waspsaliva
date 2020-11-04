@@ -449,7 +449,10 @@ end
 register_chatcommand_alias('clear_waypoint', 'cwp','cls')
 
 if (_G["minetest"]["register_cheat"] == nil) then
-
-    minetest.settings:set_bool("afly_autoaim",false)
-    minetest.settings:set_bool("afly_softlanding",true)
+    minetest.settings:set_bool("afly_autoaim", false)
+    minetest.settings:set_bool("afly_softlanding", true)
+else
+    minetest.register_cheat("Aim", "Autofly", "afly_autoaim")
+    minetest.register_cheat("Softlanding", "Autofly", "afly_softlanding")
+    minetest.register_cheat("Waypoints", "Autofly", autofly.display_formspec)
 end
