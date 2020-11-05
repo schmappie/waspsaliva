@@ -1,0 +1,1 @@
+autodupe_test (Load autodupe's test.lua WARNING: very experimental, nonfunctional) bool false
