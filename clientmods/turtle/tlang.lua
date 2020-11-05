@@ -1,8 +1,13 @@
 local tlang = {}
 
-tlang.lex = dofile("tlang_lex.lua")
-tlang.parse = dofile("tlang_parse.lua")
-tlang.builtins, tlang.gassign, tlang.step = dofile("tlang_vm.lua")
+local prefix = ""
+if minetest ~= nil then
+    prefix = minetest.get_modpath(minetest.get_current_modname()) .. "/"
+end
+
+tlang.lex = dofile(prefix .. "tlang_lex.lua")
+tlang.parse = dofile(prefix .. "tlang_parse.lua")
+tlang.builtins, tlang.gassign, tlang.step = dofile(prefix .. "tlang_vm.lua")
 
 -- TODO
 --[[

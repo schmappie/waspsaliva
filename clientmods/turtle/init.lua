@@ -2,6 +2,9 @@
 
 turtle = {}
 
+local mod_prefix = minetest.get_modpath(minetest.get_current_modname())
+tlang = dofile(mod_prefix .. "/tlang.lua")
+
 local iter = {}
 local iter_storage = {}
 
@@ -374,3 +377,28 @@ minetest.register_chatcommand("quarry", {
     end
 })
 
+
+turtle.states = {}
+
+function turtle.schedule(name, state)
+    turtle.states[#turtle.states] = {name = name, state = state}
+end
+
+function turtle.run_states()
+    local dead = {}
+    for i, v in ipairs(turtle.states) do
+        local ret = tlang.step(v.state)
+        if ret ~= true then
+            if type(ret) == "string" then
+                minetest.display_chat_message("Turtle/tlang ERROR in " .. v.name .. ": " .. ret)
+            end
+            dead[#dead] = i
+        end
+    end
+
+    for i, v in ipairs(dead) do
+        table.remove(turtle.states, v)
+    end
+end
+
+minetest.register_globalstep(turtle.run_states)
