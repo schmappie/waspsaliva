@@ -5,69 +5,6 @@ turtle = {}
 local mod_prefix = minetest.get_modpath(minetest.get_current_modname())
 tlang = dofile(mod_prefix .. "/tlang.lua")
 
-local iter = {}
-local iter_storage = {}
-
-local function schedule_run(idx, t)
-    if t[idx] then
-        if t[idx] == "wait" then
-            minetest.after(t[idx + 1], in_schedule, idx + 2, t)
-        else
-            t[idx](unpack(t[idx + 1]))
-            schedule_run(idx + 2, t)
-        end
-    end
-end
-
-
-function turtle.schedule(...)
-    schedule_run(1, {...})
-end
-
-
-function turtle.dofor(idx, iterator, ...)
-    while true do
-        iter[idx] = iterator()
-        if iter[idx] then
-            turtle.schedule(...)
-        else
-            return
-        end
-    end
-end
-
-
-function turtle.cond(condition, ifdo, elsedo)
-    if condition then
-        schedule_run(1, ifdo or {})
-    else
-        schedule_run(1, elsedo or {})
-    end
-end
-
-
-function turtle.range(from, to, step)
-    step = step or 1
-    return function(_, lastvalue)
-        local nextvalue = lastvalue + step
-        if (step > 0 and nextvalue <= to) or
-            (step < 0 and nextvalue >= to) or
-            step == 0 then
-            return nextvalue
-        end
-    end, nil, from - step
-end
-
-
--- needs to be replaced with a scheduling system
-local function busysleep(time)
-    local tgt = os.clock() + time
-    while os.clock() < tgt do
-        -- busy busy!
-    end
-end
-
-
 function turtle.coord(x, y, z)
     return {x = x, y = y, z = z}
 end
@@ -330,44 +267,6 @@ function turtle.quarry(cstart, cend)
         -- flip around to start again on the next layer
         turtle.rotate(180)
     end
-end
-
-
-function turtle.quarry_schedule(cstart, cend)
-    -- get a nice cuboid
-    cstart, cend = turtle.rectify(cstart, cend)
-    local start, relend = turtle.relativize(cstart, cend)
-
-    -- makes it start at the top rather than the bottom
-    cend.y, cstart.y = swapg(cend.y, cstart.y)
-
-    turtle.schedule(
-        -- go to the start
-        turtle.moveto, {turtle.cadd(cstart, turtle.coord(0, 1, 0))},
-        turtle.rotate_abs, {0},
-
-        -- main loop (zig zag pattern)
-        turtle.dofor, {"height", turtle.range(0, math.floor(relend.y / 2)),
-            -- go down two blocks
-            turtle.mine, {turtle.relcoord(0, -1, 0)},
-            turtle.mine, {turtle.relcoord(0, -2, 0)},
-            turtle.descend, {2},
-
-            turtle.dofor, {"width", turtle.range(0, relend.x),
-                -- actually mine
-                turtle.linemine, {relend.z}, -- maybe relend.z to make the end inclusive?
-                left_or_right, {((iter["height"] + iter["width"] + 1) % 2) == 0},
-                -- dont rotate at the end of the layer
-                turtle.cond, {iter["width"] ~= relend.x, {
-                    turtle.linemine, {1},
-                    left_or_right, {((iter["height"] + iter["width"] + 1) % 2) == 0}
-                }}
-            },
-
-            -- flip around to start again on the next layer
-            turtle.rotate, {180}
-        }
-    )
 end
 
 
