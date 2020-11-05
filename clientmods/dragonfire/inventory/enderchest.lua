@@ -24,4 +24,4 @@ function minetest.open_special_inventory()
 	minetest.show_formspec("enderchest:enderchest", formspec)
 end
 
-minetest.register_cheat("Enderchest", "Player", minetest.open_special_inventory)
+minetest.register_cheat("Enderchest", "Inventory", minetest.open_special_inventory)
