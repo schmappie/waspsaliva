@@ -293,7 +293,9 @@ function builtins.print(state)
     local value = statepop(state)
 
     if minetest then
-        minetest.display_chat_message("Tlang: " .. tostring(value.value))
+        local message = "[tlang] " .. tostring(value.value)
+        minetest.display_chat_message(message)
+        minetest.log(message)
     else
         print(value.value)
     end
