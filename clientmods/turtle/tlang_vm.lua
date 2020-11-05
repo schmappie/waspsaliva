@@ -375,6 +375,58 @@ builtins["while"] = function(state)
     end
 end
 
+builtins["repeat"] = function(state)
+    local slen = #state.locals
+
+    if state.locals[slen].broke == true then
+        state.locals[slen].broke = nil
+        state.locals[slen].loop_code = nil
+        state.locals[slen].repeat_count = nil
+        state.locals[slen].repeat_n = nil
+        state.locals[slen].loop_var = nil
+
+        return
+    end
+
+    if state.locals[slen].loop_code == nil then
+        local num_var = statepop(state)
+        local count
+        local block
+
+        if num_var.type == "quote" then
+            count = statepop_num(state)
+            block = statepop_type(state, "code")
+            state.locals[slen].loop_var = num_var.value
+        else
+            count = num_var
+            block = statepop_type(state, "code")
+        end
+
+        state.locals[slen].loop_code = block
+        state.locals[slen].repeat_count = count.value
+        state.locals[slen].repeat_n = 0
+    end
+
+    if state.locals[slen].repeat_n ~= state.locals[slen].repeat_count then
+        if state.locals[slen].loop_var then
+            lassign(state,
+                state.locals[slen].loop_var,
+                {type = "number", value = state.locals[slen].repeat_n})
+        end
+
+        statepush(state, state.locals[slen].loop_code)
+
+        state.locals[slen].pc = state.current_pc
+
+        call(state, {sg = 0, pos = #state.stack, elem = 1})
+
+        state.locals[slen].repeat_n = state.locals[slen].repeat_n + 1
+    else
+        state.locals[slen].pc = state.current_pc
+        state.locals[slen].broke = true
+    end
+end
+
 builtins["break"] = function(state)
     local slen = #state.locals
     local pos = 0

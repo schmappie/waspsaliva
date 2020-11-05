@@ -132,9 +132,17 @@ local while_test = [[
 } while
 ]]
 
+local repeat_test = [[
+{
+    "four times" print
+} 4 repeat
+{
+    i print
+} 5 `i repeat
+]]
 
 local stack_test = "5 5 == print"
 
-tlang.exec(while_test)
+tlang.exec(repeat_test)
 
 return tlang
