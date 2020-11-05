@@ -1,3 +1,8 @@
+function sleep(s)
+  local ntime = os.clock() + s/10
+  repeat until os.clock() > ntime
+end
+
 minetest.register_chatcommand("findnodes", {
 	description = "Scan for one or multible nodes in a radius around you",
 	param = "<radius> <node1>[,<node2>...]",
@@ -11,7 +16,7 @@ minetest.register_chatcommand("findnodes", {
 		end
 		return false, "None of " .. table.concat(nodes, " or ") .. " found in a radius of " .. tostring(radius)
 	end,
-}) 
+})
 
 minetest.register_chatcommand("place", {
 	params = "<X>,<Y>,<Z>",
@@ -23,6 +28,12 @@ minetest.register_chatcommand("place", {
 			return true, "Node placed at " .. minetest.pos_to_string(pos)
 		end
 		return false, pos
+	end,
+})
+minetest.register_chatcommand("screenshot", {
+	description = "asdf",
+	func = function()
+		minetest.take_screenshot()
 	end,
 })
 
@@ -48,6 +59,8 @@ end)
 local etime = 0
 
 minetest.register_globalstep(function(dtime)
+	if not ( minetest.settings:get_bool("autotnt") or minetest.settings:get_bool("scaffold") or minetest.settings:get_bool("mscaffold") or minetest.settings:get_bool("highway_z") or minetest.settings:get_bool("block_water") ) then return end
+	--if true then return end
 	etime = etime + dtime
 	if etime < 1 then return end
 	local player = minetest.localplayer
@@ -56,9 +69,30 @@ minetest.register_globalstep(function(dtime)
 	local item = player:get_wielded_item()
 	local def = minetest.get_item_def(item:get_name())
 	local nodes_per_tick = tonumber(minetest.settings:get("nodes_per_tick")) or 8
-	if item and item:get_count() > 0 and def and def.node_placement_prediction ~= "" then
+	if item:get_count() > 0 and def.node_placement_prediction ~= "" then
 		if minetest.settings:get_bool("scaffold") then
 			minetest.place_node(vector.add(pos, {x = 0, y = -0.6, z = 0}))
+		elseif minetest.settings:get_bool("mscaffold") then
+			--local z = pos.z
+			local positions = {
+				{x = 0, y = -0.6, z = 0},
+				{x = 1, y = -0.6, z = 0},
+				{x = -1, y = -0.6, z = 0},
+
+				{x = -1, y = -0.6, z = -1},
+				{x = 0, y = -0.6, z = -1},
+				{x = 1, y = -0.6, z = -1},
+
+				{x = -1, y = -0.6, z = 1},
+				{x = 0, y = -0.6, z = 1},
+				{x = 1, y = -0.6, z = 1}
+
+			}
+			for i, p in pairs(positions) do
+				if i > nodes_per_tick then return  end
+				minetest.place_node(vector.add(pos,p))
+			end
+
 		elseif minetest.settings:get_bool("highway_z") then
 			local z = pos.z
 			local positions = {
@@ -88,8 +122,9 @@ minetest.register_globalstep(function(dtime)
 			end
 		end
 	end
-end) 
+end)
 
+minetest.register_cheat("mScaffold", "World", "mscaffold")
 minetest.register_cheat("Scaffold", "World", "scaffold")
 minetest.register_cheat("HighwayZ", "World", "highway_z")
 minetest.register_cheat("BlockWater", "World", "block_water")
