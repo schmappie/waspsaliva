@@ -76,68 +76,74 @@ function tlang.exec(code)
 end
 
 
-local complex = [[{dup *} `square =
--5.42 square
-"Hello, world!" print
-[1 2 3 str:"String"]
-]]
+local function test()
+    local complex = [[{dup *} `square =
+    -5.42 square
+    "Hello, world!" print
+    [1 2 3 str:"String"]
+    ]]
 
-local number = "-4.2123"
+    local number = "-4.2123"
 
-local simple = "{dup *}"
+    local simple = "{dup *}"
 
-local map = "[this:2 that:3]"
+    local map = "[this:2 that:3]"
 
-local square = [[{dup *} `square =
-5 square print]]
+    local square = [[{dup *} `square =
+    5 square print]]
 
-local square_run = "5 {dup *} run print"
+    local square_run = "5 {dup *} run print"
 
-local comment_test = "'asd' print # 'aft' print"
+    local comment_test = "'asd' print # 'aft' print"
 
-local forever_test = [[
-5  # iteration count
-{
-    dup     # duplicate iter count
-    print   # print countdown
-    --      # decrement
-    dup 0 ==    # check if TOS is 0
-    {break} if  # break if TOS == 0
-}
-forever   # run loop
-]]
+    local forever_test = [[
+    5  # iteration count
+    {
+        dup     # duplicate iter count
+        print   # print countdown
+        --      # decrement
+        dup 0 ==    # check if TOS is 0
+        {break} if  # break if TOS == 0
+    }
+    forever   # run loop
+    ]]
 
-local local_test = [[
-'outside' `var =
-{
-    var print       # should be 'outside'
-    'inside' `var =
-    var print       # should be 'inside'
-} run
-var print           # should be 'inside'
-]]
+    local local_test = [[
+    'outside' `var =
+    {
+        var print       # should be 'outside'
+        'inside' `var =
+        var print       # should be 'inside'
+    } run
+    var print           # should be 'inside'
+    ]]
 
-local while_test = [[
-5 `cur =
-{
-    `cur --
-    cur
-} {
-    "four times" print
-} while
-]]
+    local while_test = [[
+    5 `cur =
+    {
+        `cur --
+        cur
+    } {
+        "four times" print
+    } while
+    ]]
 
-local repeat_test = [[
-{
-    "four times" print
-} 4 repeat
-{
-    i print
-} 5 `i repeat
-]]
+    local repeat_test = [[
+    {
+        "four times" print
+    } 4 repeat
+    {
+        i print
+    } 5 `i repeat
+    ]]
 
-local stack_test = "5 5 == print"
+    local stack_test = "5 5 == print"
 
-tlang.exec(repeat_test)
+    tlang.exec(repeat_test)
+end
+
+if minetest == nil then
+    test()
+end
 
 return tlang
