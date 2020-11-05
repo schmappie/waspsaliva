@@ -1,4 +1,3 @@
-
 local function in_list(value, list)
     for k, v in ipairs(list) do
         if v == value then
@@ -295,7 +294,7 @@ function builtins.print(state)
     if minetest then
         local message = "[tlang] " .. tostring(value.value)
         minetest.display_chat_message(message)
-        minetest.log(message)
+        minetest.log("info", message)
     else
         print(value.value)
     end
