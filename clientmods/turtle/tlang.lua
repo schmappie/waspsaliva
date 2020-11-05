@@ -115,10 +115,11 @@ forever   # run loop
 local local_test = [[
 'outside' `var =
 {
+    var print       # should be 'outside'
     'inside' `var =
-    var print
+    var print       # should be 'inside'
 } run
-var print
+var print           # should be 'inside'
 ]]
 
 local while_test = [[
@@ -128,6 +129,6 @@ local while_test = [[
 
 local stack_test = "5 5 == print"
 
-tlang.exec(while_test)
+tlang.exec(local_test)
 
 return tlang
