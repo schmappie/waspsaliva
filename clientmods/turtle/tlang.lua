@@ -1,13 +1,8 @@
 local tlang = {}
 
-dof = dofile
-if minetest ~= nil then
-    dof = do_file
-end
-
-tlang.lex = dof("tlang_lex.lua")
-tlang.parse = dof("tlang_parse.lua")
-tlang.builtins, tlang.gassign, tlang.step = dof("tlang_vm.lua")
+tlang.lex = dofile("tlang_lex.lua")
+tlang.parse = dofile("tlang_parse.lua")
+tlang.builtins, tlang.gassign, tlang.step = dofile("tlang_vm.lua")
 
 -- TODO
 --[[
