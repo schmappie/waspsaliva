@@ -56,15 +56,21 @@ local function call(state, target)
     state.locals[#state.locals + 1] = {pc = target}
 end
 
-local function access(state, name)
-    name = "v" .. name
+local function find_var_pos(state, name)
     local slen = #state.locals
 
     for i = 1, slen do
         local v = state.locals[slen + 1 - i]
-        if in_keys(name, v) then
-            return v[name]
+        if in_keys("v" .. name, v) then
+            return slen + 1 - i
         end
+    end
+end
+
+local function access(state, name)
+    local n = find_var_pos(state, name)
+    if n then
+        return state.locals[n]["v" .. name]
     end
 end
 
@@ -72,8 +78,17 @@ local function gassign(state, name, value)
     state.locals[0]["v" .. name] = value
 end
 
-local function assign(state, name, value)
+local function lassign(state, name, value)
     state.locals[#state.locals]["v" .. name] = value
+end
+
+local function assign(state, name, value)
+    local n = find_var_pos(state, name)
+    if n then
+        state.locals[n]["v" .. name] = value
+    else
+        state.locals[#state.locals]["v" .. name] = value
+    end
 end
 
 local function getpc(state)
