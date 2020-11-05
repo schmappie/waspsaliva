@@ -19,7 +19,7 @@ local function in_list(val, list)
 end
 
 local function nilify_node(node)
-    if node and node.name == "air" then
+    if node and (node.name == "air" or minetest.get_node_def(node.name).buildable_to) then
         return nil
     end
     return node
