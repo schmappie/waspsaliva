@@ -1,3 +1,5 @@
+-- CC0/Unlicense Emilia 2020
+
 local tlang = {}
 
 local prefix = ""

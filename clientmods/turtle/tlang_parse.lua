@@ -1,3 +1,5 @@
+-- CC0/Unlicense Emilia 2020
+
 -- parse types
 --[[
 quote
