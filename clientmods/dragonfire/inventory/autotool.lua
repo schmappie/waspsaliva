@@ -39,12 +39,5 @@ minetest.register_on_punchnode(function(pos, node)
 	player:set_wield_index(new_index)
 end)
 
-minetest.register_on_dignode(function(pos, node)
-    if odx then
-        minetest.localplayer:set_wield_index(odx)
-        odx = nil
-    end
-end)
-
 minetest.register_cheat("AutoTool", "Inventory", "autotool")
  
