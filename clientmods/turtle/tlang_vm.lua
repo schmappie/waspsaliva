@@ -292,7 +292,11 @@ end
 function builtins.print(state)
     local value = statepop(state)
 
-    print(value.value)
+    if minetest then
+        minetest.display_chat_message("Tlang: " .. tostring(value.value))
+    else
+        print(value.value)
+    end
 end
 
 function builtins.dup(state)

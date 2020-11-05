@@ -278,25 +278,32 @@ minetest.register_chatcommand("quarry", {
 
 
 turtle.states = {}
+turtle.states_available = false
 
 function turtle.schedule(name, state)
-    turtle.states[#turtle.states] = {name = name, state = state}
+    turtle.states[#turtle.states + 1] = {name = name, state = state}
+    turtle.states_available = true
 end
 
-function turtle.run_states()
-    local dead = {}
-    for i, v in ipairs(turtle.states) do
-        local ret = tlang.step(v.state)
-        if ret ~= true then
-            if type(ret) == "string" then
-                minetest.display_chat_message("Turtle/tlang ERROR in " .. v.name .. ": " .. ret)
-            end
-            dead[#dead] = i
-        end
-    end
+function turtle.run_states(dtime)
+    if turtle.states_available then
+        local dead = {}
 
-    for i, v in ipairs(dead) do
-        table.remove(turtle.states, v)
+        for i, v in ipairs(turtle.states) do
+            local ret = tlang.step(v.state)
+            if ret ~= true then
+                if type(ret) == "string" then
+                    minetest.display_chat_message("Turtle/tlang ERROR in " .. v.name .. ": " .. ret)
+                end
+                dead[#dead + 1] = i
+            end
+        end
+
+        for i, v in ipairs(dead) do
+            table.remove(turtle.states, v)
+        end
+
+        turtle.states_available = #turtle.states ~= 0
     end
 end
 
