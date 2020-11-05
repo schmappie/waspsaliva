@@ -308,3 +308,12 @@ function turtle.run_states(dtime)
 end
 
 minetest.register_globalstep(turtle.run_states)
+
+minetest.register_chatcommand("tlang", {
+    description = "Run a tlang program.",
+    params = "<code>",
+    func = function(params)
+        local state = tlang.get_state(params)
+        turtle.schedule("chat_script", state)
+    end
+})
