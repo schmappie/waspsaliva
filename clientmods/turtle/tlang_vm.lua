@@ -1,3 +1,5 @@
+-- CC0/Unlicense Emilia 2020
+
 local function in_list(value, list)
     for k, v in ipairs(list) do
         if v == value then
