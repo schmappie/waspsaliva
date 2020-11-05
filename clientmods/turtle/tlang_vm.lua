@@ -200,21 +200,25 @@ builtins["="] = function(state)
     assign(state, name.value, value)
 end
 
-builtins["--"] = function(state)
-    local tos = statepop_num(state)
-    statepush_num(state, tos.value - 1)
+local function unary(func)
+    return function(state)
+        local tos = statepop(state)
+        if tos.type == "number" then
+            statepush_num(state, func(tos.value))
+        elseif tos.type == "quote" then
+            local n = access(state, tos.value)
+            assign(state, tos.value, {type = "number", value = func(n.value)})
+        end
+    end
 end
 
-builtins["++"] = function(state)
-    local tos = statepop_num(state)
-    statepush_num(state, tos.value + 1)
-end
+local function binary(func)
+    return function(state)
+        local tos = statepop_num(state)
+        local tos1 = statepop_num(state)
 
-builtins["*"] = function(state)
-    local tos = statepop_num(state)
-    local tos1 = statepop_num(state)
-
-    statepush_num(state, tos.value * tos1.value)
+        statepush_num(state, func(tos.value, tos1.value))
+    end
 end
 
 local function boolnum(b)
@@ -225,19 +229,53 @@ local function boolnum(b)
     end
 end
 
-builtins["=="] = function(state)
-    local tos = statepop_num(state)
-    local tos1 = statepop_num(state)
-
-    statepush_num(state, boolnum(tos.value == tos1.value))
+local function numbool(n)
+    if n ~= 0 then
+        return true
+    else
+        return false
+    end
 end
 
-builtins["!="] = function(state)
-    local tos = statepop_num(state)
-    local tos1 = statepop_num(state)
+builtins["--"] = unary(function(v)
+    return v - 1
+end)
 
-    statepush_num(state, boolnum(tos.value ~= tos1.value))
-end
+builtins["++"] = unary(function(v)
+    return v + 1
+end)
+
+builtins["!"] = unary(function(v)
+    return boolnum(not numbool(v))
+end)
+
+builtins["+"] = binary(function(v1, v2)
+    return v1 + v2
+end)
+
+builtins["-"] = binary(function(v1, v2)
+    return v1 - v2
+end)
+
+builtins["*"] = binary(function(v1, v2)
+    return v1 * v2
+end)
+
+builtins["/"] = binary(function(v1, v2)
+    return v1 / v2
+end)
+
+builtins["%"] = binary(function(v1, v2)
+    return v1 % v2
+end)
+
+builtins["=="] = binary(function(v1, v2)
+    return boolnum(v1 == v2)
+end)
+
+builtins["!="] = binary(function(v1, v2)
+    return boolnum(v1 ~= v2)
+end)
 
 builtins["if"] = function(state)
     local tos = statepop_type(state, "code")

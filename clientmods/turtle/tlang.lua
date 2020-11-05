@@ -123,12 +123,18 @@ var print           # should be 'inside'
 ]]
 
 local while_test = [[
-5 `cur = {cur -- `cur = cur} {"five times" print} while
+5 `cur =
+{
+    `cur --
+    cur
+} {
+    "four times" print
+} while
 ]]
 
 
 local stack_test = "5 5 == print"
 
-tlang.exec(local_test)
+tlang.exec(while_test)
 
 return tlang
