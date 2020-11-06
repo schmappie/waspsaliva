@@ -23,13 +23,21 @@ end
 local function parse_relative_coord(c)
 end
 
--- x or {x,y,z}
-function turtle.optcoord(x, y, z)
-    local pos = x
-    if y and z then
-        pos = turtle.coord(x, y, z)
+function turtle.ordercoord(c)
+    if c.x == nil then
+        return {x = c[1], y = c[2], z = c[3]}
+    else
+        return c
     end
-    return pos
+end
+
+-- x or {x,y,z} or {x=x,y=y,z=z}
+function turtle.optcoord(x, y, z)
+    if y and z then
+        return turtle.coord(x, y, z)
+    else
+        return turtle.ordercoord(x)
+    end
 end
 
 -- swap x and y if x > y
@@ -131,6 +139,11 @@ end
 
 function turtle.dircoord(f, y, r)
     local rot = minetest.localplayer:get_yaw() % 360
+
+    local coord = turtle.optcoord(f, y, r)
+    local f = coord.x
+    local y = coord.y
+    local r = coord.z
 
     if between(rot, 315, 360) or between(rot, 0, 45) then -- north
         return turtle.relcoord(r, y, f)
@@ -281,8 +294,27 @@ turtle.states = {}
 turtle.states_available = false
 
 function turtle.schedule(name, state)
+    if type(name) == "table" then
+        error("turtle.schedule: first parameter should be the task's name")
+        return
+    end
+
     turtle.states[#turtle.states + 1] = {name = name, state = state}
     turtle.states_available = true
+end
+
+function turtle.kill_symbolic(name)
+    local dead = {}
+
+    for i, v in ipairs(turtle.states) do
+        if v.name == name then
+            dead[#dead + 1] = i
+        end
+    end
+
+    for i, v in ipairs(dead) do
+        table.remove(turtle.states, v)
+    end
 end
 
 function turtle.run_states(dtime)
@@ -291,7 +323,7 @@ function turtle.run_states(dtime)
 
         for i, v in ipairs(turtle.states) do
             local ret = tlang.step(v.state)
-            if ret ~= true then
+            if ret ~= true and ret ~= nil then
                 if type(ret) == "string" then
                     minetest.display_chat_message("Turtle/tlang ERROR in " .. v.name .. ": " .. ret)
                 end
@@ -316,4 +348,10 @@ minetest.register_chatcommand("tlang", {
         local state = tlang.get_state(params)
         turtle.schedule("chat_script", state)
     end
+})
+
+minetest.register_chatcommand("tkill", {
+    description = "Kill tlang task.",
+    params = "<task name>",
+    func = turtle.kill_symbolic
 })
