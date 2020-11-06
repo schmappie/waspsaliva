@@ -304,7 +304,7 @@ function tlang.binary(func)
         local tos = statepop_num(state)
         local tos1 = statepop_num(state)
 
-        statepush_num(state, func(tos.value, tos1.value))
+        statepush_num(state, func(tos1.value, tos.value))
     end
 end
 
