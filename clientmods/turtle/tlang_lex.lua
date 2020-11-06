@@ -1,5 +1,7 @@
 -- CC0/Unlicense Emilia 2020
 
+local tlang = {}
+
 local function in_list(value, list)
     for k, v in ipairs(list) do
         if v == value then
@@ -299,7 +301,7 @@ local function lex_step(state)
 end
 
 -- lex
-return function(code)
+function tlang.lex(code)
     local state = {code = code, position = 1}
     local lexed = {}
     local lexi = 1
@@ -322,3 +324,5 @@ return function(code)
         end
     end
 end
+
+return tlang
