@@ -60,17 +60,15 @@ end
 
 -- convert a tlang literal to a lua value
 function tlang.tlang_to_value(tl)
-    if not tl or type(tl) ~= "table" then
+    if type(tl) ~= "table" then
         return
     end
 
     if tl.type == "map" then
         local o = {}
-        local oi = 1
 
-        for i, v in ipairs(tl.value) do
-            o[oi] = tlang.tlang_to_value(v)
-            oi = oi + 1
+        for k, v in pairs(tl.value) do
+            o[k] = tlang.tlang_to_value(v)
         end
 
         return o
@@ -193,6 +191,13 @@ local function getnext(state)
     return current
 end
 
+-- doesn't support jumping out of scope yet
+function tlang.set_next_pc(state, pc)
+    -- this probably causes issues when jumping outside scope
+    state.locals[#state.locals].nextpop = nil
+
+    state.locals[#state.locals].pc = pc
+end
 
 function tlang.peek_raw(state)
     return state.stack[#state.stack]
@@ -217,7 +222,7 @@ function tlang.pop(state)
 end
 
 function tlang.push(state, value)
-    return tlang.push_raw(state, tlang.value_to_tlang(value))
+    tlang.push_raw(state, tlang.value_to_tlang(value))
 end
 
 local function statepeek_type(state, t)
@@ -395,7 +400,7 @@ tlang.builtins["forever"] = function(state)
 
     tlang.push_raw(state, state.locals[slen].loop_code)
 
-    state.locals[slen].pc = state.current_pc
+    tlang.set_next_pc(state, state.current_pc)
 
     tlang.call_tos(state)
 end
@@ -424,7 +429,7 @@ tlang.builtins["while"] = function(state)
     -- stage 0, run test
     if state.locals[slen].loop_stage == 0 then
         tlang.push_raw(state, state.locals[slen].test_code)
-        state.locals[slen].pc = state.current_pc
+        tlang.set_next_pc(state, state.current_pc)
         tlang.call_tos(state)
 
         state.locals[slen].loop_stage = 1
@@ -433,10 +438,10 @@ tlang.builtins["while"] = function(state)
         local tos = tlang.pop_raw(state)
         if tos and tos.value ~= 0 then
             tlang.push_raw(state, state.locals[slen].loop_code)
-            state.locals[slen].pc = state.current_pc
+            tlang.set_next_pc(state, state.current_pc)
             tlang.call_tos(state)
         else
-            state.locals[slen].pc = state.current_pc
+            tlang.set_next_pc(state, state.current_pc)
             state.locals[slen].broke = true
         end
 
@@ -485,13 +490,13 @@ tlang.builtins["repeat"] = function(state)
 
         tlang.push_raw(state, state.locals[slen].loop_code)
 
-        state.locals[slen].pc = state.current_pc
+        tlang.set_next_pc(state, state.current_pc)
 
         tlang.call_tos(state)
 
         state.locals[slen].repeat_n = state.locals[slen].repeat_n + 1
     else
-        state.locals[slen].pc = state.current_pc
+        tlang.set_next_pc(state, state.current_pc)
         state.locals[slen].broke = true
     end
 end
