@@ -149,15 +149,19 @@ local function test()
 
     local stack_test = "5 5 == print"
 
-    tlang.exec(repeat_test)
+    local args_test = [[
+    {   0 `first `second args
+        first print
+        second print
+    } `test =
+    1 2 test
+    ]]
+
+    tlang.exec(args_test)
 end
 
 if minetest == nil then
     test()
-end
-
-for k, v in pairs(tlang) do
-    print(k, type(v))
 end
 
 return tlang
