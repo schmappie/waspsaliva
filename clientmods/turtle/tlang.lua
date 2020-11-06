@@ -157,7 +157,7 @@ local function test()
     1 2 test
     ]]
 
-    tlang.exec(args_test)
+    tlang.exec(repeat_test)
 end
 
 if minetest == nil then
