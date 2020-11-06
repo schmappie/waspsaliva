@@ -1,5 +1,7 @@
 -- CC0/Unlicense Emilia 2020
 
+local tlang = {}
+
 local function in_list(value, list)
     for k, v in ipairs(list) do
         if v == value then
@@ -38,6 +40,45 @@ end
     wait_target = float
 --]]
 
+-- convert a lua value into a tlang literal
+function tlang.value_to_tlang(value)
+    local t = type(value)
+    if t == "string" then
+        return {type = "string", value = value}
+    elseif t == "number" then
+        return {type = "number", value = value}
+    elseif t == "table" then
+        local map = {}
+
+        for k, v in pairs(value) do
+            map[k] = tlang.value_to_tlang(v)
+        end
+
+        return {type = "map", value = map}
+    end
+end
+
+-- convert a tlang literal to a lua value
+function tlang.tlang_to_value(tl)
+    if not tl or type(tl) ~= "table" then
+        return
+    end
+
+    if tl.type == "map" then
+        local o = {}
+        local oi = 1
+
+        for i, v in ipairs(tl.value) do
+            o[oi] = tlang.tlang_to_value(v)
+            oi = oi + 1
+        end
+
+        return o
+    else
+        return tl.value
+    end
+end
+
 local literals = {
     "quote",
     "code",
@@ -47,7 +88,7 @@ local literals = {
 }
 
 
-local function call(state, target)
+function tlang.call(state, target)
     if target.sg == 0 then
         state.code_stack[#state.code_stack + 1] = state.stack[target.pos]
         table.remove(state.stack, target.pos)
@@ -55,6 +96,10 @@ local function call(state, target)
     end
 
     state.locals[#state.locals + 1] = {pc = target}
+end
+
+function tlang.call_tos(state)
+    tlang.call(state, {sg = 0, pos = #state.stack, elem = 1})
 end
 
 local function find_var_pos(state, name)
@@ -68,22 +113,22 @@ local function find_var_pos(state, name)
     end
 end
 
-local function access(state, name)
+function tlang.near_access(state, name)
     local n = find_var_pos(state, name)
     if n then
         return state.locals[n]["v" .. name]
     end
 end
 
-local function gassign(state, name, value)
+function tlang.global_assign(state, name, value)
     state.locals[0]["v" .. name] = value
 end
 
-local function lassign(state, name, value)
+function tlang.local_assign(state, name, value)
     state.locals[#state.locals]["v" .. name] = value
 end
 
-local function assign(state, name, value)
+function tlang.near_assign(state, name, value)
     local n = find_var_pos(state, name)
     if n then
         state.locals[n]["v" .. name] = value
@@ -101,7 +146,7 @@ local function accesspc(state, pc)
     if pc.sg == 0 then -- stack
         code = state.code_stack[pc.pos]
     elseif pc.sg == 1 then -- global
-        code = access(state, pc.pos)
+        code = tlang.near_access(state, pc.pos)
     end
 
     if code then
@@ -144,18 +189,34 @@ local function getnext(state)
 end
 
 
-local function statepeek(state)
+function tlang.peek_raw(state)
     return state.stack[#state.stack]
 end
 
-local function statepop(state)
-    local tos = statepeek(state)
+function tlang.pop_raw(state)
+    local tos = tlang.peek_raw(state)
     state.stack[#state.stack] = nil
     return tos
 end
 
+function tlang.push_raw(state, value)
+    state.stack[#state.stack + 1] = value
+end
+
+function tlang.peek(state)
+    return tlang.tlang_to_value(tlang.peek_raw(state))
+end
+
+function tlang.pop(state)
+    return tlang.tlang_to_value(tlang.pop_raw(state))
+end
+
+function tlang.push(state, value)
+    return tlang.push_raw(state, tlang.value_to_tlang(value))
+end
+
 local function statepeek_type(state, t)
-    local tos = statepeek(state)
+    local tos = tlang.peek_raw(state)
 
     if tos.type == t then
         return tos
@@ -165,10 +226,10 @@ local function statepeek_type(state, t)
 end
 
 local function statepop_type(state, t)
-    local tos = statepeek(state)
+    local tos = tlang.peek_raw(state)
 
     if tos.type == t then
-        return statepop(state)
+        return tlang.pop_raw(state)
     else
         return nil -- ERROR
     end
@@ -178,42 +239,38 @@ local function statepop_num(state)
     return statepop_type(state, "number")
 end
 
-local function statepush(state, value)
-    state.stack[#state.stack + 1] = value
-end
-
 local function statepush_num(state, number)
-    statepush(state, {type = "number", value = number})
+    tlang.push_raw(state, {type = "number", value = number})
 end
 
 
 
-local builtins = {}
+tlang.builtins = {}
 
-function builtins.run(state)
-    call(state, {sg = 0, pos = #state.stack, elem = 1})
+function tlang.builtins.run(state)
+    tlang.call_tos(state)
 end
 
-builtins["="] = function(state)
+tlang.builtins["="] = function(state)
     local name = statepop_type(state, "quote")
-    local value = statepop(state)
+    local value = tlang.pop_raw(state)
 
-    assign(state, name.value, value)
+    tlang.near_assign(state, name.value, value)
 end
 
-local function unary(func)
+function tlang.unary(func)
     return function(state)
-        local tos = statepop(state)
+        local tos = tlang.pop_raw(state)
         if tos.type == "number" then
             statepush_num(state, func(tos.value))
         elseif tos.type == "quote" then
-            local n = access(state, tos.value)
-            assign(state, tos.value, {type = "number", value = func(n.value)})
+            local n = tlang.near_access(state, tos.value)
+            tlang.near_assign(state, tos.value, {type = "number", value = func(n.value)})
         end
     end
 end
 
-local function binary(func)
+function tlang.binary(func)
     return function(state)
         local tos = statepop_num(state)
         local tos1 = statepop_num(state)
@@ -238,60 +295,60 @@ local function numbool(n)
     end
 end
 
-builtins["--"] = unary(function(v)
+tlang.builtins["--"] = tlang.unary(function(v)
     return v - 1
 end)
 
-builtins["++"] = unary(function(v)
+tlang.builtins["++"] = tlang.unary(function(v)
     return v + 1
 end)
 
-builtins["!"] = unary(function(v)
+tlang.builtins["!"] = tlang.unary(function(v)
     return boolnum(not numbool(v))
 end)
 
-builtins["+"] = binary(function(v1, v2)
+tlang.builtins["+"] = tlang.binary(function(v1, v2)
     return v1 + v2
 end)
 
-builtins["-"] = binary(function(v1, v2)
+tlang.builtins["-"] = tlang.binary(function(v1, v2)
     return v1 - v2
 end)
 
-builtins["*"] = binary(function(v1, v2)
+tlang.builtins["*"] = tlang.binary(function(v1, v2)
     return v1 * v2
 end)
 
-builtins["/"] = binary(function(v1, v2)
+tlang.builtins["/"] = tlang.binary(function(v1, v2)
     return v1 / v2
 end)
 
-builtins["%"] = binary(function(v1, v2)
+tlang.builtins["%"] = tlang.binary(function(v1, v2)
     return v1 % v2
 end)
 
-builtins["=="] = binary(function(v1, v2)
+tlang.builtins["=="] = tlang.binary(function(v1, v2)
     return boolnum(v1 == v2)
 end)
 
-builtins["!="] = binary(function(v1, v2)
+tlang.builtins["!="] = tlang.binary(function(v1, v2)
     return boolnum(v1 ~= v2)
 end)
 
-builtins["if"] = function(state)
+tlang.builtins["if"] = function(state)
     local tos = statepop_type(state, "code")
-    local tos1 = statepop(state)
+    local tos1 = tlang.pop_raw(state)
 
     if tos1.type == "number" then
         if tos1.value ~= 0 then
-            statepush(state, tos)
-            call(state, {sg = 0, pos = #state.stack, elem = 1})
+            tlang.push_raw(state, tos)
+            tlang.call_tos(state)
         end
     end
 end
 
-function builtins.print(state)
-    local value = statepop(state)
+function tlang.builtins.print(state)
+    local value = tlang.pop_raw(state)
 
     if minetest then
         local message = "[tlang] " .. tostring(value.value)
@@ -302,20 +359,20 @@ function builtins.print(state)
     end
 end
 
-function builtins.dup(state)
-    statepush(state, statepeek(state))
+function tlang.builtins.dup(state)
+    tlang.push_raw(state, tlang.peek_raw(state))
 end
 
-function builtins.popoff(state)
+function tlang.builtins.popoff(state)
     state.stack[#state.stack] = nil
 end
 
-function builtins.wait(state)
+function tlang.builtins.wait(state)
     local tos = statepop_type(state, "number")
     state.wait_target = os.clock() + tos.value
 end
 
-builtins["forever"] = function(state)
+tlang.builtins["forever"] = function(state)
     local slen = #state.locals
 
     if state.locals[slen].broke == true then
@@ -331,14 +388,14 @@ builtins["forever"] = function(state)
         state.locals[slen].loop_code = tos
     end
 
-    statepush(state, state.locals[slen].loop_code)
+    tlang.push_raw(state, state.locals[slen].loop_code)
 
     state.locals[slen].pc = state.current_pc
 
-    call(state, {sg = 0, pos = #state.stack, elem = 1})
+    tlang.call_tos(state)
 end
 
-builtins["while"] = function(state)
+tlang.builtins["while"] = function(state)
     local slen = #state.locals
 
     if state.locals[slen].broke == true then
@@ -361,18 +418,18 @@ builtins["while"] = function(state)
 
     -- stage 0, run test
     if state.locals[slen].loop_stage == 0 then
-        statepush(state, state.locals[slen].test_code)
+        tlang.push_raw(state, state.locals[slen].test_code)
         state.locals[slen].pc = state.current_pc
-        call(state, {sg = 0, pos = #state.stack, elem = 1})
+        tlang.call_tos(state)
 
         state.locals[slen].loop_stage = 1
     -- stage 1, run while
     elseif state.locals[slen].loop_stage == 1 then
-        local tos = statepop(state)
+        local tos = tlang.pop_raw(state)
         if tos and tos.value ~= 0 then
-            statepush(state, state.locals[slen].loop_code)
+            tlang.push_raw(state, state.locals[slen].loop_code)
             state.locals[slen].pc = state.current_pc
-            call(state, {sg = 0, pos = #state.stack, elem = 1})
+            tlang.call_tos(state)
         else
             state.locals[slen].pc = state.current_pc
             state.locals[slen].broke = true
@@ -382,7 +439,7 @@ builtins["while"] = function(state)
     end
 end
 
-builtins["repeat"] = function(state)
+tlang.builtins["repeat"] = function(state)
     local slen = #state.locals
 
     if state.locals[slen].broke == true then
@@ -396,18 +453,18 @@ builtins["repeat"] = function(state)
     end
 
     if state.locals[slen].loop_code == nil then
-        local num_var = statepop(state)
+        local num_var = tlang.pop_raw(state)
         local count
         local block
 
         if num_var.type == "quote" then
             count = statepop_num(state)
-            block = statepop_type(state, "code")
             state.locals[slen].loop_var = num_var.value
         else
             count = num_var
-            block = statepop_type(state, "code")
         end
+
+        block = statepop_type(state, "code")
 
         state.locals[slen].loop_code = block
         state.locals[slen].repeat_count = count.value
@@ -416,16 +473,16 @@ builtins["repeat"] = function(state)
 
     if state.locals[slen].repeat_n ~= state.locals[slen].repeat_count then
         if state.locals[slen].loop_var then
-            lassign(state,
+            tlang.local_assign(state,
                 state.locals[slen].loop_var,
                 {type = "number", value = state.locals[slen].repeat_n})
         end
 
-        statepush(state, state.locals[slen].loop_code)
+        tlang.push_raw(state, state.locals[slen].loop_code)
 
         state.locals[slen].pc = state.current_pc
 
-        call(state, {sg = 0, pos = #state.stack, elem = 1})
+        tlang.call_tos(state)
 
         state.locals[slen].repeat_n = state.locals[slen].repeat_n + 1
     else
@@ -434,7 +491,7 @@ builtins["repeat"] = function(state)
     end
 end
 
-builtins["break"] = function(state)
+tlang.builtins["break"] = function(state)
     local slen = #state.locals
     local pos = 0
     local found = false
@@ -460,7 +517,7 @@ builtins["break"] = function(state)
     end
 end
 
-builtins["return"] = function(state)
+tlang.builtins["return"] = function(state)
     state.locals[#state.locals] = nil
 end
 
@@ -470,7 +527,7 @@ end
 -- nil - more to do but waiting
 -- false - finished
 -- string - error
-local step = function(state)
+function tlang.step(state)
     if state.wait_target and os.clock() < state.wait_target then
         return nil
     end
@@ -486,11 +543,11 @@ local step = function(state)
             local f = state.builtins[cur.value]
             f(state)
         else
-            local var = access(state, cur.value)
+            local var = tlang.near_access(state, cur.value)
             if var == nil then
                 return "Undefined identifier: " .. cur.value
             elseif var.type == "code" then
-                call(state, {sg = 1, pos = cur.value, elem = 1})
+                tlang.call(state, {sg = 1, pos = cur.value, elem = 1})
             else
                 state.stack[#state.stack + 1] = var
             end
@@ -500,4 +557,4 @@ local step = function(state)
     return true
 end
 
-return builtins, gassign, step
+return tlang

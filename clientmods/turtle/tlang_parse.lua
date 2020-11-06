@@ -11,6 +11,7 @@ number
 symbol
 --]]
 
+local tlang = {}
 
 local function sublist(list, istart, iend, inclusive)
     local o = {}
@@ -34,7 +35,7 @@ local function sublist(list, istart, iend, inclusive)
 end
 
 
-local parse
+--tlang.parse = function(lexed) end
 
 local function parse_peek(state)
     return state.lexed[state.position]
@@ -70,7 +71,7 @@ local function parse_map(state)
 
             if mr.type == "map_relation" then
                 parse_next(state)
-                local nval = parse({parse_next(state)})
+                local nval = tlang.parse({parse_next(state)})
 
                 if nval == nil then
                     return nil -- ERROR
@@ -82,7 +83,7 @@ local function parse_map(state)
         end
 
         if not skip then
-            local nval = parse({n})
+            local nval = tlang.parse({n})
 
             if nval == nil then
                 return nil -- ERROR
@@ -121,7 +122,7 @@ local function parse_code(state, open, close)
 
     return {
         type = "code",
-        value = parse(sublist(state.lexed, istart, iend))
+        value = tlang.parse(sublist(state.lexed, istart, iend))
     }
 end
 
@@ -161,7 +162,7 @@ end
 
 
 -- parse
-parse = function(lexed)
+function tlang.parse(lexed)
     local state = {lexed = lexed, position = 1}
     local tree = {}
     local treei = 1
@@ -182,4 +183,4 @@ parse = function(lexed)
     end
 end
 
-return parse
+return tlang

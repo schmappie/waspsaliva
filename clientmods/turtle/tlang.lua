@@ -7,9 +7,36 @@ if minetest ~= nil then
     prefix = minetest.get_modpath(minetest.get_current_modname()) .. "/"
 end
 
-tlang.lex = dofile(prefix .. "tlang_lex.lua")
-tlang.parse = dofile(prefix .. "tlang_parse.lua")
-tlang.builtins, tlang.gassign, tlang.step = dofile(prefix .. "tlang_vm.lua")
+local function merge_tables(l1, l2)
+    local out = {}
+
+    for k, v in pairs(l1) do
+        out[k] = v
+    end
+
+    for k, v in pairs(l2) do
+        out[k] = v
+    end
+
+    return out
+end
+
+local function load_api_file(file)
+    tlang = merge_tables(tlang, dofile(prefix .. file))
+end
+
+load_api_file("tlang_lex.lua")
+load_api_file("tlang_parse.lua")
+load_api_file("tlang_vm.lua")
+
+
+function tlang.combine_builtins(b1, b2)
+    return merge_tables(b1, b2)
+end
+
+function tlang.construct_builtins(builtins)
+    return merge_tables(tlang.builtins, builtins)
+end
 
 -- TODO
 --[[
@@ -35,30 +62,6 @@ function tlang.run(state)
     end
 end
 
-local function assign_many(state, source)
-    for k, v in pairs(source) do
-        tlang.gassign(state, k, v)
-    end
-end
-
--- convert a lua value into a tlang literal
-function tlang.valconv(value)
-    local t = type(value)
-    if t == "string" then
-        return {type = "string", value = value}
-    elseif t == "number" then
-        return {type = "number", value = value}
-    elseif t == "table" then
-        local map = {}
-
-        for k, v in pairs(value) do
-            map[k] = tlang.valconv(v)
-        end
-
-        return {type = "map", value = map}
-    end
-end
-
 function tlang.get_state(code)
     local lexed = tlang.lex(code)
     local parsed = tlang.parse(lexed)
@@ -66,8 +69,8 @@ function tlang.get_state(code)
     return {
         locals = {{
             pc = {sg = 1, pos = "__ast__", elem = 1},
-            v__src__ = tlang.valconv(code),
-            v__lex__ = tlang.valconv(lexed),
+            v__src__ = tlang.value_to_tlang(code),
+            v__lex__ = tlang.value_to_tlang(lexed),
             v__ast__ = {type = "code", value = parsed}}},
         stack = {},
         code_stack = {},
@@ -151,6 +154,10 @@ end
 
 if minetest == nil then
     test()
+end
+
+for k, v in pairs(tlang) do
+    print(k, type(v))
 end
 
 return tlang
