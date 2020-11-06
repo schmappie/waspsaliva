@@ -27,7 +27,7 @@ end
         stack = {},
         builtins = {},
         code_stack = {},
-        wait_target = int,
+        wait_target = float,
         nextpop = f/t
     }
 --]]
@@ -36,9 +36,24 @@ end
 --[[
     sg = 0/1,
     pos = int/string,
-    elem = int,
-    wait_target = float
+    elem = int
 --]]
+
+function tlang.boolean_to_number(b)
+    if b then
+        return 1
+    else
+        return 0
+    end
+end
+
+function tlang.number_to_boolean(n)
+    if n ~= 0 then
+        return true
+    else
+        return false
+    end
+end
 
 -- convert a lua value into a tlang literal
 function tlang.value_to_tlang(value)
@@ -47,6 +62,8 @@ function tlang.value_to_tlang(value)
         return {type = "string", value = value}
     elseif t == "number" then
         return {type = "number", value = value}
+    elseif t == "boolean" then
+        return {type = "number", value = tlang.boolean_to_number(value)}
     elseif t == "table" then
         local map = {}
 
@@ -289,22 +306,6 @@ function tlang.binary(func)
     end
 end
 
-local function boolnum(b)
-    if b then
-        return 1
-    else
-        return 0
-    end
-end
-
-local function numbool(n)
-    if n ~= 0 then
-        return true
-    else
-        return false
-    end
-end
-
 tlang.builtins["--"] = tlang.unary(function(v)
     return v - 1
 end)
@@ -314,7 +315,7 @@ tlang.builtins["++"] = tlang.unary(function(v)
 end)
 
 tlang.builtins["!"] = tlang.unary(function(v)
-    return boolnum(not numbool(v))
+    return tlang.boolean_to_number(not tlang.number_to_boolean(v))
 end)
 
 tlang.builtins["+"] = tlang.binary(function(v1, v2)
@@ -338,11 +339,11 @@ tlang.builtins["%"] = tlang.binary(function(v1, v2)
 end)
 
 tlang.builtins["=="] = tlang.binary(function(v1, v2)
-    return boolnum(v1 == v2)
+    return tlang.boolean_to_number(v1 == v2)
 end)
 
 tlang.builtins["!="] = tlang.binary(function(v1, v2)
-    return boolnum(v1 ~= v2)
+    return tlang.boolean_to_number(v1 ~= v2)
 end)
 
 tlang.builtins["if"] = function(state)
