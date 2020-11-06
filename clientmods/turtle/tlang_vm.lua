@@ -164,25 +164,30 @@ end
 
 local function getnext(state)
     if state.locals[#state.locals].nextpop then
+        local pc = getpc(state)
+
         state.locals[#state.locals] = nil
         if #state.locals == 0 then
             return nil
         end
 
         -- pop code stack
-        local pc = getpc(state)
         if pc.sg == 0 then
             state.code_stack[pc.pos] = nil
         end
     end
 
-    state.current_pc = getpc(state)
-    local current = accesspc(state, state.current_pc)
+    local current
+    if not state.locals[#state.locals].nextpop then
+        state.current_pc = getpc(state)
+        current = accesspc(state, state.current_pc)
+    end
 
     local incd = incpc(state, getpc(state))
-    state.locals[#state.locals].pc = incd
     if not incd then
         state.locals[#state.locals].nextpop = true
+    else
+        state.locals[#state.locals].pc = incd
     end
 
     return current
@@ -519,6 +524,27 @@ end
 
 tlang.builtins["return"] = function(state)
     state.locals[#state.locals] = nil
+end
+
+tlang.builtins["args"] = function(state)
+    local vars = {}
+    local vari = 1
+
+    while true do
+        local n = tlang.pop_raw(state)
+        if n.type == "quote" then
+            vars[vari] = n.value
+            vari = vari + 1
+        elseif n.type == "number" and n.value == 0 then
+            break
+        else
+            return false
+        end
+    end
+
+    for i, v in ipairs(vars) do
+        tlang.local_assign(state, v, tlang.pop_raw(state))
+    end
 end
 
 
