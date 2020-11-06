@@ -190,6 +190,8 @@ local function getnext(state)
         if pc.sg == 0 then
             state.code_stack[pc.pos] = nil
         end
+
+        return getnext(state)
     end
 
     local current
@@ -352,6 +354,15 @@ tlang.builtins["if"] = function(state)
 
     if tos1.type == "number" then
         if tos1.value ~= 0 then
+            tlang.push_raw(state, tos)
+            tlang.call_tos(state)
+        end
+    elseif tos1.type == "code" then
+        local tos2 = statepop_num(state)
+        if tos2.value ~= 0 then
+            tlang.push_raw(state, tos1)
+            tlang.call_tos(state)
+        else
             tlang.push_raw(state, tos)
             tlang.call_tos(state)
         end

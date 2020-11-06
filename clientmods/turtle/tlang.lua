@@ -157,7 +157,29 @@ local function test()
     1 2 test
     ]]
 
-    tlang.exec(repeat_test)
+    local ifelse_test = [[
+        {
+            {
+                'if' print
+            } {
+                'else' print
+            } if
+        } `ifprint =
+
+        1 ifprint
+        0 ifprint
+    ]]
+
+    local nest_run = [[
+        {
+            {
+                'innermost' print
+            } run
+        } run
+        'work' print
+    ]]
+
+    tlang.exec(ifelse_test)
 end
 
 if minetest == nil then
