@@ -85,6 +85,10 @@ function tlang.exec(code)
     tlang.run(state)
 end
 
+function tlang.pretty_pc(pc)
+    return tostring(pc.sg) .. ";" .. tostring(pc.pos) .. ";" .. tostring(pc.elem)
+end
+
 
 local function test()
     local complex = [[{dup *} `square =

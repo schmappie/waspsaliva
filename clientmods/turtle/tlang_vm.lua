@@ -117,6 +117,39 @@ function tlang.call_tos(state)
     tlang.call(state, {sg = 0, pos = #state.stack, elem = 1})
 end
 
+function tlang.call_var(state, name)
+    tlang.call(state, {sg = 1, pos = name, elem = 1})
+end
+
+function tlang.call_builtin(state, name)
+    local f = state.builtins[name]
+    f(state)
+end
+
+function tlang.call_var_or_builtin(state, name)
+    if in_keys(name, state.builtins) then
+        tlang.call_builtin(state, name)
+    else
+        tlang.call_var(state, name)
+    end
+end
+
+function tlang.push_values(state, vals)
+    for i, v in ipairs(vals) do
+        tlang.push(state, v)
+    end
+end
+
+function tlang.lua_call_tos(state, ...)
+    tlang.push_values(state, {...})
+    tlang.call_tos(state)
+end
+
+function tlang.lua_call_var(state, name, ...)
+    tlang.push_values(state, {...})
+    tlang.call_var(state, name)
+end
+
 local function find_var_pos(state, name)
     local slen = #state.locals
 
@@ -152,7 +185,7 @@ function tlang.near_assign(state, name, value)
     end
 end
 
-local function getpc(state)
+function tlang.get_pc(state)
     return state.locals[#state.locals].pc
 end
 
@@ -169,7 +202,7 @@ local function accesspc(state, pc)
     end
 end
 
-local function incpc(state, pc)
+function tlang.increment_pc(state, pc)
     local next_pc = {sg = pc.sg, pos = pc.pos, elem = pc.elem + 1}
 
     if accesspc(state, next_pc) then
@@ -179,12 +212,14 @@ end
 
 local function getnext(state)
     if state.locals[#state.locals].nextpop then
-        local pc = getpc(state)
+        local pc = tlang.get_pc(state)
 
-        state.locals[#state.locals] = nil
-        if #state.locals == 0 then
+        -- allows for finished states to be used in calls
+        if #state.locals == 1 then
             return nil
         end
+
+        state.locals[#state.locals] = nil
 
         -- pop code stack
         if pc.sg == 0 then
@@ -196,11 +231,11 @@ local function getnext(state)
 
     local current
     if not state.locals[#state.locals].nextpop then
-        state.current_pc = getpc(state)
+        state.current_pc = tlang.get_pc(state)
         current = accesspc(state, state.current_pc)
     end
 
-    local incd = incpc(state, getpc(state))
+    local incd = tlang.increment_pc(state, tlang.get_pc(state))
     if not incd then
         state.locals[#state.locals].nextpop = true
     else
@@ -346,6 +381,32 @@ end)
 
 tlang.builtins["!="] = tlang.binary(function(v1, v2)
     return tlang.boolean_to_number(v1 ~= v2)
+end)
+
+tlang.builtins[">="] = tlang.binary(function(v1, v2)
+    return tlang.boolean_to_number(v1 >= v2)
+end)
+
+tlang.builtins["<="] = tlang.binary(function(v1, v2)
+    return tlang.boolean_to_number(v1 <= v2)
+end)
+
+tlang.builtins[">"] = tlang.binary(function(v1, v2)
+    return tlang.boolean_to_number(v1 > v2)
+end)
+
+tlang.builtins["<"] = tlang.binary(function(v1, v2)
+    return tlang.boolean_to_number(v1 < v2)
+end)
+
+tlang.builtins["&&"] = tlang.binary(function(v1, v2)
+    return tlang.boolean_to_number(
+        tlang.number_to_boolean(v1) and tlang.number_to_boolean(v2))
+end)
+
+tlang.builtins["||"] = tlang.binary(function(v1, v2)
+    return tlang.boolean_to_number(
+        tlang.number_to_boolean(v1) or tlang.number_to_boolean(v2))
 end)
 
 tlang.builtins["if"] = function(state)
@@ -578,8 +639,13 @@ function tlang.step(state)
     local cur = getnext(state)
 
     if cur == nil then
+        state.finished = true
         return false
-    elseif in_list(cur.type, literals) then
+    else
+        state.finished = false
+    end
+
+    if in_list(cur.type, literals) then
         state.stack[#state.stack + 1] = cur
     elseif cur.type == "identifier" or cur.type == "symbol" then
         if in_keys(cur.value, state.builtins) then
@@ -590,7 +656,7 @@ function tlang.step(state)
             if var == nil then
                 return "Undefined identifier: " .. cur.value
             elseif var.type == "code" then
-                tlang.call(state, {sg = 1, pos = cur.value, elem = 1})
+                tlang.call_var(state, cur.value)
             else
                 state.stack[#state.stack + 1] = var
             end
