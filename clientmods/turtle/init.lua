@@ -350,8 +350,17 @@ minetest.register_chatcommand("tlang", {
     end
 })
 
-minetest.register_chatcommand("tkill", {
-    description = "Kill tlang task.",
+minetest.register_chatcommand("tl_list", {
+    description = "List running tlang states.",
+    func = function()
+        for i, v in ipairs(turtle.states) do
+            minetest.display_chat_message(tostring(i) .. " " .. v.name)
+        end
+    end
+})
+
+minetest.register_chatcommand("tl_kill", {
+    description = "Kill a tlang task.",
     params = "<task name>",
     func = turtle.kill_symbolic
 })
