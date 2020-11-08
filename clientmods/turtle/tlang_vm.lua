@@ -28,6 +28,7 @@ end
         builtins = {},
         code_stack = {},
         wait_target = float,
+        paused = f/t,
         nextpop = f/t
     }
 --]]
@@ -632,7 +633,7 @@ end
 -- false - finished
 -- string - error
 function tlang.step(state)
-    if state.wait_target and os.clock() < state.wait_target then
+    if state.paused or state.wait_target and os.clock() < state.wait_target then
         return nil
     end
 
