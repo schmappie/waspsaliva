@@ -467,9 +467,22 @@ tlang.builtins["forever"] = function(state)
     end
 
     if state.locals[slen].loop_code == nil then
-        local tos = statepop_type(state, "code")
+        local tos = statepop(state)
 
-        state.locals[slen].loop_code = tos
+        if tos.type == "code" then
+            state.locals[slen].loop_code = tos
+        elseif tos.type == "quote" then
+            state.locals[slen].loop_code = statepop_type(state, "code")
+            state.locals[slen].repeat_n = 0
+            state.locals[slen].loop_var = tos.value
+        end
+    end
+
+    if state.locals[slen].loop_var then
+        tlang.local_assign(state,
+                state.locals[slen].loop_var,
+                {type = "number", value = state.locals[slen].repeat_n})
+        state.locals[slen].repeat_n = state.locals[slen].repeat_n + 1
     end
 
     tlang.push_raw(state, state.locals[slen].loop_code)

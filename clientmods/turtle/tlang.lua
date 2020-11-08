@@ -74,9 +74,7 @@ function tlang.get_state(code)
             v__ast__ = {type = "code", value = parsed}}},
         stack = {},
         code_stack = {},
-        builtins = tlang.builtins,
-        wait_target = nil,
-        nextpop = false
+        builtins = tlang.builtins
     }
 end
 
