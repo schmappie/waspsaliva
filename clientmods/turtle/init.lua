@@ -327,7 +327,7 @@ function turtle.pause_symbolic(name)
     local dead = turtle.get_symbolic(name)
 
     for i, v in ipairs(dead) do
-        turtle.states[v].paused = true
+        turtle.states[v].state.paused = true
     end
 end
 
@@ -335,7 +335,7 @@ function turtle.resume_symbolic(name)
     local dead = turtle.get_symbolic(name)
 
     for i, v in ipairs(dead) do
-        turtle.states[v].paused = nil
+        turtle.states[v].state.paused = nil
     end
 end
 
