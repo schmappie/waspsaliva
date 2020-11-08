@@ -467,7 +467,7 @@ tlang.builtins["forever"] = function(state)
     end
 
     if state.locals[slen].loop_code == nil then
-        local tos = statepop(state)
+        local tos = tlang.pop_raw(state)
 
         if tos.type == "code" then
             state.locals[slen].loop_code = tos
@@ -646,7 +646,7 @@ end
 -- false - finished
 -- string - error
 function tlang.step(state)
-    if state.paused or state.wait_target and os.clock() < state.wait_target then
+    if state.paused or (state.wait_target and os.clock() < state.wait_target) then
         return nil
     end
 
