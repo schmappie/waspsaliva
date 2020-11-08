@@ -303,17 +303,39 @@ function turtle.schedule(name, state)
     turtle.states_available = true
 end
 
-function turtle.kill_symbolic(name)
+function turtle.get_symbolic(name)
     local dead = {}
 
     for i, v in ipairs(turtle.states) do
-        if v.name == name then
+        if i == name or v.name == name then
             dead[#dead + 1] = i
         end
     end
 
+    return dead
+end
+
+function turtle.kill_symbolic(name)
+    local dead = turtle.get_symbolic(name)
+
     for i, v in ipairs(dead) do
         table.remove(turtle.states, v)
+    end
+end
+
+function turtle.pause_symbolic(name)
+    local dead = turtle.get_symbolic(name)
+
+    for i, v in ipairs(dead) do
+        turtle.states[v].paused = true
+    end
+end
+
+function turtle.resume_symbolic(name)
+    local dead = turtle.get_symbolic(name)
+
+    for i, v in ipairs(dead) do
+        turtle.states[v].paused = nil
     end
 end
 
@@ -360,7 +382,19 @@ minetest.register_chatcommand("tl_list", {
 })
 
 minetest.register_chatcommand("tl_kill", {
-    description = "Kill a tlang task.",
-    params = "<task name>",
+    description = "Kill a tlang state.",
+    params = "<task>",
     func = turtle.kill_symbolic
+})
+
+minetest.register_chatcommand("tl_pause", {
+    description = "Pause a tlang state.",
+    params = "<task>",
+    func = turtle.pause_symbolic
+})
+
+minetest.register_chatcommand("tl_resume", {
+    description = "Resume a tlang state.",
+    params = "<task>",
+    func = turtle.resume_symbolic
 })
