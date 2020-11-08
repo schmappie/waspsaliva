@@ -86,12 +86,16 @@ function round2(num, numDecimalPlaces)
   return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
 end
 
+local last_sprint = false
+
 minetest.register_globalstep(function()
     autofly.checkfall()
     if minetest.settings:get_bool("autosprint") or (minetest.settings:get_bool("continuous_forward") and minetest.settings:get_bool("autofsprint")) then
         core.set_keypress("special1", true)
-    else
+        last_sprint = true
+    elseif last_sprint then
         core.set_keypress("special1", false)
+        last_sprint = false
     end
 
 
