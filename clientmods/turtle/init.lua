@@ -150,9 +150,9 @@ function turtle.dircoord(f, y, r)
     elseif between(rot, 135, 225) then -- south
         return turtle.relcoord(-r, y, -f)
     elseif between(rot, 225, 315) then -- east
-        return turtle.relcoord(f, y, r)
+        return turtle.relcoord(f, y, -r)
     elseif between(rot, 45, 135) then -- west
-        return turtle.relcoord(-f, y, -r)
+        return turtle.relcoord(-f, y, r)
     end
     return turtle.relcoord(0, 0, 0)
 end
