@@ -10,14 +10,11 @@ local nextsc=0
 
 
 minetest.register_globalstep(function()
-    if not minetest.settings:get_bool("randomsc") then
-        return
-    end
-
+    if not minetest.settings:get_bool("randomsc") then return end
     if os.time() < nextsc then return end
     math.randomseed(os.clock())
     nextsc=os.time() + ( interval * 60 ) + math.random(rnd * 60)
-    minetest.take_screenshot()
+    minetest.after("5.0",minetest.take_screenshot)
 
 end)
 
