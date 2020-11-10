@@ -467,6 +467,8 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("movement_liquid_fluidity_smooth", "0.5");
 	settings->setDefault("movement_liquid_sink", "10");
 	settings->setDefault("movement_gravity", "9.81");
+	settings->setDefault("movement_ignore_server_speed", "false");
+
 
 	// Liquids
 	settings->setDefault("liquid_loop_max", "100000");

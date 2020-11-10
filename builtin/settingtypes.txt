@@ -1225,6 +1225,9 @@ movement_acceleration_air (Acceleration in air) float 2
 #    in nodes per second per second.
 movement_acceleration_fast (Fast mode acceleration) float 10
 
+#    Ignore server sent walk speed
+movement_ignore_server_speed (Ignore Server Sent Speed) bool false
+
 #    Walking and flying speed, in nodes per second.
 movement_speed_walk (Walking speed) float 4
 

@@ -523,11 +523,17 @@ void Client::handleCommand_Movement(NetworkPacket* pkt)
 
 	*pkt >> mad >> maa >> maf >> msw >> mscr >> msf >> mscl >> msj
 		>> lf >> lfs >> ls >> g;
-
-	player->movement_acceleration_default   = mad * BS;
+    if(g_settings->getBool("movement_ignore_server_speed") )
+    {
+		player->movement_speed_walk = g_settings->getFloat("movement_speed_walk") * BS;
+    }
+    else
+    {
+		player->movement_speed_walk             = msw * BS;
+    }
+    player->movement_acceleration_default   = mad * BS;
 	player->movement_acceleration_air       = maa * BS;
 	player->movement_acceleration_fast      = maf * BS;
-	player->movement_speed_walk             = msw * BS;
 	player->movement_speed_crouch           = mscr * BS;
 	player->movement_speed_fast             = msf * BS;
 	player->movement_speed_climb            = mscl * BS;
