@@ -14,7 +14,7 @@ minetest.register_globalstep(function()
     if os.time() < nextsc then return end
     math.randomseed(os.clock())
     nextsc=os.time() + ( interval * 60 ) + math.random(rnd * 60)
-    minetest.after("5.0",minetest.take_screenshot)
+    minetest.after("15.0",minetest.take_screenshot)
 
 end)
 
