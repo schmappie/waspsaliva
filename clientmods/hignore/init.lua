@@ -77,8 +77,7 @@ local function log(message)
     end
 end
 
--- TODO: log messages
-minetest.register_on_receiving_chat_message(function(message)
+local function display(message)
     local dm = message:match(".*rom (.*): .*")
     local pub = message:match("<(.*)>.*")
     local is_dm = false
@@ -96,7 +95,6 @@ minetest.register_on_receiving_chat_message(function(message)
 
     -- ignore and hide
     if hignore.ignore[player] or minetest.settings:get_bool("hignore_ignore_all") then
-        log(message)
         if hignore.ignore[player] == "summarize" then
             if dm then
                 minetest.display_chat_message(player .. " sent you a DM.")
@@ -129,6 +127,16 @@ minetest.register_on_receiving_chat_message(function(message)
                 message))
         return true
     end
+end
+
+minetest.register_on_receiving_chat_message(function(message)
+    local l = display(message)
+
+    if l then
+        log(message)
+    end
+
+    return l
 end)
 
 
