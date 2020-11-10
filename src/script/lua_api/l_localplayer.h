@@ -123,6 +123,9 @@ private:
 	// get_object(self)
 	static int l_get_object(lua_State *L);
 
+	// set_override_speed
+	static int l_set_override_speed(lua_State *L);
+
 	LocalPlayer *m_localplayer = nullptr;
 
 public:

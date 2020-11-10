@@ -504,7 +504,6 @@ int LuaLocalPlayer::l_get_object(lua_State *L)
 	return 1;
 }
 
-
 LuaLocalPlayer *LuaLocalPlayer::checkobject(lua_State *L, int narg)
 {
 	luaL_checktype(L, narg, LUA_TUSERDATA);
@@ -528,6 +527,14 @@ LocalPlayer *LuaLocalPlayer::getobject(lua_State *L, int narg)
 	LocalPlayer *player = getobject(ref);
 	assert(player);
 	return player;
+}
+
+int LuaLocalPlayer::l_set_override_speed(lua_State *L)
+{
+	LocalPlayer *player = getobject(L, 1);
+	g_settings->setBool("movement_ignore_server_speed",true);
+	player->movement_speed_walk = g_settings->getFloat("movement_speed_walk") * BS;
+	return 0;
 }
 
 int LuaLocalPlayer::gc_object(lua_State *L)
@@ -604,6 +611,7 @@ const luaL_Reg LuaLocalPlayer::methods[] = {
 
 		luamethod(LuaLocalPlayer, get_nearby_objects),
 		luamethod(LuaLocalPlayer, get_object),
+		luamethod(LuaLocalPlayer, set_override_speed),
 
 		{0, 0}
 };
