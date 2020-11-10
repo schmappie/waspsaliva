@@ -471,10 +471,10 @@ int ModApiClient::l_get_inventory(lua_State *L)
 		inventory_location.deSerialize(location);
 		inventory = client->getInventory(inventory_location);
 
-        if (!inventory) {
-            lua_pushnil(L);
-            return 1;
-        }
+		if (!inventory) {
+			lua_pushnil(L);
+			return 1;
+		}
 
 		push_inventory(L, inventory);
 	} catch (SerializationError &) {
