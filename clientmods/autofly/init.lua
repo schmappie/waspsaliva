@@ -456,16 +456,16 @@ function autofly.aim(tpos)
 
 end
 
-function autofly.autotp(tpos)
+function autofly.autotp(tpname)
    if minetest.localplayer == nil then return end
-    if tpos == nil then
+    local tpos=nil
+    if tpname == nil then
         tpos = autofly.get_waypoint('AUTOTP')
-     --    minetest.display_chat_message(dump(tpos))
+    else
+        tpos=autofly.get_waypoint(tpname)
     end
     if tpos == nil then return end
     local lp=minetest.localplayer
-    -- minetest.display_chat_message(dump(tpos.x))
-   -- if true then return end
     local dst=vector.distance(lp:get_pos(),tpos)
     if (dst < 100) then
         autofly.delete_waypoint('AUTOTP')
