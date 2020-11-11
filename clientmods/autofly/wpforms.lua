@@ -23,7 +23,7 @@ function autofly.display_formspec()
                      'button_exit[0,7.5;1,0.5;goto;GO]' ..
                      'button_exit[0.8,7.5;1,0.5;display;SHO]' ..
                      'button[1.5125,7.5;0.9,0.5;warp;wrp]' ..
-                     'button[2.125,7.5;1.2,0.5;warpae;w+e]' ..
+                     'button[2.125,7.5;1.2,0.5;autotp;w+e]' ..
                      'button[2.625,7.5;1.3,0.5;rename;Rename]' ..
                      'button[3.9375,7.5;1.3,0.5;delete;Delete]' ..
                      'textlist[0,0.75;5,6;marker;'
@@ -98,8 +98,8 @@ minetest.register_on_formspec_input(function(formname, fields)
         if not autofly.warp(name) then
                 minetest.display_chat_message('warp error')
             end
-        elseif fields.warpae then
-            if not autofly.warpae(name) then
+        elseif fields.autotp then
+            if not autofly.autotp(name) then
                 minetest.display_chat_message('warpandexit error')
             end
         elseif fields.rename then
