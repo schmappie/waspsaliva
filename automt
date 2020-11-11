@@ -5,6 +5,6 @@ usr=$2
 pas=$3
 mtpath=$(dirname $0)
 while true; do
-    $mtpath/bin/minetest --go --server $srv --name $usr --password $pas
+    $mtpath/bin/minetest --go --address $srv --name $usr --password $pas
     sleep 2
 done
