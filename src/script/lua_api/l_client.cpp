@@ -520,28 +520,23 @@ int ModApiClient::l_take_screenshot(lua_State *L)
 //interact_use()
 int ModApiClient::l_interact(lua_State *L)
 {
-	//LocalPlayer *player = getClient(L)->getEnv().getLocalPlayer();
 	Camera *camera = getClient(L)->getCamera();
 	const v3f camera_direction = camera->getDirection();
 	const v3s16 camera_offset  = camera->getOffset();
-	u16 t = luaL_checknumber(L, 1);
-	/*
-		Calculate what block is the crosshair pointing to
-	*/
+	u8 t = luaL_checknumber(L, 1);
+	if(t < 5) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
 	IItemDefManager *itemdef_manager = createItemDefManager();
 	ItemStack selected_item, hand_item;
-	//const ItemStack &tool_item = player->getWieldedItem(&selected_item, &hand_item);
-
 	const ItemDefinition &selected_def = selected_item.getDefinition(itemdef_manager);
 	f32 d = getToolRange(selected_def, hand_item.getDefinition(itemdef_manager));
-
 	if (g_settings->getBool("increase_tool_range"))
 		d += 2;
 	if (g_settings->getBool("increase_tool_range_plus"))
 		d = 1000;
-
 	core::line3d<f32> shootline;
-
 	switch (camera->getCameraMode()) {
 	case CAMERA_MODE_FIRST:
 		// Shoot from camera position, with bobbing
@@ -586,7 +581,7 @@ int ModApiClient::l_interact(lua_State *L)
 	}
 
 	lua_pushboolean(L, true);
-	return 1;
+	return 0;
 }
 
 void ModApiClient::Initialize(lua_State *L, int top)
