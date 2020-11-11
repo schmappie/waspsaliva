@@ -517,6 +517,58 @@ int ModApiClient::l_take_screenshot(lua_State *L)
 	return 1;
 }
 
+//interact_use()
+int ModApiClient::l_interact_place(lua_State *L)
+{
+	//LocalPlayer *player = getClient(L)->getEnv().getLocalPlayer();
+	Camera *camera = getClient(L)->getCamera();
+	const v3f camera_direction = camera->getDirection();
+	const v3s16 camera_offset  = camera->getOffset();
+	/*
+		Calculate what block is the crosshair pointing to
+	*/
+	IItemDefManager *itemdef_manager = createItemDefManager();
+	ItemStack selected_item, hand_item;
+	//const ItemStack &tool_item = player->getWieldedItem(&selected_item, &hand_item);
+
+	const ItemDefinition &selected_def = selected_item.getDefinition(itemdef_manager);
+	f32 d = getToolRange(selected_def, hand_item.getDefinition(itemdef_manager));
+
+	if (g_settings->getBool("increase_tool_range"))
+		d += 2;
+	if (g_settings->getBool("increase_tool_range_plus"))
+		d = 1000;
+
+	core::line3d<f32> shootline;
+
+	switch (camera->getCameraMode()) {
+	case CAMERA_MODE_FIRST:
+		// Shoot from camera position, with bobbing
+		shootline.start = camera->getPosition();
+		break;
+	case CAMERA_MODE_THIRD:
+		// Shoot from player head, no bobbing
+		shootline.start = camera->getHeadPosition();
+		break;
+	case CAMERA_MODE_THIRD_FRONT:
+		shootline.start = camera->getHeadPosition();
+		// prevent player pointing anything in front-view
+		d = 0;
+		break;
+	}
+	shootline.end = shootline.start + camera_direction * BS * d;
+	GameRunData runData = GameRunData();
+
+	PointedThing pointed = g_game->updatePointedThing(shootline,
+			selected_def.liquids_pointable,
+			!runData.ldown_for_dig,
+			camera_offset);
+
+	getClient(L)->interact(INTERACT_PLACE, pointed);
+	lua_pushboolean(L, true);
+	return 1;
+}
+
 void ModApiClient::Initialize(lua_State *L, int top)
 {
 	API_FCT(get_current_modname);
@@ -551,4 +603,5 @@ void ModApiClient::Initialize(lua_State *L, int top)
 	API_FCT(set_keypress);
 	API_FCT(drop_selected_item);
 	API_FCT(take_screenshot);
+	API_FCT(interact_place);
 }
