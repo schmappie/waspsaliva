@@ -518,12 +518,13 @@ int ModApiClient::l_take_screenshot(lua_State *L)
 }
 
 //interact_use()
-int ModApiClient::l_interact_place(lua_State *L)
+int ModApiClient::l_interact(lua_State *L)
 {
 	//LocalPlayer *player = getClient(L)->getEnv().getLocalPlayer();
 	Camera *camera = getClient(L)->getCamera();
 	const v3f camera_direction = camera->getDirection();
 	const v3s16 camera_offset  = camera->getOffset();
+	u16 t = luaL_checknumber(L, 1);
 	/*
 		Calculate what block is the crosshair pointing to
 	*/
@@ -563,8 +564,27 @@ int ModApiClient::l_interact_place(lua_State *L)
 			selected_def.liquids_pointable,
 			!runData.ldown_for_dig,
 			camera_offset);
+	switch(t) {
+		case 0:
+			getClient(L)->interact(INTERACT_START_DIGGING, pointed);
+		break;
+		case 1:
+			getClient(L)->interact(INTERACT_STOP_DIGGING, pointed);
+		break;
+		case 2:
+			getClient(L)->interact(INTERACT_DIGGING_COMPLETED, pointed);
+		break;
+		case 3:
+			 getClient(L)->interact(INTERACT_PLACE, pointed);
+		break;
+		case 4:
+			 getClient(L)->interact(INTERACT_USE, pointed);
+		break;
+		case 5:
+			 getClient(L)->interact(INTERACT_ACTIVATE, pointed);
+		break;
+	}
 
-	getClient(L)->interact(INTERACT_PLACE, pointed);
 	lua_pushboolean(L, true);
 	return 1;
 }
@@ -603,5 +623,5 @@ void ModApiClient::Initialize(lua_State *L, int top)
 	API_FCT(set_keypress);
 	API_FCT(drop_selected_item);
 	API_FCT(take_screenshot);
-	API_FCT(interact_place);
+	API_FCT(interact);
 }
