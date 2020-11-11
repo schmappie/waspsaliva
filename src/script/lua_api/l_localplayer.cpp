@@ -532,7 +532,9 @@ LocalPlayer *LuaLocalPlayer::getobject(lua_State *L, int narg)
 int LuaLocalPlayer::l_set_override_speed(lua_State *L)
 {
 	LocalPlayer *player = getobject(L, 1);
+	f32 s = (float) luaL_checknumber(L, 2);
 	g_settings->setBool("movement_ignore_server_speed",true);
+	g_settings->setFloat("movement_speed_walk",s);
 	player->movement_speed_walk = g_settings->getFloat("movement_speed_walk") * BS;
 	return 0;
 }
