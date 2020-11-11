@@ -524,7 +524,7 @@ int ModApiClient::l_interact(lua_State *L)
 	const v3f camera_direction = camera->getDirection();
 	const v3s16 camera_offset  = camera->getOffset();
 	u8 t = luaL_checknumber(L, 1);
-	if(t < 5) {
+	if(t > 5) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
