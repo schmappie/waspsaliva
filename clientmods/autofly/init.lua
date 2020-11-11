@@ -89,6 +89,7 @@ end
 local last_sprint = false
 
 minetest.register_globalstep(function()
+   -- if autofly.get_waypoint('AUTOTP') ~= '' then autofly.autotp(nil) end
     autofly.checkfall()
     if minetest.settings:get_bool("autosprint") or (minetest.settings:get_bool("continuous_forward") and minetest.settings:get_bool("autofsprint")) then
         core.set_keypress("special1", true)
@@ -420,6 +421,13 @@ minetest.register_chatcommand('clear_waypoint', {
 
     end,
 })
+minetest.register_chatcommand('atp', {
+    params      = 'position',
+    description = 'autotp',
+    func = function(param)
+      autofly.autotp(param)
+    end
+})
 
 minetest.register_on_death(function()
     if minetest.localplayer then
@@ -447,6 +455,42 @@ function autofly.aim(tpos)
     minetest.localplayer:set_yaw(yyaw)
     minetest.localplayer:set_pitch(pitch)
 
+end
+
+function autofly.autotp(tpos)
+   if minetest.localplayer == nil then return end
+   local lp=nil
+   for k, v in ipairs(minetest.localplayer.get_nearby_objects(1)) do
+    if v:is_player() and v:get_name() == minetest.localplayer:get_name() then
+            lp=v break      end
+   end
+    for k, v in ipairs(minetest.localplayer.get_nearby_objects(5)) do
+        local txt = v:get_item_textures()
+        --minetest.log(txt)
+		if ( txt:find('mcl_boats_texture')) then
+            --v:right_click(lp)
+            autofly.aim(vector.add(v:get_pos(),{x=0,y=-1.5,z=0}))
+            minetest.after("0.5",minetest.interact_place)
+                --minetest.log(txt)
+			return
+        end
+    end
+    if true then return end
+
+    if tpos == nil then
+        local tpos = autofly.get_waypoint('AUTOTP')
+        if tpos == '' then return end
+    end
+    local lp=minetest.localplayer
+    local dst=vector.distance(lp.get_pos(),tpos)
+    if (dst < 100) then
+        autofly.delete_waypoint('AUTOTP')
+        return
+    end
+
+
+    autofly.set_waypoint(tpos,'AUTOTP')
+    autofly.warpae(tpos)
 end
 
 
