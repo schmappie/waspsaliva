@@ -467,28 +467,29 @@ function autofly.autotp(tpname)
     if tpos == nil then return end
     local lp=minetest.localplayer
     local dst=vector.distance(lp:get_pos(),tpos)
-    if (dst < 100) then
+    if (dst < 500) then
         autofly.delete_waypoint('AUTOTP')
         return
     end
     autofly.set_waypoint(tpos,'AUTOTP')
-    for k, v in ipairs(lp.get_nearby_objects(5)) do
+    for k, v in ipairs(lp.get_nearby_objects(4)) do
         local txt = v:get_item_textures()
 		if ( txt:find('mcl_boats_texture')) then
             autofly.aim(vector.add(v:get_pos(),{x=0,y=-1.5,z=0}))
             minetest.after("0.2",function()
                 minetest.interact(3) end)
             minetest.after("2.5",function()
-                 --minetest.display_chat_message(dump(tpos))
                  autofly.warpae('AUTOTP')
               end)
 			return
         end
     end
+    autofly.delete_waypoint('AUTOTP')
 end
- minetest.after("3.0",function()
+
+minetest.after("3.0",function()
     if autofly.get_waypoint('AUTOTP') ~= nil then autofly.autotp(nil) end
- end)
+end)
 
 register_chatcommand_alias('clear_waypoint', 'cwp','cls')
 
