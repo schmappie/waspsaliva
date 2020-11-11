@@ -479,7 +479,7 @@ function autofly.autotp(tpos)
             minetest.after("0.2",minetest.interact_place)
             minetest.after("2.5",function()
                  --minetest.display_chat_message(dump(tpos))
-                 autofly.warpae('AUTOTPff')
+                 autofly.warpae('AUTOTP')
               end)
 			return
         end
