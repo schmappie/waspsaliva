@@ -195,7 +195,7 @@ function autofly.arrived()
         minetest.settings:set("continuous_forward", "false")
         minetest.settings:set("afly_autoaim", "false")
         autofly.set_hud_info("Arrived at destination")
-        minetest.sound_play({name = "sounds/autofly_arrived", gain = 1.0})
+        minetest.sound_play({name = "default_dug_metal", gain = 1.0})
         wpr=false
         twpname=nil
 end
@@ -468,6 +468,7 @@ function autofly.autotp(tpname)
     local lp=minetest.localplayer
     local dst=vector.distance(lp:get_pos(),tpos)
     if (dst < 500) then
+        minetest.sound_play({name = "default_dug_metal", gain = 1.0})
         autofly.delete_waypoint('AUTOTP')
         return
     end
@@ -484,6 +485,7 @@ function autofly.autotp(tpname)
 			return
         end
     end
+    minetest.sound_play({name = "default_dug_metal", gain = 1.0})
     autofly.delete_waypoint('AUTOTP')
 end
 
