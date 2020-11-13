@@ -183,7 +183,9 @@ local function test()
 
     local mapid_test = "this.that.2.here .81..wao.88912"
 
-    tlang.exec(ifelse_test)
+    local paren_test = "('works' print) 'out' print"
+
+    tlang.exec(paren_test)
 end
 
 if minetest == nil then
