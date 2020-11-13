@@ -26,6 +26,7 @@ literal
     number
     quote
     identifier
+    mapid   -- TEMP
     string
 symbol
 code_open
@@ -43,7 +44,7 @@ local whitespace = {" ", "\t", "\n", "\r", "\v"}
 local identifier_start = {
     "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
     "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
-    "_"
+    "_", "."
 }
 local identifier_internal = {
     "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
@@ -101,9 +102,7 @@ local function lex_whitespace(state)
     end
 end
 
-
-local function lex_identifier(state)
-    --lex_next(state) -- skip first (should be verified as in identifier_start)
+local function lex_identifier_raw(state, top)
     local identifier = {}
     local n = 1
 
@@ -112,12 +111,36 @@ local function lex_identifier(state)
         if in_list(cur, identifier_internal) then
             identifier[n] = lex_next(state)
             n = n + 1
+        elseif cur == "." then
+            lex_next(state)
+            local subs = lex_identifier_raw(state)
+
+            if type(subs) == "string" then
+                subs = {subs}
+            end
+
+            if n > 1 then
+                table.insert(subs, 1, table.concat(identifier))
+            elseif top then -- TOS .key.key syntax
+                table.insert(subs, 1, '')
+            end
+
+            return subs
         else
             break
         end
     end
 
-    return {type = "literal", subtype = "identifier", value = table.concat(identifier)}
+    return table.concat(identifier)
+end
+
+local function lex_identifier(state)
+    local id = lex_identifier_raw(state, true)
+    if type(id) == "string" then
+        return {type = "literal", subtype = "identifier", value = id}
+    elseif type(id) == "table" then
+        return {type = "literal", subtype = "mapid", value = id}
+    end
 end
 
 -- `identifier

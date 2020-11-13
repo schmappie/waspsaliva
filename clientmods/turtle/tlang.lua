@@ -181,6 +181,8 @@ local function test()
         'work' print
     ]]
 
+    local mapid_test = "this.that.2.here .81..wao.88912"
+
     tlang.exec(ifelse_test)
 end
 
