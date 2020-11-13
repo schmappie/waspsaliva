@@ -134,7 +134,10 @@ local function parse_step(state)
     elseif n.type == "code_open" then
         return parse_code(state, "code_open", "code_close")
     elseif n.type == "code_e_open" then
-        return parse_code(state, "code_e_open", "code_e_close")
+        return {
+            parse_code(state, "code_e_open", "code_e_close"),
+            {type = "identifier", value = "run"}
+        }
         -- also return run
     elseif n.type == "map_open" then
         local istart = state.position
@@ -178,8 +181,14 @@ function tlang.parse(lexed)
             end
         end
 
-        tree[treei] = n
-        treei = treei + 1
+        if n.type == nil then -- () = {} run
+            tree[treei] = n[1]
+            tree[treei + 1] = n[2]
+            treei = treei + 2
+        else
+            tree[treei] = n
+            treei = treei + 1
+        end
     end
 end
 
