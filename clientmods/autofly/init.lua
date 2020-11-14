@@ -174,7 +174,7 @@ function autofly.set_hud_info(text)
     if not minetest.localplayer then return end
     local vspeed=minetest.localplayer:get_velocity()
     --local vspeed=vector.round(minetest.localplayer:get_velocity(),4)
-    local ttext=text.."\nSpeed: "..speed.."n/s\n"..round2(vspeed.x,2) ..','..round2(vspeed.y,2) ..','..round2(vspeed.z,2) .."\nYaw:"..round2(minetest.localplayer:get_yaw(),2).."° Pitch:" ..round2(minetest.localplayer:get_pitch(),2).."°"
+    local ttext=text.."\nSpeed: "..speed.."n/s\n"..round2(vspeed.x,2) ..','..round2(vspeed.y,2) ..','..round2(vspeed.z,2) .."\nYaw:"..round2(minetest.localplayer:get_yaw() % 360,2).."° Pitch:" ..round2(minetest.localplayer:get_pitch(),2).."°"
     if hud_info then
         minetest.localplayer:hud_change(hud_info,'text',ttext)
     else
@@ -493,7 +493,7 @@ end
 
 function autofly.axissnap()
     if not minetest.settings:get_bool('afly_snap') then return end
-    local y=minetest.localplayer:get_yaw()
+    local y=minetest.localplayer:get_yaw() % 360
     local yy=nil
     if ( y < 45 or y > 315 ) then
         yy=0
