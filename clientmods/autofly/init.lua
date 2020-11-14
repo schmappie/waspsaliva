@@ -171,8 +171,8 @@ end
 local hud_info
 function autofly.set_hud_info(text)
     if not minetest.localplayer then return end
-    local vspeed=minetest.localplayer:get_last_velocity()
-    local ttext=text.."\nSpeed: "..speed.."n/s\n"..round2(vspeed.x / 10,1)..','..round2(vspeed.y / 10,1)..','..round2(vspeed.z / 10,1)
+    local vspeed=vector.round(minetest.localplayer:get_velocity(),4)
+    local ttext=text.."\nSpeed: "..speed.."n/s\n"..vspeed.x ..','..vspeed.y ..','..vspeed.z .."\nYaw:"..round2(minetest.localplayer:get_yaw(),2).."° Pitch:" ..round2(minetest.localplayer:get_pitch(),2).."°"
     if hud_info then
         minetest.localplayer:hud_change(hud_info,'text',ttext)
     else
@@ -182,7 +182,7 @@ function autofly.set_hud_info(text)
             text          = ttext,
             number        = 0x00ff00,
             direction   = 0,
-            position = {x=0.75,y=0.9},
+            position = {x=0,y=0.80},
             alignment ={x=1,y=1},
             offset = {x=0, y=0}
         })
