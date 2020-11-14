@@ -78,7 +78,7 @@ int LuaLocalPlayer::l_get_yaw(lua_State *L)
 {
 	LocalPlayer *player = getobject(L, 1);
 
-	lua_pushnumber(L, player->getYaw());
+	lua_pushnumber(L, fmod( player->getYaw(), 360.0f ));
 	return 1;
 }
 
@@ -86,7 +86,7 @@ int LuaLocalPlayer::l_get_pitch(lua_State *L)
 {
 	LocalPlayer *player = getobject(L, 1);
 
-	lua_pushnumber(L, player->getPitch());
+	lua_pushnumber(L, fmod(player->getPitch(), 360.0f ));
 	return 1;
 }
 
