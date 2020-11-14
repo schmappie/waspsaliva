@@ -90,6 +90,7 @@ local last_sprint = false
 
 minetest.register_globalstep(function()
     autofly.checkfall()
+    autofly.axissnap()
     if minetest.settings:get_bool("autosprint") or (minetest.settings:get_bool("continuous_forward") and minetest.settings:get_bool("autofsprint")) then
         core.set_keypress("special1", true)
         last_sprint = true
@@ -171,8 +172,9 @@ end
 local hud_info
 function autofly.set_hud_info(text)
     if not minetest.localplayer then return end
-    local vspeed=vector.round(minetest.localplayer:get_velocity(),4)
-    local ttext=text.."\nSpeed: "..speed.."n/s\n"..vspeed.x ..','..vspeed.y ..','..vspeed.z .."\nYaw:"..round2(minetest.localplayer:get_yaw(),2).."° Pitch:" ..round2(minetest.localplayer:get_pitch(),2).."°"
+    local vspeed=minetest.localplayer:get_velocity()
+    --local vspeed=vector.round(minetest.localplayer:get_velocity(),4)
+    local ttext=text.."\nSpeed: "..speed.."n/s\n"..round2(vspeed.x,2) ..','..round2(vspeed.y,2) ..','..round2(vspeed.z,2) .."\nYaw:"..round2(minetest.localplayer:get_yaw(),2).."° Pitch:" ..round2(minetest.localplayer:get_pitch(),2).."°"
     if hud_info then
         minetest.localplayer:hud_change(hud_info,'text',ttext)
     else
@@ -489,6 +491,24 @@ function autofly.autotp(tpname)
     autofly.delete_waypoint('AUTOTP')
 end
 
+function autofly.axissnap()
+    if not minetest.settings:get_bool('afly_snap') then return end
+    local y=minetest.localplayer:get_yaw()
+    local yy=nil
+    if ( y < 45 or y > 315 ) then
+        yy=0
+    elseif (y < 135) then
+        yy=90
+    elseif (y < 225 ) then
+        yy=180
+    elseif ( y < 315 ) then
+        yy=270
+    end
+    if yy ~= nil then
+        minetest.localplayer:set_yaw(yy)
+    end
+end
+
 minetest.after("3.0",function()
     if autofly.get_waypoint('AUTOTP') ~= nil then autofly.autotp(nil) end
 end)
@@ -500,6 +520,7 @@ if (_G["minetest"]["register_cheat"] == nil) then
     minetest.settings:set_bool("afly_softlanding", true)
 else
     minetest.register_cheat("Aim", "Autofly", "afly_autoaim")
+    minetest.register_cheat("AxisSnap", "Autofly", "afly_snap")
     minetest.register_cheat("Softlanding", "Autofly", "afly_softlanding")
     minetest.register_cheat("Waypoints", "Autofly", autofly.display_formspec)
 end
