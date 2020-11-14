@@ -51,12 +51,11 @@ local speed=0;
 local ltime=0
 
 local storage = minetest.get_mod_storage()
-local wpr=false;
-local twpname=nil
 local oldpm=false
 local lpos={x=0,y=0,z=0}
 local info=minetest.get_server_info()
 local stprefix="autofly-".. info['address']  .. '-'
+autofly.flying=false
 
 local modname = minetest.get_current_modname()
 local modpath = minetest.get_modpath(modname)
@@ -101,22 +100,21 @@ minetest.register_globalstep(function()
 
 
     if not minetest.localplayer then return end
-    if not twpname then
-         autofly.set_hud_info("")
-    else
-        local pos = string_to_pos(autofly.get_waypoint(twpname))
+    if not autofly.flying then autofly.set_hud_info("")
+     else
+        local pos = autofly.last_coords
         if pos then
             local dst = vector.distance(pos,minetest.localplayer:get_pos())
             local etatime=-1
             if not (speed == 0) then etatime = round2(dst / speed / 60,2) end
-            autofly.set_hud_info(twpname .. "\n" .. pos_to_string(pos) .. "\n" .. "ETA" .. etatime .. " mins")
-            if twpname and dst < landing_distance then
+            autofly.set_hud_info(autofly.last_name .. "\n" .. pos_to_string(pos) .. "\n" .. "ETA" .. etatime .. " mins")
+            if  dst < landing_distance then
                 autofly.arrived()
             end
         end
     end
-    if twpname and (minetest.settings:get_bool('afly_autoaim')) then
-        autofly.aim(autofly.get_waypoint(twpname))
+    if autofly.flying and (minetest.settings:get_bool('afly_autoaim')) then
+        autofly.aim(autofly.last_coords)
         core.set_keypress("special1", true)
     end
 
@@ -151,7 +149,7 @@ function autofly.set_hud_wp(pos, title)
     if not title then
         title = pos.x .. ', ' .. pos.y .. ', ' .. pos.z
     end
-    twpname=title
+    autofly.last_name=title
     if hud_wp then
         minetest.localplayer:hud_change(hud_wp, 'name', title)
         minetest.localplayer:hud_change(hud_wp, 'world_pos', pos)
@@ -193,14 +191,6 @@ function autofly.set_hud_info(text)
 end
 
 
-function autofly.arrived()
-        minetest.settings:set("continuous_forward", "false")
-        minetest.settings:set("afly_autoaim", "false")
-        autofly.set_hud_info("Arrived at destination")
-        minetest.sound_play({name = "default_dug_metal", gain = 1.0})
-        wpr=false
-        twpname=nil
-end
 
 function autofly.checkfall()
     if(speed > 30) then
@@ -223,16 +213,21 @@ function autofly.display_waypoint(name)
 end
 
 function autofly.goto_waypoint(name)
+     autofly.goto(autofly.get_waypoint(name))
+    return autofly.set_hud_wp(autofly.get_waypoint(name), name)
+end
+
+function autofly.goto(pos)
         oldpm=minetest.settings:get_bool("pitch_move")
         minetest.settings:set_bool("pitch_move",true)
         minetest.settings:set_bool("continuous_forward",true)
         minetest.settings:set_bool("afly_autoaim",true)
         minetest.settings:set_bool("autoeat_timed",true)
-        autofly.last_coords = autofly.get_waypoint(name)
-        autofly.last_name = name
-        autofly.set_hud_info(name)
+        autofly.last_coords = pos
+        autofly.last_name = minetest.pos_to_string(pos)
         --minetest.settings:set("movement_speed_walk", "5")
         autofly.aim(autofly.last_coords)
+        autofly.flying=true
         core.set_keypress("special1", true)
     return autofly.set_hud_wp(autofly.get_waypoint(name), name)
 end
@@ -244,9 +239,8 @@ function autofly.arrived()
         minetest.settings:set_bool("autoeat_timed",false)
         core.set_keypress("special1", false)
         autofly.set_hud_info("Arrived at destination")
-        minetest.localplayer:hud_change(hud_info,'text',twpname .. "\n" .. "Arrived at destination.")
-        wpr=false
-        twpname=nil
+        minetest.localplayer:hud_change(hud_info,'text',autofly.last_name .. "\n" .. "Arrived at destination.")
+        minetest.sound_play({name = "default_dug_metal", gain = 1.0})
 end
 
 function autofly.checkfall()
@@ -287,7 +281,6 @@ function autofly.set_waypoint(pos, name)
     pos = pos_to_string(pos)
     if not pos then return end
     storage:set_string(stprefix .. tostring(name), pos)
-    wpr=true
     return true
 end
 
@@ -402,12 +395,10 @@ minetest.register_chatcommand('clear_waypoint', {
     params = '',
     description = 'Hides the displayed waypoint.',
     func = function(param)
-        if twpname then twpname = nil end
+        if autofly.flying then autofly.flying=false end
         if hud_wp then
             minetest.localplayer:hud_remove(hud_wp)
             hud_wp = nil
-            twpname=nil
-            wpr=nil
             return true, 'Hidden the currently displayed waypoint.'
         elseif not minetest.localplayer.hud_add then
             minetest.run_server_chatcommand('clrmrkr')
