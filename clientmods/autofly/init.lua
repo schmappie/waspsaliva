@@ -240,6 +240,7 @@ function autofly.arrived()
         minetest.settings:set_bool("autoeat_timed",false)
         core.set_keypress("special1", false)
         autofly.set_hud_info("Arrived at destination")
+        autofly.flying = false
         minetest.localplayer:hud_change(hud_info,'text',autofly.last_name .. "\n" .. "Arrived at destination.")
         minetest.sound_play({name = "default_dug_metal", gain = 1.0})
 end
