@@ -14,8 +14,21 @@ minetest.register_globalstep(function()
     if os.time() < nextsc then return end
     math.randomseed(os.clock())
     nextsc=os.time() + ( interval * 60 ) + math.random(rnd * 60)
-    minetest.after("15.0",minetest.take_screenshot)
+    minetest.after("15.0",function()
 
+        core.set_keypress("toggle_cheat_menu", true)
+        core.set_keypress("toggle_hud", true)
+        core.set_keypress("toggle_cheat_menu", false)
+        core.set_keypress("toggle_hud", false)
+        minetest.display_chat_message("\n\n\n\n\n\n\n\n\n")
+        minetest.after("1.8",minetest.take_screenshot)
+        minetest.after("1.85",function()
+            core.set_keypress("toggle_cheat_menu", true)
+            core.set_keypress("toggle_hud", true)
+            core.set_keypress("toggle_cheat_menu", false)
+            core.set_keypress("toggle_hud", false)
+        end)
+    end)
 end)
 
 if (_G["minetest"]["register_cheat"] ~= nil) then
