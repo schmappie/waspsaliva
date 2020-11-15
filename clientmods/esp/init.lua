@@ -64,6 +64,8 @@ minetest.register_globalstep(function()
     end
 end)
 
-if (_G["minetest"]["register_cheat"] == nil) then
+if (_G["minetest"]["register_cheat"] ~= nil) then
+    minetest.register_cheat("NodeESP", "Render", "espactive")
+else
     minetest.settings:set_bool('espactive',true)
 end
