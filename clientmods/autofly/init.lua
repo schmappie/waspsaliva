@@ -113,9 +113,9 @@ minetest.register_globalstep(function()
             end
         end
     end
-    if autofly.flying and (minetest.settings:get_bool('afly_autoaim')) then
+    if not minetest.settings:get_bool("freecam") and autofly.flying and (minetest.settings:get_bool('afly_autoaim')) then
         autofly.aim(autofly.last_coords)
-        core.set_keypress("special1", true)
+        --core.set_keypress("special1", true)
     end
 
     if ( os.time() < ltime + 1 ) then return end
@@ -222,6 +222,7 @@ function autofly.goto(pos)
         oldpm=minetest.settings:get_bool("pitch_move")
         minetest.settings:set_bool("pitch_move",true)
         minetest.settings:set_bool("continuous_forward",true)
+        minetest.settings:set_bool("autofsprint",true)
         minetest.settings:set_bool("afly_autoaim",true)
         minetest.settings:set_bool("autoeat_timed",true)
         autofly.last_coords = pos
@@ -229,16 +230,15 @@ function autofly.goto(pos)
         --minetest.settings:set("movement_speed_walk", "5")
         autofly.aim(autofly.last_coords)
         autofly.flying=true
-        core.set_keypress("special1", true)
     return autofly.set_hud_wp(autofly.get_waypoint(name), name)
 end
 
 function autofly.arrived()
         minetest.settings:set("continuous_forward", "false")
+        minetest.settings:set_bool("autofsprint",false)
         minetest.settings:set_bool("pitch_move",oldpm)
         minetest.settings:set_bool("afly_autoaim",false)
         minetest.settings:set_bool("autoeat_timed",false)
-        core.set_keypress("special1", false)
         autofly.set_hud_info("Arrived at destination")
         autofly.flying = false
         minetest.localplayer:hud_change(hud_info,'text',autofly.last_name .. "\n" .. "Arrived at destination.")
