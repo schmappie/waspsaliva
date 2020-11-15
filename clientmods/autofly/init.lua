@@ -245,8 +245,10 @@ function autofly.cruise()
     local lp=minetest.localplayer:get_pos()
     local pos2=vector.add(lp,{x=0,y=-50,z=0})
     local air, blck = minetest.line_of_sight(lp, pos2)
+    if blck==nil then return end
+    local nd=minetest.get_node_or_nil(blck)
     if not air and nd ~= nil then
-        local nd=minetest.get_node_or_nil(blck)
+
         minetest.localplayer:set_pos({x=lp.x,y=blck.y+25,z=lp.z} )
         minetest.settings:set_bool("free_move",true)
     else
