@@ -2,11 +2,21 @@
 if [ -z $1 ] || [ -z $2 ] || [ -z $3 ]; then echo "usage: automat server username password"; exit 1; fi 
 pwf=~/.mtpw
 srv=$1
+prt=30000
 usr=$2
 pas=$3
 logfile=$HOME/.wslog
 mtpath=$(dirname $0)
 if [ -f $pwf ]; then pas=$(cat $pwf); fi
+check_host() {
+    if [ ! -x $(which nc) ]; then return 0; fi
+    if nc -z $1 $2; then return 0; fi
+    return 1
+}
+
 while true; do
-    $mtpath/bin/minetest --go --address $srv --name $usr --password $pas --logfile $logfile --color never
+    if check_host $srv $prt; then
+        $mtpath/bin/minetest --go --address $srv --name $usr --password $pas --logfile $logfile
+    else echo host is down. waiting 10...; sleep 10
+    fi
 done

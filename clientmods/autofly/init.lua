@@ -108,7 +108,7 @@ minetest.register_globalstep(function()
             local etatime=-1
             if not (speed == 0) then etatime = round2(dst / speed / 60,2) end
             autofly.set_hud_info(autofly.last_name .. "\n" .. pos_to_string(pos) .. "\n" .. "ETA" .. etatime .. " mins")
-            if  dst < landing_distance then
+            if  autofly.flying and dst < landing_distance then
                 autofly.arrived()
             end
         end
