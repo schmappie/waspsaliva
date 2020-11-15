@@ -248,11 +248,8 @@ function autofly.cruise()
     if blck==nil then return end
     local nd=minetest.get_node_or_nil(blck)
     if not air and nd ~= nil then
-
         minetest.localplayer:set_pos({x=lp.x,y=blck.y+25,z=lp.z} )
         minetest.settings:set_bool("free_move",true)
-    else
-        minetest.settings:set_bool("free_move",false)
     end
 end
 
