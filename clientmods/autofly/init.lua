@@ -85,6 +85,10 @@ function round2(num, numDecimalPlaces)
   return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
 end
 
+function autofly.get2ddst(pos1,pos2)
+    return vector.distance({x=pos1.x,y=0,z=pos1.z},{x=pos2.x,y=0,z=pos2.z})
+end
+
 local last_sprint = false
 
 minetest.register_globalstep(function()
@@ -126,7 +130,9 @@ minetest.register_globalstep(function()
         autofly.speed=speed
     end
     lpos=minetest.localplayer:get_pos()
+    autofly.cruise()
 end)
+
 
 function autofly.getwps()
     local wp={}
@@ -182,7 +188,7 @@ function autofly.set_hud_info(text)
             text          = ttext,
             number        = 0x00ff00,
             direction   = 0,
-            position = {x=0,y=0.80},
+            position = {x=0,y=0.90},
             alignment ={x=1,y=1},
             offset = {x=0, y=0}
         })
@@ -191,18 +197,6 @@ function autofly.set_hud_info(text)
 end
 
 
-
-function autofly.checkfall()
-    if(speed > 30) then
-        local nod=minetest.get_node_or_nil(vector.add(minetest.localplayer:get_pos(),{x=0,y=-100,z=0}))
-        if nod and not ( nod['name'] == "air" ) then
-            minetest.settings:set("free_move", "true")
-            minetest.settings:set("noclip", "false")
-            minetest.display_chat_message("fall detected")
-        end
-
-    end
-end
 
 function autofly.display_waypoint(name)
         autofly.last_coords = autofly.get_waypoint(name)
@@ -234,6 +228,7 @@ function autofly.goto(pos)
 end
 
 function autofly.arrived()
+        if not autofly.flying then return end
         minetest.settings:set("continuous_forward", "false")
         minetest.settings:set_bool("autofsprint",false)
         minetest.settings:set_bool("pitch_move",oldpm)
@@ -245,7 +240,22 @@ function autofly.arrived()
         minetest.sound_play({name = "default_dug_metal", gain = 1.0})
 end
 
+function autofly.cruise()
+    if not minetest.settings:get_bool('afly_cruise') then return end
+    local lp=minetest.localplayer:get_pos()
+    local pos2=vector.add(lp,{x=0,y=-50,z=0})
+    local air, blck = minetest.line_of_sight(lp, pos2)
+    local nd=minetest.get_node_or_nil(blck)
+    if not air and nd ~= nil then
+        minetest.localplayer:set_pos({x=lp.x,y=blck.y+25,z=lp.z} )
+        minetest.settings:set_bool("free_move",true)
+    else
+        minetest.settings:set_bool("free_move",false)
+    end
+end
+
 function autofly.checkfall()
+    if not afly_softlanding then return end
     if(speed > 30) then
         local nod=minetest.get_node_or_nil(vector.add(minetest.localplayer:get_pos(),{x=0,y=-100,z=0}))
         if nod and not ( nod['name'] == "air" ) then
@@ -514,6 +524,7 @@ if (_G["minetest"]["register_cheat"] == nil) then
 else
     minetest.register_cheat("Aim", "Autofly", "afly_autoaim")
     minetest.register_cheat("AxisSnap", "Autofly", "afly_snap")
+    minetest.register_cheat("Cruise", "Autofly", "afly_cruise")
     minetest.register_cheat("Softlanding", "Autofly", "afly_softlanding")
     minetest.register_cheat("Waypoints", "Autofly", autofly.display_formspec)
 end
