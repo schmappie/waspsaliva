@@ -105,7 +105,6 @@ end
 
 function fren.load()
     local d = storage:get("data")
-    minetest.display_chat_message(d)
     if d then
         fren.deserialize(d)
     end
@@ -134,7 +133,7 @@ end
 function fren.friend(player, color, level)
     local n = fren.qualify(player)
 
-    fren.friends[n] = {true} -- true because the way Minetest serializes Json replaces {} with null
+    fren.friends[n] = {placeholder = true} -- true because the way Minetest serializes Json replaces {} with null
     fren.friends[n].color = color
     fren.friends[n].level = level
 
@@ -150,7 +149,7 @@ end
 function fren.enemy(player, color, level)
     local n = fren.qualify(player)
 
-    fren.enemy[n] = {true}
+    fren.enemy[n] = {placeholder = true}
     fren.enemy[n].color = color
     fren.enemy[n].level = level
 
@@ -165,7 +164,7 @@ end
 
 
 function fren.group(name, color, level)
-    fren.groups[name] = {true}
+    fren.groups[name] = {placeholder = true}
     fren.groups[name].color = color
     fren.groups[name].level = level
 
@@ -181,7 +180,7 @@ end
 function fren.group_add_player(group, player, level)
     if fren.groups[group] then
         local q = fren.qualify(player)
-        fren.groups[group].members[q] = {true}
+        fren.groups[group].members[q] = {placeholder = true}
         fren.groups[group].members[q].level = level
 
         fren.store()
