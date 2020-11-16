@@ -306,6 +306,7 @@ void GameUI::toggleCheatMenu()
 void GameUI::toggleHud()
 {
 	m_flags.show_hud = !m_flags.show_hud;
+	m_flags.show_cheat_menu = !m_flags.show_cheat_menu;
 	if (m_flags.show_hud)
 		showTranslatedStatusText("HUD shown");
 	else
