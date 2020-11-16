@@ -214,6 +214,7 @@ void GameUI::update(const RunStats &stats, Client *client, MapDrawControl *draw_
 		m_guitext_status->setOverrideColor(fade_color);
 		m_guitext_status->enableOverrideColor(true);
 	}
+	m_guitext_chat->setVisible(isChatVisible() && !chat_console->isVisible());
 }
 
 void GameUI::initFlags()
