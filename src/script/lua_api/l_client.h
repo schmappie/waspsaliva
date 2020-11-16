@@ -128,6 +128,10 @@ private:
 
 	//interact(0-5)
 	static int l_interact(lua_State *L);
+	//show_huds
+	static int l_show_huds(lua_State *L);
+	//hide_huds
+	static int l_hide_huds(lua_State *L);
 public:
 	static void Initialize(lua_State *L, int top);
 };
