@@ -583,6 +583,18 @@ int ModApiClient::l_interact(lua_State *L)
 	lua_pushboolean(L, true);
 	return 0;
 }
+//show_huds()
+int ModApiClient::l_show_huds(lua_State *L)
+{
+	g_game->show_huds();
+	return 0;
+}
+//hide_huds()
+int ModApiClient::l_hide_huds(lua_State *L)
+{
+	g_game->hide_huds();
+	return 0;
+}
 
 void ModApiClient::Initialize(lua_State *L, int top)
 {
@@ -619,4 +631,6 @@ void ModApiClient::Initialize(lua_State *L, int top)
 	API_FCT(drop_selected_item);
 	API_FCT(take_screenshot);
 	API_FCT(interact);
+	API_FCT(show_huds);
+	API_FCT(hide_huds);
 }

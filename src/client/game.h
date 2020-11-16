@@ -735,6 +735,8 @@ public:
 	void toggleFreecam();
 	void toggleCinematic();
 	void toggleAutoforward();
+	void show_huds();
+	void hide_huds();
 
 	void toggleMinimap(bool shift_pressed);
 	void toggleFog();

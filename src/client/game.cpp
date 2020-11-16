@@ -1557,6 +1557,17 @@ void Game::toggleUpdateCamera()
 		m_game_ui->showTranslatedStatusText("Camera update enabled");
 }
 
+void Game::show_huds()
+{
+	m_game_ui->m_flags.show_hud=true;
+	m_game_ui->m_flags.show_cheat_menu=true;
+}
+void Game::hide_huds()
+{
+	m_game_ui->m_flags.show_hud=false;
+	m_game_ui->m_flags.show_cheat_menu=false;
+}
+
 
 void Game::increaseViewRange()
 {
