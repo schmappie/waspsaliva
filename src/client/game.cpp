@@ -1561,11 +1561,13 @@ void Game::show_huds()
 {
 	m_game_ui->m_flags.show_hud=true;
 	m_game_ui->m_flags.show_cheat_menu=true;
+	m_game_ui->m_flags.show_chat=true;
 }
 void Game::hide_huds()
 {
 	m_game_ui->m_flags.show_hud=false;
 	m_game_ui->m_flags.show_cheat_menu=false;
+		m_game_ui->m_flags.show_chat=false;
 }
 
 
