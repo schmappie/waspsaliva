@@ -224,7 +224,7 @@ function autofly.goto(pos)
         --minetest.settings:set("movement_speed_walk", "5")
         autofly.aim(autofly.last_coords)
         autofly.flying=true
-    return autofly.set_hud_wp(autofly.get_waypoint(name), name)
+    return autofly.set_hud_wp(autofly.get_waypoint(autofly.last_name), autofly.last_name)
 end
 
 function autofly.arrived()
