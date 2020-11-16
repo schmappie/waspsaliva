@@ -7,6 +7,7 @@ esp = {}
 local radius=60 -- limit is 4,096,000 nodes (i.e. 160^3 -> a number > 79 won't work)
 local esplimit=30; -- display at most this many waypoints
 local espinterval=4 --number of seconds to wait between scans (a lower number can induce clientside lag)
+local stpos={x=0,y=0,z=0}
 
 --nodes={"group:chest",'mcl_chests:chest','mcl_chests:chest_left','mcl_chests:ender_chest','group:shulker_box','mcl_crafting_table:crafting_table','mcl_furnaces:furnace'}
 nodes={'mcl_chests:chest','mcl_chests:chest_left','mcl_chests:ender_chest','group:shulker_box','mcl_furnaces:furnace','mcl_chests:violet_shulker_box'}
@@ -18,7 +19,6 @@ local lastch=0
 
 minetest.register_globalstep(function()
     if not minetest.settings:get_bool("espactive") then
-        if hud2 then minetest.localplayer:hud_remove(hud2) hud2=nil end
         for k,v in pairs(wps) do
                 minetest.localplayer:hud_remove(v)
                 table.remove(wps,k)
@@ -44,12 +44,17 @@ minetest.register_globalstep(function()
     end
 
     if epos then
-        if(hud2) then minetest.localplayer:hud_remove(hud2) end
         local ii=0;
         for m,xx in pairs(epos) do -- display found nodes as WPs
             for kk,vv in pairs(xx) do
                 if ( ii > esplimit ) then break end
-                if minetest.settings:get_bool("espautostop") then minetest.settings:set("continuous_forward", "false") end
+                if vector.distance(stpos,pos) > 200 then
+                    stpos=minetest.localplayer:get_pos()
+                    if minetest.settings:get_bool("espautostop") then
+                        minetest.settings:set("continuous_forward", "false")
+                        autofly.aim(vv)
+                    end
+                end
                 ii=ii+1
                 table.insert(wps,minetest.localplayer:hud_add({
                     hud_elem_type = 'waypoint',
