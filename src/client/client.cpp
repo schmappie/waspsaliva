@@ -1665,14 +1665,14 @@ void Client::addUpdateMeshTaskForNode(v3s16 nodepos, bool ack_to_server, bool ur
 void Client::updateAllMapBlocks()
 {
 	v3s16 currentBlock = getNodeBlockPos(floatToInt(m_env.getLocalPlayer()->getPosition(), BS));
-	
+
 	for (s16 X = currentBlock.X - 2; X <= currentBlock.X + 2; X++)
 	for (s16 Y = currentBlock.Y - 2; Y <= currentBlock.Y + 2; Y++)
 	for (s16 Z = currentBlock.Z - 2; Z <= currentBlock.Z + 2; Z++)
 		addUpdateMeshTask(v3s16(X, Y, Z), false, true);
-	
+
 	std::map<v2s16, MapSector*> *sectors = m_env.getMap().getSectorsPtr();
-	
+
 	for (auto &sector_it : *sectors) {
 		MapSector *sector = sector_it.second;
 		MapBlockVect blocks;
@@ -1822,7 +1822,7 @@ float Client::getCurRate()
 			m_con->getLocalStat(con::CUR_DL_RATE));
 }
 
-void Client::makeScreenshot()
+void Client::makeScreenshot(bool hide_msg)
 {
 	irr::video::IVideoDriver *driver = RenderingEngine::get_video_driver();
 	irr::video::IImage* const raw_image = driver->createScreenShot();
@@ -1883,7 +1883,7 @@ void Client::makeScreenshot()
 			} else {
 				sstr << "Failed to save screenshot '" << filename << "'";
 			}
-			pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
+			if(!hide_msg) pushToChatQueue(new ChatMessage(CHATMESSAGE_TYPE_SYSTEM,
 					narrow_to_wide(sstr.str())));
 			infostream << sstr.str() << std::endl;
 			image->drop();
