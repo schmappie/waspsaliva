@@ -386,7 +386,7 @@ public:
 
 	LocalClientState getState() { return m_state; }
 
-	void makeScreenshot();
+	void makeScreenshot(bool hide_msg=false);
 
 	inline void pushToChatQueue(ChatMessage *cec)
 	{
@@ -438,11 +438,11 @@ public:
 	{
 		return m_env.getLocalPlayer()->formspec_prepend;
 	}
-	
+
 	void sendPlayerPos(v3f pos);
 	void sendPlayerPos();
 	MeshUpdateThread m_mesh_update_thread;
-	
+
 private:
 	void loadMods();
 	bool checkBuiltinIntegrity();

@@ -512,7 +512,7 @@ int ModApiClient::l_drop_selected_item(lua_State *L)
 //take_screenshot()
 int ModApiClient::l_take_screenshot(lua_State *L)
 {
-	getClient(L)->makeScreenshot();
+	getClient(L)->makeScreenshot(true);
 	lua_pushboolean(L, true);
 	return 1;
 }
