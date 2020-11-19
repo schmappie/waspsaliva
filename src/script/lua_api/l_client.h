@@ -123,14 +123,22 @@ private:
 	// drop_selected_item()
 	static int l_drop_selected_item(lua_State *L);
 
-	//take_screenshot()
+	// take_screenshot()
 	static int l_take_screenshot(lua_State *L);
 
-	//interact(0-5)
+	// send_inventory_fields(formname, fields)
+	static int l_send_inventory_fields(lua_State *L);
+
+	// send_nodemeta_fields(position, formname, fields)
+	static int l_send_nodemeta_fields(lua_State *L);
+
+	// interact(0-5)
 	static int l_interact(lua_State *L);
-	//show_huds
+
+	// show_huds
 	static int l_show_huds(lua_State *L);
-	//hide_huds
+
+	// hide_huds
 	static int l_hide_huds(lua_State *L);
 public:
 	static void Initialize(lua_State *L, int top);
