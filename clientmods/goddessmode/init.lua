@@ -18,10 +18,16 @@ local function checkbadblocks(pos)
     return true
 end
 local function checktrap()
-    local pos=vector.add(minetest.localplayer:get_pos(),{x=0,y=1,z=0})
-    local n=minetest.find_node_near(pos, 2, {'mcl_core:lava_source','mcl_core:lava_flowing','mcl_core:water_source','mcl_core:water_flowing'}, true)
-    if n == nil then return false end
-    return true
+    local lp=minetest.localplayer:get_pos()
+    local air,nd=minetest.line_of_sight(vector.add(lp,{x=0,y=-2,z=0}), vector.add(lp,{x=0,y=50,z=0}))
+    if(not air) then
+	local tn=minetest.get_node_or_nil(nd)
+	if(tn == nil) then return false end
+	for k,v in ipairs({'mcl_core:lava_source','mcl_core:lava_flowing','mcl_core:water_source','mcl_core:water_flowing'}) do
+		if tn.name == v then return true end
+	end
+    end
+    return false
 end
 
 local function checkhead()
@@ -77,22 +83,26 @@ end
 local function dhfree()
             if not minetest.localplayer then return end
             local n=vector.add(minetest.localplayer:get_pos(),{x=0,y=2,z=0})
-            amautotool(n)
-            minetest.dig_node(n)
-            minetest.dig_node(vector.add(n,{x=0,y=-1,z=0}))
+	    local nd=minetest.get_node_or_nil(n)
+	    if nd == nil then return end
+	    while nd.name ~= "air" do
+		amautotool(n)
+		minetest.dig_node(n)
+		minetest.dig_node(vector.add(n,{x=0,y=-1,z=0}))
+		nd=minetest.get_node_or_nil(n)
+		end
 end
 local lastwrp=0
 local function mwarp(pos)
-	if lastwrp+1 > os.time() then return end
+	if os.time() < lastwrp+1 then return end
 	lastwrp=os.time();
+	minetest.after("0.1",function() dhfree() end)
 	minetest.localplayer:set_pos(pos)
-	minetest.after("0.4",function() autofly.aim(pos) end)
-	minetest.after("0.2",function() dhfree() end)
 end
 
 local function get_target(epos)
 	math.randomseed(os.time())
-	local t=vector.add(epos,get_3dpos_from_yaw_and_pitch(karange+1,math.random(120,240),math.random(0,180)))
+	local t=vector.add(epos,get_3dpos_from_yaw_and_pitch(karange+1,math.random(90,240),math.random(90,135)))
 	if (checkbadblocks(t)) then
 		return get_target(epos)
 	elseif checkair(t) then
@@ -121,7 +131,9 @@ local function rro() -- reverse restraining order
 			local mpos=minetest.localplayer:get_pos()
             local distance=vector.distance(mpos,pos)
             if distance < karange then
-				mwarp(get_target(pos))
+				local trg=get_target(pos)
+				mwarp(trg)
+				minetest.after("0.2",function() autofly.aim(pos) end)
 				return
 			end
         end
