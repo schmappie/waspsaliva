@@ -81,18 +81,18 @@ local function dhfree()
             minetest.dig_node(n)
             minetest.dig_node(vector.add(n,{x=0,y=-1,z=0}))
 end
-local lastwrp
+local lastwrp=0
 local function mwarp(pos)
 	if lastwrp+1 > os.time() then return end
 	lastwrp=os.time();
 	minetest.localplayer:set_pos(pos)
-	minetest.after(0.2,function() autofly.aim(pos) end)
-	minetest.after(0.2,function() dhfree() end)
+	minetest.after("0.4",function() autofly.aim(pos) end)
+	minetest.after("0.2",function() dhfree() end)
 end
 
 local function get_target(epos)
 	math.randomseed(os.time())
-	local t=vector.add(epos,get_3dpos_from_yaw_and_pitch(karange,math.random(120,240),math.random(270,359)))
+	local t=vector.add(epos,get_3dpos_from_yaw_and_pitch(karange+1,math.random(120,240),math.random(0,180)))
 	if (checkbadblocks(t)) then
 		return get_target(epos)
 	elseif checkair(t) then
@@ -107,13 +107,15 @@ end
 local function evade(ppos)
 	mwarp(get_target(ppos))
 end
-local lastrro=0
+
 local function rro() -- reverse restraining order
 
     for k, v in ipairs(minetest.localplayer.get_nearby_objects(karange+5)) do
 	local name=v:get_name()
         if (v:is_player() and  name ~= minetest.localplayer:get_name()) then
-	    if fren.is_friend(name) then return end
+	    if fren.is_friend(name) then
+		minetest.settings:set_bool("killaura",false)
+		return end
             local pos = v:get_pos()
             pos.y = pos.y - 1
 			local mpos=minetest.localplayer:get_pos()
