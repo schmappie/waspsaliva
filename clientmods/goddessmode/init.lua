@@ -19,7 +19,7 @@ local function checkbadblocks(pos)
 end
 local function checktrap()
     local pos=vector.add(minetest.localplayer:get_pos(),{x=0,y=1,z=0})
-    local n=minetest.find_node_near(pos, 2, {'mcl_core:lava_source','mcl_core:lava_flowing','mcl_core:water_source','mcl_core:water_flowing','mcl_core:obsidian'}, true)
+    local n=minetest.find_node_near(pos, 2, {'mcl_core:lava_source','mcl_core:lava_flowing','mcl_core:water_source','mcl_core:water_flowing'}, true)
     if n == nil then return false end
     return true
 end
@@ -81,7 +81,10 @@ local function dhfree()
             minetest.dig_node(n)
             minetest.dig_node(vector.add(n,{x=0,y=-1,z=0}))
 end
+local lastwrp
 local function mwarp(pos)
+	if lastwrp+1 > os.time() then return end
+	lastwrp=os.time();
 	minetest.localplayer:set_pos(pos)
 	minetest.after(0.2,function() autofly.aim(pos) end)
 	minetest.after(0.2,function() dhfree() end)
@@ -104,9 +107,13 @@ end
 local function evade(ppos)
 	mwarp(get_target(ppos))
 end
+local lastrro=0
 local function rro() -- reverse restraining order
+
     for k, v in ipairs(minetest.localplayer.get_nearby_objects(karange+5)) do
-        if (v:is_player() and v:get_name() ~= minetest.localplayer:get_name()) then
+	local name=v:get_name()
+        if (v:is_player() and  name ~= minetest.localplayer:get_name()) then
+	    if fren.is_friend(name) then return end
             local pos = v:get_pos()
             pos.y = pos.y - 1
 			local mpos=minetest.localplayer:get_pos()
@@ -121,7 +128,7 @@ end
 
 minetest.register_globalstep(function()
     if minetest.settings:get_bool("goddess") then
-		local ppos=minetest.localplayer:get_pos()
+	local ppos=minetest.localplayer:get_pos()
         rro()
         if(checkprojectile()) then evade(ppos)  end
         if(checktrap()) then evade(ppos)  end
