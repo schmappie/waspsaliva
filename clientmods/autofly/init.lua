@@ -438,7 +438,9 @@ minetest.register_on_death(function()
         local pos  = minetest.localplayer:get_pos()
         autofly.last_coords = pos
         autofly.set_waypoint(pos, name)
-        minetest.display_chat_message('Added waypoint "' .. name .. '".')
+        autofly.display_waypoint(name)
+        --minetest.display_chat_message('Added waypoint "' .. name .. '".')
+
     end
 end)
 
