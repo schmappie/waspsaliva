@@ -199,7 +199,7 @@ function autofly.goto_waypoint(name)
     local wp=autofly.get_waypoint(name)
     autofly.goto(wp)
     autofly.last_name=name
-    autofly.display_waypoint(autofly.last_coords,autofly.last_name)
+    autofly.display_waypoint(autofly.last_name)
     return true
 end
 
@@ -207,14 +207,16 @@ function autofly.goto(pos)
     oldpm=minetest.settings:get_bool("pitch_move")
     minetest.settings:set_bool("pitch_move",true)
     minetest.settings:set_bool("continuous_forward",true)
-    minetest.settings:set_bool("autofsprint",true)
+    if minetest.settings:get_bool("afly_sprint") then
+        minetest.settings:set_bool("autofsprint",true)
+        minetest.settings:set_bool("autoeat_timed",true)
+    end
     minetest.settings:set_bool("afly_autoaim",true)
-    minetest.settings:set_bool("autoeat_timed",true)
     autofly.last_coords = pos
     autofly.last_name = minetest.pos_to_string(pos)
     autofly.aim(autofly.last_coords)
     autofly.flying=true
-    autofly.display_waypoint(autofly.last_coords,autofly.last_name)
+    autofly.set_hud_wp(autofly.last_coords, autofly.last_name)
     return true
 end
 
@@ -482,13 +484,45 @@ minetest.after("3.0",function()
 end)
 
 
+math.randomseed(os.time())
+
+local randflying = false
+
+minetest.register_globalstep(function()
+    if randflying and not autofly.flying then
+        local x = math.random(-31000, 31000)
+        local y = math.random(2000, 31000)
+        local z = math.random(-31000, 31000)
+
+        autofly.goto({x = x, y = y, z = z})
+    end
+end)
+
+local function randfly()
+    if not randflying then
+        randflying = true
+        local lp = minetest.localplayer:get_pos()
+        autofly.goto(turtle.coord(lp.x, 6000, lp.z))
+    else
+        randflying = false
+        autofly.arrived()
+    end
+end
+
+minetest.register_chatcommand("randfly", {
+    description = "Randomly fly up high (toggle).",
+    func = randfly
+})
+
 
 if (_G["minetest"]["register_cheat"] == nil) then
     minetest.settings:set_bool("afly_autoaim", false)
     minetest.settings:set_bool("afly_softlanding", true)
+    minetest.settings:set_bool("afly_sprint", true)
 else
     minetest.register_cheat("Aim", "Autofly", "afly_autoaim")
     minetest.register_cheat("AxisSnap", "Autofly", "afly_snap")
     minetest.register_cheat("Cruise", "Autofly", "afly_cruise")
+    minetest.register_cheat("Sprint", "Autofly", "afly_sprint")
     minetest.register_cheat("Waypoints", "Autofly", autofly.display_formspec)
 end
