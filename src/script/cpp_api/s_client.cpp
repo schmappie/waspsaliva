@@ -273,7 +273,7 @@ bool ScriptApiClient::on_nodemeta_form_open(v3s16 position, std::string formname
 	lua_pushstring(L, formname.c_str());
 	lua_pushstring(L, formspec.c_str());
 
-	runCallbacks(2, RUN_CALLBACKS_MODE_OR);
+	runCallbacks(3, RUN_CALLBACKS_MODE_OR);
 	return readParam<bool>(L, -1);
 }
 

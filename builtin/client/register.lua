@@ -95,4 +95,4 @@ core.registered_on_modchannel_message, core.register_on_modchannel_message = mak
 core.registered_on_modchannel_signal, core.register_on_modchannel_signal = make_registration()
 core.registered_on_inventory_open, core.register_on_inventory_open = make_registration()
 core.registered_on_receiving_inventory_form, core.register_on_receiving_inventory_form = make_registration()
-core.registered_on_open_nodemeta_form, core.register_on_open_nodemeta_form = make_registration()
+core.registered_on_nodemeta_form_open, core.register_on_nodemeta_form_open = make_registration()

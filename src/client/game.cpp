@@ -2625,6 +2625,7 @@ bool Game::nodePlacement(const ItemDefinition &selected_def,
 			client->interact(INTERACT_PLACE, pointed);
 
 		std::string formspec_str = meta->getString("formspec");
+
 		if (!client->getScript()->on_nodemeta_form_open(nodepos, "", formspec_str)) {
 			infostream << "Launching custom inventory view" << std::endl;
 
