@@ -61,5 +61,8 @@ public:
 	bool on_inventory_open(Inventory *inventory);
 	void open_special_inventory();
 
+	bool on_receiving_inventory_form(std::string formname, std::string formspec);
+	bool on_nodemeta_form_open(v3s16 position, std::string formname, std::string formspec);
+
 	void setEnv(ClientEnvironment *env);
 };

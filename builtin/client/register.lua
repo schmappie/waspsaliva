@@ -53,7 +53,7 @@ function core.override_item(name, redefinition)
 	end
 	local nodedef = core.get_node_def(name)
 	table.combine(itemdef, nodedef)
-	
+
 	for k, v in pairs(redefinition) do
 		rawset(itemdef, k, v)
 	end
@@ -94,3 +94,5 @@ core.registered_on_item_use, core.register_on_item_use = make_registration()
 core.registered_on_modchannel_message, core.register_on_modchannel_message = make_registration()
 core.registered_on_modchannel_signal, core.register_on_modchannel_signal = make_registration()
 core.registered_on_inventory_open, core.register_on_inventory_open = make_registration()
+core.registered_on_receiving_inventory_form, core.register_on_receiving_inventory_form = make_registration()
+core.registered_on_open_nodemeta_form, core.register_on_open_nodemeta_form = make_registration()

@@ -2624,20 +2624,23 @@ bool Game::nodePlacement(const ItemDefinition &selected_def,
 		if (nodedef_manager->get(map.getNode(nodepos)).rightclickable)
 			client->interact(INTERACT_PLACE, pointed);
 
-		infostream << "Launching custom inventory view" << std::endl;
+		std::string formspec_str = meta->getString("formspec");
+		if (!client->getScript()->on_nodemeta_form_open(nodepos, "", formspec_str)) {
+			infostream << "Launching custom inventory view" << std::endl;
 
-		InventoryLocation inventoryloc;
-		inventoryloc.setNodeMeta(nodepos);
+			InventoryLocation inventoryloc;
+			inventoryloc.setNodeMeta(nodepos);
 
-		NodeMetadataFormSource *fs_src = new NodeMetadataFormSource(
-			&client->getEnv().getClientMap(), nodepos);
-		TextDest *txt_dst = new TextDestNodeMetadata(nodepos, client);
+			NodeMetadataFormSource *fs_src = new NodeMetadataFormSource(
+				&client->getEnv().getClientMap(), nodepos);
+			TextDest *txt_dst = new TextDestNodeMetadata(nodepos, client);
 
-		auto *&formspec = m_game_ui->updateFormspec("");
-		GUIFormSpecMenu::create(formspec, client, &input->joystick, fs_src,
-			txt_dst, client->getFormspecPrepend());
+			auto *&formspec = m_game_ui->updateFormspec("");
+			GUIFormSpecMenu::create(formspec, client, &input->joystick, fs_src,
+				txt_dst, client->getFormspecPrepend());
 
-		formspec->setFormSpec(meta->getString("formspec"), inventoryloc);
+			formspec->setFormSpec(formspec_str, inventoryloc);
+		}
 		return false;
 	}
 
