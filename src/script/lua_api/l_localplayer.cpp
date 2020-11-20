@@ -543,7 +543,7 @@ int LuaLocalPlayer::l_set_speeds_from_local_settings(lua_State *L)
 }
 int LuaLocalPlayer::l_set_speeds_from_server_settings(lua_State *L)
 {
-	g_settings->setBool("movement_ignore_server_speed",true);
+	g_settings->setBool("movement_ignore_server_speed",false);
 	getClient(L)->set_speeds_from_server_settings();
 	return 0;
 }
