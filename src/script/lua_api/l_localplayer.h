@@ -126,6 +126,11 @@ private:
 	// set_override_speed
 	static int l_set_override_speed(lua_State *L);
 
+	static int l_set_speeds_from_local_settings(lua_State *L);
+
+	static int l_set_speeds_from_server_settings(lua_State *L);
+
+
 	LocalPlayer *m_localplayer = nullptr;
 
 public:

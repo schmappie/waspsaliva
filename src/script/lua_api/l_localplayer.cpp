@@ -535,6 +535,19 @@ int LuaLocalPlayer::l_set_override_speed(lua_State *L)
 	return 0;
 }
 
+int LuaLocalPlayer::l_set_speeds_from_local_settings(lua_State *L)
+{
+	g_settings->setBool("movement_ignore_server_speed",true);
+	getClient(L)->set_speeds_from_local_settings();
+	return 0;
+}
+int LuaLocalPlayer::l_set_speeds_from_server_settings(lua_State *L)
+{
+	g_settings->setBool("movement_ignore_server_speed",true);
+	getClient(L)->set_speeds_from_server_settings();
+	return 0;
+}
+
 int LuaLocalPlayer::gc_object(lua_State *L)
 {
 	LuaLocalPlayer *o = *(LuaLocalPlayer **)(lua_touserdata(L, 1));
@@ -610,6 +623,8 @@ const luaL_Reg LuaLocalPlayer::methods[] = {
 		luamethod(LuaLocalPlayer, get_nearby_objects),
 		luamethod(LuaLocalPlayer, get_object),
 		luamethod(LuaLocalPlayer, set_override_speed),
+		luamethod(LuaLocalPlayer, set_speeds_from_server_settings),
+		luamethod(LuaLocalPlayer, set_speeds_from_local_settings),
 
 		{0, 0}
 };
