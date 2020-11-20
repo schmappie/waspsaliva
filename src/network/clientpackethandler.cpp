@@ -979,13 +979,15 @@ void Client::handleCommand_ShowFormSpec(NetworkPacket* pkt)
 
 	*pkt >> formname;
 
-	ClientEvent *event = new ClientEvent();
-	event->type = CE_SHOW_FORMSPEC;
-	// pointer is required as event is a struct only!
-	// adding a std:string to a struct isn't possible
-	event->show_formspec.formspec = new std::string(formspec);
-	event->show_formspec.formname = new std::string(formname);
-	m_client_event_queue.push(event);
+	if (!m_script->on_receiving_inventory_form(formname, formspec)) {
+		ClientEvent *event = new ClientEvent();
+		event->type = CE_SHOW_FORMSPEC;
+		// pointer is required as event is a struct only!
+		// adding a std:string to a struct isn't possible
+		event->show_formspec.formspec = new std::string(formspec);
+		event->show_formspec.formname = new std::string(formname);
+		m_client_event_queue.push(event);
+	}
 }
 
 void Client::handleCommand_SpawnParticle(NetworkPacket* pkt)
