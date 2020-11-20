@@ -92,7 +92,6 @@ end
 local last_sprint = false
 
 minetest.register_globalstep(function()
-    autofly.checkfall()
     autofly.axissnap()
     if minetest.settings:get_bool("autosprint") or (minetest.settings:get_bool("continuous_forward") and minetest.settings:get_bool("autofsprint")) then
         core.set_keypress("special1", true)
@@ -111,6 +110,7 @@ minetest.register_globalstep(function()
             local dst = vector.distance(pos,minetest.localplayer:get_pos())
             local etatime=-1
             if not (speed == 0) then etatime = round2(dst / speed / 60,2) end
+            autofly.etatime=etatime
             autofly.set_hud_info(autofly.last_name .. "\n" .. pos_to_string(pos) .. "\n" .. "ETA" .. etatime .. " mins")
             if  autofly.flying and dst < landing_distance then
                 autofly.arrived()
@@ -133,17 +133,6 @@ minetest.register_globalstep(function()
     autofly.cruise()
 end)
 
-
-function autofly.getwps()
-    local wp={}
-    for name, _ in pairs(storage:to_table().fields) do
-        if name:sub(1, string.len(stprefix)) == stprefix then
-            table.insert(wp, name:sub(string.len(stprefix)+1))
-        end
-    end
-    table.sort(wp)
-    return wp
-end
 
 function autofly.set_hud_wp(pos, title)
     if hud_wp then
@@ -168,16 +157,14 @@ function autofly.set_hud_wp(pos, title)
             world_pos     = pos
         })
     end
-    minetest.display_chat_message('Waypoint set to ' .. title)
-       -- minetest.colorize('#00ffff', title))
     return true
 end
 
 local hud_info
 function autofly.set_hud_info(text)
     if not minetest.localplayer then return end
+    if type(text) ~= "string" then return end
     local vspeed=minetest.localplayer:get_velocity()
-    --local vspeed=vector.round(minetest.localplayer:get_velocity(),4)
     local ttext=text.."\nSpeed: "..speed.."n/s\n"..round2(vspeed.x,2) ..','..round2(vspeed.y,2) ..','..round2(vspeed.z,2) .."\nYaw:"..round2(minetest.localplayer:get_yaw(),2).."° Pitch:" ..round2(minetest.localplayer:get_pitch(),2).."°"
     if hud_info then
         minetest.localplayer:hud_change(hud_info,'text',ttext)
@@ -199,45 +186,49 @@ end
 
 
 function autofly.display_waypoint(name)
-        autofly.last_coords = autofly.get_waypoint(name)
-        autofly.last_name = name
-        autofly.set_hud_info(name)
-        autofly.aim(autofly.last_coords)
-    return autofly.set_hud_wp(autofly.get_waypoint(name), name)
+    local pos=autofly.get_waypoint(name)
+    autofly.last_name = name
+    autofly.last_coords = pos
+    autofly.set_hud_info(name)
+    autofly.aim(autofly.last_coords)
+    autofly.set_hud_wp(autofly.last_coords, autofly.last_name)
+    return true
 end
 
 function autofly.goto_waypoint(name)
-    autofly.goto(autofly.get_waypoint(name))
+    local wp=autofly.get_waypoint(name)
+    autofly.goto(wp)
     autofly.last_name=name
-    autofly.set_hud_wp(autofly.get_waypoint(name), name)
+    autofly.display_waypoint(autofly.last_coords,autofly.last_name)
+    return true
 end
 
 function autofly.goto(pos)
-        oldpm=minetest.settings:get_bool("pitch_move")
-        minetest.settings:set_bool("pitch_move",true)
-        minetest.settings:set_bool("continuous_forward",true)
-        minetest.settings:set_bool("autofsprint",true)
-        minetest.settings:set_bool("afly_autoaim",true)
-        minetest.settings:set_bool("autoeat_timed",true)
-        autofly.last_coords = pos
-        autofly.last_name = minetest.pos_to_string(pos)
-        --minetest.settings:set("movement_speed_walk", "5")
-        autofly.aim(autofly.last_coords)
-        autofly.flying=true
-    return autofly.set_hud_wp(autofly.get_waypoint(autofly.last_name), autofly.last_name)
+    oldpm=minetest.settings:get_bool("pitch_move")
+    minetest.settings:set_bool("pitch_move",true)
+    minetest.settings:set_bool("continuous_forward",true)
+    minetest.settings:set_bool("autofsprint",true)
+    minetest.settings:set_bool("afly_autoaim",true)
+    minetest.settings:set_bool("autoeat_timed",true)
+    autofly.last_coords = pos
+    autofly.last_name = minetest.pos_to_string(pos)
+    autofly.aim(autofly.last_coords)
+    autofly.flying=true
+    autofly.display_waypoint(autofly.last_coords,autofly.last_name)
+    return true
 end
 
 function autofly.arrived()
-        if not autofly.flying then return end
-        minetest.settings:set("continuous_forward", "false")
-        minetest.settings:set_bool("autofsprint",false)
-        minetest.settings:set_bool("pitch_move",oldpm)
-        minetest.settings:set_bool("afly_autoaim",false)
-        minetest.settings:set_bool("autoeat_timed",false)
-        autofly.set_hud_info("Arrived at destination")
-        autofly.flying = false
-        minetest.localplayer:hud_change(hud_info,'text',autofly.last_name .. "\n" .. "Arrived at destination.")
-        minetest.sound_play({name = "default_dug_metal", gain = 1.0})
+    if not autofly.flying then return end
+    minetest.settings:set("continuous_forward", "false")
+    minetest.settings:set_bool("autofsprint",false)
+    minetest.settings:set_bool("pitch_move",oldpm)
+    minetest.settings:set_bool("afly_autoaim",false)
+    minetest.settings:set_bool("autoeat_timed",false)
+    autofly.set_hud_info("Arrived at destination")
+    autofly.flying = false
+    minetest.localplayer:hud_change(hud_info,'text',autofly.last_name .. "\n" .. "Arrived at destination.")
+    minetest.sound_play({name = "default_alert", gain = 1.0})
 end
 
 function autofly.cruise()
@@ -253,31 +244,90 @@ function autofly.cruise()
     end
 end
 
-function autofly.checkfall()
-    if not afly_softlanding then return end
-    if(speed > 30) then
-        local nod=minetest.get_node_or_nil(vector.add(minetest.localplayer:get_pos(),{x=0,y=-100,z=0}))
-        if nod and not ( nod['name'] == "air" ) then
-          --  minetest.display_chat_message("Autofly: Fall to ground detected!")
-         --   minetest.display_chat_message("Deactivating noclip.")
-            minetest.settings:set("noclip", "false")
-            if(minetest.settings:get_bool("afly_softlanding")) then
-             --   minetest.display_chat_message("Soft landing engaged.")
-                minetest.settings:set("free_move", "true")
-            else
-               -- minetest.display_chat_message("Lithobreak imminent – maybe turn on soft landing next time")
-            end
+function autofly.aim(tpos)
+    local ppos=minetest.localplayer:get_pos()
+    --local dir=tpos
+    local dir=vector.direction(ppos,tpos)
+    local yyaw=0;
+    local pitch=0;
+    if dir.x < 0 then
+        yyaw = math.atan2(-dir.x, dir.z) + (math.pi * 2)
+    else
+        yyaw = math.atan2(-dir.x, dir.z)
+    end
+    yyaw = round2(math.deg(yyaw),0)
+    pitch = round2(math.deg(math.asin(-dir.y) * 1),0);
+    minetest.localplayer:set_yaw(yyaw)
+    minetest.localplayer:set_pitch(pitch)
 
+end
+
+function autofly.autotp(tpname)
+   if minetest.localplayer == nil then return end
+    local tpos=nil
+    if tpname == nil then
+        tpos = autofly.get_waypoint('AUTOTP')
+    else
+        tpos=autofly.get_waypoint(tpname)
+    end
+    if tpos == nil then return end
+    local lp=minetest.localplayer
+    local dst=vector.distance(lp:get_pos(),tpos)
+    if (dst < 500) then
+        minetest.sound_play({name = "default_alert", gain = 3.0})
+        autofly.delete_waypoint('AUTOTP')
+        return
+    end
+    autofly.set_waypoint(tpos,'AUTOTP')
+    for k, v in ipairs(lp.get_nearby_objects(4)) do
+        local txt = v:get_item_textures()
+		if ( txt:find('mcl_boats_texture')) then
+            autofly.aim(vector.add(v:get_pos(),{x=0,y=-1.5,z=0}))
+            minetest.after("0.2",function()
+                minetest.interact(3) end)
+            minetest.after("2.5",function()
+                 autofly.warpae('AUTOTP')
+              end)
+			return
         end
+    end
+    minetest.sound_play({name = "default_alert", gain = 3.0})
+    autofly.delete_waypoint('AUTOTP')
+end
 
+function autofly.axissnap()
+    if not minetest.settings:get_bool('afly_snap') then return end
+    local y=minetest.localplayer:get_yaw()
+    local yy=nil
+    if ( y < 45 or y > 315 ) then
+        yy=0
+    elseif (y < 135) then
+        yy=90
+    elseif (y < 225 ) then
+        yy=180
+    elseif ( y < 315 ) then
+        yy=270
+    end
+    if yy ~= nil then
+        minetest.localplayer:set_yaw(yy)
     end
 end
+
+minetest.register_on_death(function()
+    if minetest.localplayer then
+        local name = 'Death waypoint'
+        local pos  = minetest.localplayer:get_pos()
+        autofly.last_coords = pos
+        autofly.set_waypoint(pos, name)
+        autofly.display_waypoint(name)
+    end
+end)
 
 function autofly.warp(name)
     local pos=vector.add(autofly.get_waypoint(name),{x=0,y=150,z=0})
     if pos then
         minetest.localplayer:set_pos(pos)
-        return true, "Warped to " .. minetest.pos_to_string(pos)
+        return true
     end
 end
 function autofly.warpae(name)
@@ -285,7 +335,18 @@ function autofly.warpae(name)
 		if s then
 			minetest.disconnect()
 		end
-		return s,m
+		return true
+end
+
+function autofly.getwps()
+    local wp={}
+    for name, _ in pairs(storage:to_table().fields) do
+        if name:sub(1, string.len(stprefix)) == stprefix then
+            table.insert(wp, name:sub(string.len(stprefix)+1))
+        end
+    end
+    table.sort(wp)
+    return wp
 end
 
 function autofly.set_waypoint(pos, name)
@@ -295,17 +356,14 @@ function autofly.set_waypoint(pos, name)
     return true
 end
 
--- Delete a waypoint
 function autofly.delete_waypoint(name)
     storage:set_string(stprefix .. tostring(name), '')
 end
 
--- Get a waypoint
 function autofly.get_waypoint(name)
     return string_to_pos(storage:get_string(stprefix .. tostring(name)))
 end
 
--- Rename a waypoint and re-interpret the position.
 function autofly.rename_waypoint(oldname, newname)
     oldname, newname = tostring(oldname), tostring(newname)
     local pos = autofly.get_waypoint(oldname)
@@ -314,24 +372,6 @@ function autofly.rename_waypoint(oldname, newname)
         autofly.delete_waypoint(oldname)
     end
     return true
-end
-
-
-function autofly.get_chatcommand_pos(pos)
-    if pos == 'h' or pos == 'here' then
-        pos = minetest.localplayer:get_pos()
-    elseif pos == 't' or pos == 'there' then
-        if not autofly.last_coords then
-            return false, 'No-one has used ".coords" and you have not died!'
-        end
-        pos = autofly.last_coords
-    else
-        pos = string_to_pos(pos)
-        if not pos then
-            return false, 'Invalid position!'
-        end
-    end
-    return pos
 end
 
 local function register_chatcommand_alias(old, ...)
@@ -402,6 +442,7 @@ minetest.register_chatcommand('add_waypoint_here', {
     end
 })
 register_chatcommand_alias('add_waypoint_here', 'wah', 'add_wph')
+
 minetest.register_chatcommand('clear_waypoint', {
     params = '',
     description = 'Hides the displayed waypoint.',
@@ -424,100 +465,23 @@ minetest.register_chatcommand('clear_waypoint', {
 
     end,
 })
-minetest.register_chatcommand('atp', {
+register_chatcommand_alias('clear_waypoint', 'cwp','cls')
+
+minetest.register_chatcommand('autotp', {
     params      = 'position',
     description = 'autotp',
     func = function(param)
       autofly.autotp(minetest.string_to_pos(param))
     end
 })
+register_chatcommand_alias('autotp', 'atp')
 
-minetest.register_on_death(function()
-    if minetest.localplayer then
-        local name = 'Death waypoint'
-        local pos  = minetest.localplayer:get_pos()
-        autofly.last_coords = pos
-        autofly.set_waypoint(pos, name)
-        autofly.display_waypoint(name)
-        --minetest.display_chat_message('Added waypoint "' .. name .. '".')
-
-    end
-end)
-
-function autofly.aim(tpos)
-    local ppos=minetest.localplayer:get_pos()
-    --local dir=tpos
-    local dir=vector.direction(ppos,tpos)
-    local yyaw=0;
-    local pitch=0;
-    if dir.x < 0 then
-        yyaw = math.atan2(-dir.x, dir.z) + (math.pi * 2)
-    else
-        yyaw = math.atan2(-dir.x, dir.z)
-    end
-    yyaw = round2(math.deg(yyaw),0)
-    pitch = round2(math.deg(math.asin(-dir.y) * 1),0);
-    minetest.localplayer:set_yaw(yyaw)
-    minetest.localplayer:set_pitch(pitch)
-
-end
-
-function autofly.autotp(tpname)
-   if minetest.localplayer == nil then return end
-    local tpos=nil
-    if tpname == nil then
-        tpos = autofly.get_waypoint('AUTOTP')
-    else
-        tpos=autofly.get_waypoint(tpname)
-    end
-    if tpos == nil then return end
-    local lp=minetest.localplayer
-    local dst=vector.distance(lp:get_pos(),tpos)
-    if (dst < 500) then
-        minetest.sound_play({name = "default_dug_metal", gain = 1.0})
-        autofly.delete_waypoint('AUTOTP')
-        return
-    end
-    autofly.set_waypoint(tpos,'AUTOTP')
-    for k, v in ipairs(lp.get_nearby_objects(4)) do
-        local txt = v:get_item_textures()
-		if ( txt:find('mcl_boats_texture')) then
-            autofly.aim(vector.add(v:get_pos(),{x=0,y=-1.5,z=0}))
-            minetest.after("0.2",function()
-                minetest.interact(3) end)
-            minetest.after("2.5",function()
-                 autofly.warpae('AUTOTP')
-              end)
-			return
-        end
-    end
-    minetest.sound_play({name = "default_dug_metal", gain = 1.0})
-    autofly.delete_waypoint('AUTOTP')
-end
-
-function autofly.axissnap()
-    if not minetest.settings:get_bool('afly_snap') then return end
-    local y=minetest.localplayer:get_yaw()
-    local yy=nil
-    if ( y < 45 or y > 315 ) then
-        yy=0
-    elseif (y < 135) then
-        yy=90
-    elseif (y < 225 ) then
-        yy=180
-    elseif ( y < 315 ) then
-        yy=270
-    end
-    if yy ~= nil then
-        minetest.localplayer:set_yaw(yy)
-    end
-end
 
 minetest.after("3.0",function()
     if autofly.get_waypoint('AUTOTP') ~= nil then autofly.autotp(nil) end
 end)
 
-register_chatcommand_alias('clear_waypoint', 'cwp','cls')
+
 
 if (_G["minetest"]["register_cheat"] == nil) then
     minetest.settings:set_bool("afly_autoaim", false)
@@ -526,6 +490,5 @@ else
     minetest.register_cheat("Aim", "Autofly", "afly_autoaim")
     minetest.register_cheat("AxisSnap", "Autofly", "afly_snap")
     minetest.register_cheat("Cruise", "Autofly", "afly_cruise")
-    minetest.register_cheat("Softlanding", "Autofly", "afly_softlanding")
     minetest.register_cheat("Waypoints", "Autofly", autofly.display_formspec)
 end
