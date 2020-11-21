@@ -1,5 +1,7 @@
 -- CC0/Unlicense Emilia 2020
 
+local category = "Scaffold"
+
 scaffold = {}
 scaffold.registered_scaffolds = {}
 
@@ -28,7 +30,7 @@ end
 function scaffold.register_template_scaffold(name, setting, func, offset)
     scaffold.register_scaffold(scaffold.template(setting, func, offset))
     if minetest.register_cheat then
-        minetest.register_cheat(name, "Scaffold", setting)
+        minetest.register_cheat(name, category, setting)
     end
 end
 
@@ -86,3 +88,4 @@ end
 local mpath = minetest.get_modpath(minetest.get_current_modname())
 dofile(mpath .. "/sapscaffold.lua")
 dofile(mpath .. "/slowscaffold.lua")
+dofile(mpath .. "/autofarm.lua")
