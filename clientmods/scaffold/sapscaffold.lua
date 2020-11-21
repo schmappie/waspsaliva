@@ -22,7 +22,7 @@ local function nilify_node(node)
     if node and (node.name == "air" or minetest.get_node_def(node.name).buildable_to) then
         return nil
     end
-    return node
+    return node or {name = ""}
 end
 
 local dirt = {
@@ -39,9 +39,8 @@ local saplings = {
     "mcl_core:acaciasapling"
 }
 
-local function sapper()
-    local lp = minetest.localplayer:get_pos()
-    local below = vector.add(lp, {x = 0, y = -1, z = 0})
+local function sapper(below)
+    local lp = vector.round(minetest.localplayer:get_pos())
     local node_here = nilify_node(minetest.get_node_or_nil(lp))
     local node_under = nilify_node(minetest.get_node_or_nil(below))
 
@@ -59,12 +58,8 @@ local function sapper()
     end
 end
 
-minetest.register_globalstep(function()
-    if minetest.settings:get_bool("scaffold_saplings") then
-        sapper()
-    end
-end)
+scaffold.register_template_scaffold("scaffold_saplings", sapper)
 
 if minetest.register_cheat then
-    minetest.register_cheat("SapScaffold", "World", "scaffold_saplings")
+    minetest.register_cheat("SapScaffold", "Scaffold", "scaffold_saplings")
 end

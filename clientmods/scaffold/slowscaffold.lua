@@ -55,37 +55,19 @@ local function can_place(pos)
     return not wield_empty and can_place_at(pos)
 end
 
-local function scaffold(setting, func, offset)
-    if not offset then
-        offset = {x = 0, y = -1, z = 0}
-    end
-
-    return function()
-        if minetest.settings:get_bool(setting) then
-            local lp = minetest.localplayer:get_pos()
-            local tgt = vector.round(vector.add(lp, offset))
-            func(tgt)
-        end
-    end
-end
-
-local slowscaffold = scaffold("slow_scaffold", function(pos)
+scaffold.register_template_scaffold("scaffold_slow", function(pos)
     if can_place(pos) then
         place(pos)
     end
 end)
-local checkscaffold = scaffold("check_scaffold", function(pos)
+
+scaffold.register_template_scaffold("scaffold_check", function(pos)
     if can_place(pos) then
         minetest.place_node(pos)
     end
 end)
 
-minetest.register_globalstep(function()
-    slowscaffold()
-    checkscaffold()
-end)
-
 if minetest.register_cheat then
-    minetest.register_cheat("SlowScaffold", "World", "slow_scaffold")
-    minetest.register_cheat("CheckScaffold", "World", "check_scaffold")
+    minetest.register_cheat("SlowScaffold", "Scaffold", "scaffold_slow")
+    minetest.register_cheat("CheckScaffold", "Scaffold", "scaffold_check")
 end
