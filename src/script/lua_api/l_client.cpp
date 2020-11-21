@@ -559,68 +559,72 @@ int ModApiClient::l_send_nodemeta_fields(lua_State *L)
 	return 0;
 }
 
-//interact_use()
+// interact(mode, pointed)
 int ModApiClient::l_interact(lua_State *L)
 {
-	Camera *camera = getClient(L)->getCamera();
-	const v3f camera_direction = camera->getDirection();
-	const v3s16 camera_offset  = camera->getOffset();
-	u8 t = luaL_checknumber(L, 1);
-	if(t > 5) {
-		lua_pushboolean(L, false);
-		return 1;
-	}
-	IItemDefManager *itemdef_manager = createItemDefManager();
-	ItemStack selected_item, hand_item;
-	const ItemDefinition &selected_def = selected_item.getDefinition(itemdef_manager);
-	f32 d = getToolRange(selected_def, hand_item.getDefinition(itemdef_manager));
-	if (g_settings->getBool("increase_tool_range"))
-		d += 2;
-	if (g_settings->getBool("increase_tool_range_plus"))
-		d = 1000;
-	core::line3d<f32> shootline;
-	switch (camera->getCameraMode()) {
-	case CAMERA_MODE_FIRST:
-		// Shoot from camera position, with bobbing
-		shootline.start = camera->getPosition();
-		break;
-	case CAMERA_MODE_THIRD:
-		// Shoot from player head, no bobbing
-		shootline.start = camera->getHeadPosition();
-		break;
-	case CAMERA_MODE_THIRD_FRONT:
-		shootline.start = camera->getHeadPosition();
-		// prevent player pointing anything in front-view
-		d = 0;
-		break;
-	}
-	shootline.end = shootline.start + camera_direction * BS * d;
-	GameRunData runData = GameRunData();
+	std::string mode = luaL_checkstring(L, 1);
+	PointedThing pointed;
+    int imode;
 
-	PointedThing pointed = g_game->updatePointedThing(shootline,
-			selected_def.liquids_pointable,
-			!runData.ldown_for_dig,
-			camera_offset);
-	switch(t) {
-		case 0:
-			getClient(L)->interact(INTERACT_START_DIGGING, pointed);
-		break;
-		case 1:
-			getClient(L)->interact(INTERACT_STOP_DIGGING, pointed);
-		break;
-		case 2:
-			getClient(L)->interact(INTERACT_DIGGING_COMPLETED, pointed);
-		break;
-		case 3:
-			 getClient(L)->interact(INTERACT_PLACE, pointed);
-		break;
-		case 4:
-			 getClient(L)->interact(INTERACT_USE, pointed);
-		break;
-		case 5:
-			 getClient(L)->interact(INTERACT_ACTIVATE, pointed);
-		break;
-	}
+    if (lua_gettop(L) > 1) {
+        v3s16 pos = check_v3s16(L, 2);
+	    pointed.type = POINTEDTHING_NODE;
+	    pointed.node_abovesurface = pos;
+	    pointed.node_undersurface = pos;
+    } else {
+	    Camera *camera = getClient(L)->getCamera();
+	    const v3f camera_direction = camera->getDirection();
+	    const v3s16 camera_offset  = camera->getOffset();
+
+	    IItemDefManager *itemdef_manager = createItemDefManager();
+	    ItemStack selected_item, hand_item;
+	    const ItemDefinition &selected_def = selected_item.getDefinition(itemdef_manager);
+	    f32 d = getToolRange(selected_def, hand_item.getDefinition(itemdef_manager));
+
+	    if (g_settings->getBool("increase_tool_range"))
+		    d += 2;
+	    if (g_settings->getBool("increase_tool_range_plus"))
+		    d = 1000;
+
+	    core::line3d<f32> shootline;
+
+	    switch (camera->getCameraMode()) {
+	    case CAMERA_MODE_FIRST:
+		    // Shoot from camera position, with bobbing
+		    shootline.start = camera->getPosition();
+		    break;
+	    case CAMERA_MODE_THIRD:
+		    // Shoot from player head, no bobbing
+		    shootline.start = camera->getHeadPosition();
+		    break;
+	    case CAMERA_MODE_THIRD_FRONT:
+		    shootline.start = camera->getHeadPosition();
+		    // prevent player pointing anything in front-view
+		    d = 0;
+		    break;
+	    }
+	    shootline.end = shootline.start + camera_direction * BS * d;
+	    GameRunData runData = GameRunData();
+
+	    pointed = g_game->updatePointedThing(shootline,
+			    selected_def.liquids_pointable,
+			    !runData.ldown_for_dig,
+			    camera_offset);
+    }
+
+    struct EnumString interact_modes[] = {
+        {INTERACT_START_DIGGING, "start_digging"},
+        {INTERACT_STOP_DIGGING, "stop_digging"},
+        {INTERACT_DIGGING_COMPLETED, "digging_completed"},
+        {INTERACT_PLACE, "place"},
+        {INTERACT_USE, "use"},
+        {INTERACT_ACTIVATE, "activate"},
+        {0, NULL}
+    };
+
+    string_to_enum(interact_modes, imode, mode);
+
+    getClient(L)->interact((InteractAction)imode, pointed);
 
 	lua_pushboolean(L, true);
 	return 0;
