@@ -3,8 +3,8 @@
 local seeds = {
     "mcl_farming:wheat_seeds",
     "mcl_farming:beetroot_seeds",
-    "mcl_farming:carrots",
-    "mcl_farming:potatoes"
+    "mcl_farming:carrot_item",
+    "mcl_farming:potato_item"
 }
 
 local nodeseeds = {
@@ -48,5 +48,30 @@ scaffold.register_template_scaffold("AutoFarm", "scaffold_farm", function(below)
     -- water
     else
         scaffold.place_if_needed(water, below)
+    end
+end)
+
+scaffold.register_template_scaffold("AutoMelon", "scaffold_melon", function(below)
+    local lp = vector.round(minetest.localplayer:get_pos())
+
+    local x = below.x % 3
+    local z = below.z % 3
+
+    -- water
+    if x == 0 and z == 0 then
+        scaffold.place_if_needed(water, below)
+    -- dirt
+    elseif z == 2 or (x == 2 and z == 0) then
+        scaffold.place_if_needed(tillable, below)
+    -- farmland
+    elseif x == 1 or z == 1 then
+        if scaffold.place_if_needed(tillable, below) then
+            if scaffold.can_place_at(lp) then
+                if scaffold.find_any_swap(hoes) then
+                    minetest.interact("place", below)
+                    scaffold.place_if_needed(nodeseeds, lp)
+                end
+            end
+        end
     end
 end)
