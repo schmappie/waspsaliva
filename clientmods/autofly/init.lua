@@ -286,7 +286,7 @@ function autofly.autotp(tpname)
 		if ( txt:find('mcl_boats_texture')) then
             autofly.aim(vector.add(v:get_pos(),{x=0,y=-1.5,z=0}))
             minetest.after("0.2",function()
-                minetest.interact(3) end)
+                minetest.interact("place") end)
             minetest.after("2.5",function()
                  autofly.warpae('AUTOTP')
               end)
