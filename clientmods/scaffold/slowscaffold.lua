@@ -1,3 +1,5 @@
+-- CC0/Unlicense Emilia 2020
+
 if minetest.settings:get("slow_blocks_per_second") == nil then
     minetest.settings:set("slow_blocks_per_second", 8)
 end
@@ -43,31 +45,22 @@ local function place(pos)
     end
 end
 
-local function can_place_at(pos)
-    local node = minetest.get_node_or_nil(pos)
-    return (node and (node.name == "air" or minetest.get_node_def(node.name).buildable_to))
-end
-
 -- should check if wield is placeable
 -- minetest.get_node(wielded:get_name()) ~= nil should probably work
+-- otherwise it equips armor and eats food
 local function can_place(pos)
     local wield_empty = minetest.localplayer:get_wielded_item():is_empty()
-    return not wield_empty and can_place_at(pos)
+    return not wield_empty and scaffold.can_place_at(pos)
 end
 
-scaffold.register_template_scaffold("scaffold_slow", function(pos)
+scaffold.register_template_scaffold("SlowScaffold", "scaffold_slow", function(pos)
     if can_place(pos) then
         place(pos)
     end
 end)
 
-scaffold.register_template_scaffold("scaffold_check", function(pos)
+scaffold.register_template_scaffold("CheckScaffold", "scaffold_check", function(pos)
     if can_place(pos) then
         minetest.place_node(pos)
     end
 end)
-
-if minetest.register_cheat then
-    minetest.register_cheat("SlowScaffold", "Scaffold", "scaffold_slow")
-    minetest.register_cheat("CheckScaffold", "Scaffold", "scaffold_check")
-end
