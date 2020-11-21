@@ -387,19 +387,7 @@ end
 minetest.register_chatcommand('waypoints', {
     params      = '',
     description = 'Open the autofly GUI',
-    func = function(param)
-        if param == '' then
-            autofly.display_formspec()
-        else
-            local pos, err = autofly.get_chatcommand_pos(param)
-            if not pos then
-                return false, err
-            end
-            if not autofly.set_hud_wp(pos) then
-                return false, 'Error setting the waypoint!'
-            end
-        end
-    end
+    func = function(param) autofly.display_formspec() end
 })
 
 register_chatcommand_alias('waypoints','wp', 'wps', 'waypoint')
@@ -417,7 +405,6 @@ minetest.register_chatcommand('add_waypoint', {
         local name = param:sub(e + 1)
 
         -- Validate the position
-        local pos, err = autofly.get_chatcommand_pos(pos)
         if not pos then
             return false, err
         end
