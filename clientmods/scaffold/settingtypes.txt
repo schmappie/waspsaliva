@@ -1,2 +1,3 @@
+sapling_scaffold (Scaffold with saplings and dirt) bool false
 slow_blocks_per_second (Blocks placed per second) int 8
 slow_scaffold (Slow scaffold) bool false
