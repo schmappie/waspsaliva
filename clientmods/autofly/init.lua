@@ -269,6 +269,8 @@ function autofly.autotp(tpname)
     local tpos=nil
     if tpname == nil then
         tpos = autofly.get_waypoint('AUTOTP')
+    elseif type(tpname) == "table" then
+        tpos = tpname
     else
         tpos=autofly.get_waypoint(tpname)
     end
