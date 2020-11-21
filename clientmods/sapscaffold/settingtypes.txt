@@ -1,1 +1,0 @@
-sapling_scaffold (Scaffold with saplings and dirt) bool false
