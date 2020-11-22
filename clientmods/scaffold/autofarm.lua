@@ -54,17 +54,17 @@ end)
 scaffold.register_template_scaffold("AutoMelon", "scaffold_melon", function(below)
     local lp = vector.round(minetest.localplayer:get_pos())
 
-    local x = below.x % 3
-    local z = below.z % 3
+    local x = below.x % 5
+    local z = below.z % 5
 
     -- water
     if x == 0 and z == 0 then
         scaffold.place_if_needed(water, below)
     -- dirt
-    elseif z == 2 or (x == 2 and z == 0) then
+    elseif z == 2 or z == 4 or ((x == 2 or x == 4) and z == 0) then
         scaffold.place_if_needed(tillable, below)
     -- farmland
-    elseif x == 1 or z == 1 then
+    elseif (x == 1 or z == 1) or (x == 3 or z == 3) then
         if scaffold.place_if_needed(tillable, below) then
             if scaffold.can_place_at(lp) then
                 if scaffold.find_any_swap(hoes) then
