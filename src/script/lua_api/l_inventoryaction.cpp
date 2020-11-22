@@ -43,9 +43,9 @@ int LuaInventoryAction::l_apply(lua_State *L)
 
 	std::ostringstream os(std::ios::binary);
 	o->m_action->serialize(os);
-	
+
 	std::istringstream is(os.str(), std::ios_base::binary);
-	
+
 	InventoryAction *a = InventoryAction::deSerialize(is);
 
 	getClient(L)->inventoryAction(a);
@@ -69,29 +69,29 @@ int LuaInventoryAction::l_to(lua_State *L)
 int LuaInventoryAction::l_craft(lua_State *L)
 {
 	LuaInventoryAction *o = checkobject(L, 1);
-	
+
 	if (o->m_action->getType() != IAction::Craft)
 		return 0;
-		
+
 	std::string locStr;
 	InventoryLocation loc;
-	
+
 	locStr = readParam<std::string>(L, 2);
-	
+
 	try {
 		loc.deSerialize(locStr);
 		dynamic_cast<ICraftAction *>(o->m_action)->craft_inv = loc;
 	} catch (SerializationError &) {}
-	
+
 	return 0;
 }
 
 int LuaInventoryAction::l_set_count(lua_State *L)
 {
 	LuaInventoryAction *o = checkobject(L, 1);
-	
+
 	s16 count = luaL_checkinteger(L, 2);
-	
+
 	switch (o->m_action->getType()) {
 	case IAction::Move:
 		((IMoveAction *)o->m_action)->count = count;
@@ -103,8 +103,61 @@ int LuaInventoryAction::l_set_count(lua_State *L)
 		((ICraftAction *)o->m_action)->count = count;
 		break;
 	}
-	
+
 	return 0;
+}
+
+int LuaInventoryAction::l_to_table(lua_State *L)
+{
+	LuaInventoryAction *o = checkobject(L, 1);
+	MoveAction *act = dynamic_cast<MoveAction *>(o->m_action);
+
+	std::string type = "";
+	u16 count = 0;
+	switch (o->m_action->getType()) {
+	case IAction::Move:
+		count = ((IMoveAction *)o->m_action)->count;
+		type = "move";
+		break;
+	case IAction::Drop:
+		count = ((IDropAction *)o->m_action)->count;
+		type = "drop";
+		break;
+	case IAction::Craft:
+		count = ((ICraftAction *)o->m_action)->count;
+		type = "craft";
+		break;
+	}
+
+	lua_newtable(L);
+	lua_pushinteger(L, count);
+	lua_setfield(L, -2, "count");
+	lua_pushstring(L, type.c_str());
+	lua_setfield(L, -2, "type");
+
+	lua_newtable(L);
+	std::ostringstream from_loc;
+	act->from_inv.serialize(from_loc);
+	lua_pushstring(L, from_loc.str().c_str());
+	lua_setfield(L, -2, "location");
+	lua_pushstring(L, act->from_list.c_str());
+	lua_setfield(L, -2, "inventory");
+	lua_pushinteger(L, act->from_i);
+	lua_setfield(L, -2, "slot");
+	lua_setfield(L, -2, "from");
+
+	lua_newtable(L);
+	std::ostringstream to_loc;
+	act->to_inv.serialize(to_loc);
+	lua_pushstring(L, to_loc.str().c_str());
+	lua_setfield(L, -2, "location");
+	lua_pushstring(L, act->to_list.c_str());
+	lua_setfield(L, -2, "inventory");
+	lua_pushinteger(L, act->to_i);
+	lua_setfield(L, -2, "slot");
+	lua_setfield(L, -2, "to");
+
+	return 1;
 }
 
 LuaInventoryAction::LuaInventoryAction(const IAction &type) : m_action(nullptr)
@@ -141,9 +194,9 @@ int LuaInventoryAction::create_object(lua_State *L)
 {
 	IAction type;
 	std::string typeStr;
-	
+
 	typeStr = readParam<std::string>(L, 1);
-	
+
 	if (typeStr == "move")
 		type = IAction::Move;
 	else if (typeStr == "drop")
@@ -212,5 +265,6 @@ const luaL_Reg LuaInventoryAction::methods[] = {
 	luamethod(LuaInventoryAction, to),
 	luamethod(LuaInventoryAction, craft),
 	luamethod(LuaInventoryAction, set_count),
+	luamethod(LuaInventoryAction, to_table),
 	{0,0}
 };
