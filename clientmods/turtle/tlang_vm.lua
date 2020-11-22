@@ -12,12 +12,7 @@ local function in_list(value, list)
 end
 
 local function in_keys(value, list)
-    for k, v in pairs(list) do
-        if k == value then
-            return true
-        end
-    end
-    return false
+    return list[value] ~= nil
 end
 
 -- state
