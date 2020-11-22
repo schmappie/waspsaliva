@@ -41,6 +41,14 @@ function scaffold.can_place_at(pos)
     return (node and (node.name == "air" or minetest.get_node_def(node.name).buildable_to))
 end
 
+-- should check if wield is placeable
+-- minetest.get_node(wielded:get_name()) ~= nil should probably work
+-- otherwise it equips armor and eats food
+function scaffold.can_place_wielded_at(pos)
+    local wield_empty = minetest.localplayer:get_wielded_item():is_empty()
+    return not wield_empty and scaffold.can_place_at(pos)
+end
+
 function scaffold.find_any_swap(items)
     for i, v in ipairs(items) do
         local n = minetest.find_item(v)
@@ -89,3 +97,16 @@ local mpath = minetest.get_modpath(minetest.get_current_modname())
 dofile(mpath .. "/sapscaffold.lua")
 dofile(mpath .. "/slowscaffold.lua")
 dofile(mpath .. "/autofarm.lua")
+
+
+scaffold.register_template_scaffold("CheckScaffold", "scaffold_check", function(pos)
+    if scaffold.can_place_wielded_at(pos) then
+        minetest.place_node(pos)
+    end
+end)
+
+scaffold.register_template_scaffold("HereScaffold", "scaffold_here", function(pos)
+    if scaffold.can_place_wielded_at(pos) then
+        minetest.place_node(pos)
+    end
+end, {x = 0, y = 0, z = 0})
