@@ -45,22 +45,8 @@ local function place(pos)
     end
 end
 
--- should check if wield is placeable
--- minetest.get_node(wielded:get_name()) ~= nil should probably work
--- otherwise it equips armor and eats food
-local function can_place(pos)
-    local wield_empty = minetest.localplayer:get_wielded_item():is_empty()
-    return not wield_empty and scaffold.can_place_at(pos)
-end
-
 scaffold.register_template_scaffold("SlowScaffold", "scaffold_slow", function(pos)
-    if can_place(pos) then
+    if scaffold.can_place_wielded_at(pos) then
         place(pos)
-    end
-end)
-
-scaffold.register_template_scaffold("CheckScaffold", "scaffold_check", function(pos)
-    if can_place(pos) then
-        minetest.place_node(pos)
     end
 end)
