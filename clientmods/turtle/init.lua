@@ -289,6 +289,99 @@ minetest.register_chatcommand("quarry", {
     end
 })
 
+turtle.builtins = {}
+
+function turtle.builtins.mine(state)
+
+end
+
+function turtle.builtins.advance(state)
+
+end
+
+function turtle.builtins.descend(state)
+
+end
+
+function turtle.builtins.v3add(state)
+
+end
+
+function turtle.builtins.rotate(state)
+
+end
+
+function turtle.builtins.relativize(state)
+
+end
+
+function turtle.builtins.swapg(state)
+
+end
+
+function turtle.builtins.rectify(state)
+
+end
+
+local quarry_tlang = [[
+# turtle.builtins: mine advance v3add descend rotate relativize swapg rectify
+# tlang operators: // .elem
+
+################################
+# Mine ahead length nodes (including head and feet)
+{   0 `length args
+####
+    {
+        i length == {break} if
+
+        [1 1 0] dircoord mine
+        [1 0 0] dircoord mine
+        1 wait
+        advance
+    } `i forever
+} `linemine =
+
+
+################################
+# Mine the cuboid defined by start and end
+{   0 `start `end args
+####
+    rectify `start = `end =
+    start end relativize
+
+    start end swapg_y `relstart = `relend =
+
+    start [0 1 0] v3add moveto
+    0 rotate_abs
+
+    relend.y 2 // `yend =
+
+    {
+        height yend > {break} if
+
+        [0 -1 0] dircoord mine
+        [0 -2 0] dircoord mine
+        2 descend
+
+        {
+            width relend.x > {break} if
+
+            height width + 1 + 2 % 0 == `leftiness =
+
+            relend.z linemine
+            leftiness left_or_right
+
+            width relend.x != {
+                1 linemine
+                leftiness left_or_right
+            } if
+        } `width forever
+
+        180 rotate
+    } `height forever
+} `quarry =
+]]
+
 
 turtle.states = {}
 turtle.states_available = false
