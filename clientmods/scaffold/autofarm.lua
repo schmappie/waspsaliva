@@ -36,7 +36,7 @@ scaffold.register_template_scaffold("AutoFarm", "scaffold_farm", function(below)
     local lp = vector.round(minetest.localplayer:get_pos())
 
     -- farmland
-    if below.x % 2 ~= 0 or below.z % 2 ~= 0 then
+    if below.x % 5 ~= 0 or below.z % 5 ~= 0 then
         if scaffold.place_if_needed(tillable, below) then
             if scaffold.can_place_at(lp) then
                 if scaffold.find_any_swap(hoes) then
