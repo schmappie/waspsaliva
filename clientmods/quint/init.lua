@@ -24,6 +24,12 @@ local function format_inv(taction)
     return taction.location .. ";" .. taction.inventory
 end
 
+-- Split a global inventory index
+local function parse_inv(inv)
+    local spl = string.split(inv, ";")
+    return {location = spl[1], inventory = spl[2]}
+end
+
 -- Get some useful things from an invaction
 local function parse_invaction(lists, taction)
     local idx = format_inv(taction)
@@ -191,15 +197,29 @@ function quint.invaction_dump(q, src, dst)
     return
 end
 
--- Preview an invaction quint after the first n (index) actions
-function quint.invaction_view_state(q, index)
-    local t = invaction_new()
+-- Remake a invaction quint up to index, refreshing the starts
+function quint.invaction_remake(q, index)
+    local t = quint.invaction_new()
 
     for i = 1, index do
         invaction_enqueue(t, q.q[i])
     end
 
+    return t
+end
+
+-- Preview an invaction quint after the first n (index) actions
+function quint.invaction_view_state_at(q, index)
+    local t = quint.invaction_remake(q, index)
+
     return t.current
+end
+
+-- Refresh starts and get new currents
+function quint.invaction_refresh(q)
+    local t = quint.invaction_remake(q, #q.q)
+    q.start = t.start
+    q.current = t.current
 end
 
 quint.invaction_gsteps = {}
