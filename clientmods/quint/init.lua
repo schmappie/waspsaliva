@@ -121,7 +121,7 @@ function quint.invaction_enqueue(q, invaction)
 end
 
 -- Dump a slot into destination, perform another dump if there is extra
-local function invaction_dump_slot(q, src, dst, srci)
+local function invaction_dump_slot(q, src, dst, srci, dstbounds)
     local empty
     local matching
 
@@ -132,7 +132,7 @@ local function invaction_dump_slot(q, src, dst, srci)
         return true
     end
 
-    for i = 0, #dinv - 1 do
+    for i = dstbounds.min, dstbounds.max do
         if not empty and dinv[i + 1]:is_empty() then
             empty = i
         end
@@ -177,10 +177,29 @@ local function invaction_dump_slot(q, src, dst, srci)
     end
 end
 
+local function rebind(lists, inv, bounds)
+    local invlist = lists[format_inv(inv)]
+
+    if not bounds then
+        bounds = {min = 0, max = 0}
+    end
+
+    if bounds.max == 0 then
+        bounds.max = #invlist
+    end
+
+    bounds.min = math.max(bounds.min, 0)
+    bounds.max = math.min(bounds.max, #invlist - 1)
+
+    return bounds
+end
+
 -- Dump from src to dst
 -- src and dest are in the format of {location = "", inventory = ""}
 -- like {location = "current_player", inventory = "main"}
-function quint.invaction_dump(q, src, dst)
+-- srcbounds and dstbounds are inclusive beginning and ends to the selectible invslots
+-- in the form {min = n, max = n}, if max is 0 it is changed to the maximum index
+function quint.invaction_dump(q, src, dst, srcbounds, dstbounds)
     if src.location .. src.inventory == dst.location .. dst.inventory then
         return
     end
@@ -188,8 +207,11 @@ function quint.invaction_dump(q, src, dst)
     insert_invlist(q, src)
     insert_invlist(q, dst)
 
-    for i = 0, #q.current[format_inv(src)] - 1 do
-        if not invaction_dump_slot(q, src, dst, i) then
+    srcbounds = rebind(q.current, src, srcbounds)
+    dstbounds = rebind(q.current, dst, dstbounds)
+
+    for i = srcbounds.min, srcbounds.max do
+        if not invaction_dump_slot(q, src, dst, i, dstbounds) then
             return
         end
     end
