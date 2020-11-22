@@ -57,7 +57,9 @@ private:
 
 	// set_count(self, count)
 	static int l_set_count(lua_State *L);
-		
+
+    // to_table(self)
+    static int l_to_table(lua_State *L);
 public:
 	LuaInventoryAction(const IAction &type);
 	~LuaInventoryAction();
