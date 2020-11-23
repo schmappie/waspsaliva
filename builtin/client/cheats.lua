@@ -18,7 +18,8 @@ core.cheats = {
 		["NoSlow"] = "no_slow",
 		["AutoSneak"] = "autosneak",
 		["Autosprint"] = 'autosprint',
-		["AutoForwSprint"] = 'autofsprint'
+		["AutoForwSprint"] = 'autofsprint',
+		["Jetpack"] = 'jetpack',
 	},
 	["Render"] = {
 		["Xray"] = "xray",

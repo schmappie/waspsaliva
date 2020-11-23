@@ -95,6 +95,7 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("enable_esp", "false");
 	settings->setDefault("no_slow", "false");
 	settings->setDefault("trace_players_only", "true");
+	settings->setDefault("jetpack", "false");
 
 	// Keymap
 	settings->setDefault("remote_port", "30000");
