@@ -161,7 +161,7 @@ local function invaction_dump_slot(q, src, dst, srci, dstbounds)
         quint.invaction_enqueue(q, act)
 
         if scount > free then
-            return invaction_dump_slot(q, src, dst, srci)
+            return invaction_dump_slot(q, src, dst, srci, dstbounds)
         end
 
         return true
