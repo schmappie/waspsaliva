@@ -6,7 +6,12 @@ prt=30000
 usr=$2
 passwd=$3
 logfile=$HOME/.wslog
+chatlogdir=~/.wschat
+mtpid=0
 mtpath=$(dirname $0)
+dbg=1
+if [ ! -z $4 ]; then dbg=0; fi
+mkdir -p $chatlogdir
 if [ -f $pwf ]; then pas=$(cat $pwf); fi
 check_host() {
     if [ -x $(which nc) ]; then return 0; fi
@@ -14,9 +19,24 @@ check_host() {
     return 1
 }
 
+
+startmt() {  
+    $mtpath/bin/minetest --go --address $srv --port $prt --name $usr --password $passwd 2>&1 | while read l; do
+        if [ "$(echo $l |grep '\[cchat\]')" != "" ]; then
+            srvstr=$(echo $l|cut -d ' ' -f 5)
+            lgstr=$(echo $l|sed 's/ACTION\[Main\]: \[cchat\] //'|sed "s/$srvstr//")
+            if [ "$(echo $l |grep '\[sent\]')" != "" ]; then continue; fi
+            echo $lgstr >> $chatlogdir/$srvstr.txt
+            else echo $l >> $logfile; fi
+            
+        if [ $dbg -eq 0 ]; then echo $l; fi
+    done &
+    mtpid=$!
+}
+
 while true; do
     if check_host $srv $prt; then
-        $mtpath/bin/minetest --go --address $srv --port $prt --name $usr --password $passwd;
-    else echo host is down. waiting 10...; sleep 10
-    fi
+        if ! ps $mtpid >/dev/null 2>&1; then startmt; fi
+    else echo host is down. waiting 10...; sleep 10;  fi
+    sleep 1
 done
