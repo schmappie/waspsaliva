@@ -20,9 +20,12 @@ check_host() {
     return 1
 }
 
+mt=$mtpath/bin/minetest
+amt="$mt --go --address $srv --port $prt --name $usr --password $passwd"
 
 startmt() {  
-    $mtpath/bin/minetest --go --address $srv --port $prt --name $usr --password $passwd 2>&1 | while read l; do
+    if [ ! -z $1 ]; then mmt=$mt; else mmt=$amt; fi
+    $mmt 2>&1 | while read l; do
        if [ "$(echo $l |grep '\[cchat\]')" != "" ]; then
             srvstr=$(echo $l|cut -d ' ' -f 5)
             lgstr=$(echo $l|sed 's/ACTION\[Main\]: \[cchat\] //'|sed "s/$srvstr//")
@@ -30,24 +33,35 @@ startmt() {
             echo $lgstr >> $chatlogdir/$srvstr.txt
         else 
                 echo $l >> $logfile; 
-                if [ "$(echo $l|grep 'AUTOMT Actually Quit')" != "" ]; then 
-                    quit=0; 
-                    kill $mtpid
+                if [ "$(echo $l|grep 'AUTOMT exit to menu')" != "" ]; then
+                    # kill -9 $mtpid
+                    touch /tmp/$(whoami)-wsxmen
+                    break;
+                fi
+                if [ "$(echo $l|grep 'AUTOMT Actually Quit')" != "" ]; then
+                    # kill -9 $mtpid
+                    touch /tmp/$(whoami)-wsxt
+                    break;
                 fi
         fi      
         if [ $dbg -eq 0 ]; then echo $l; fi
-    done &
-    mtpid=$!
+    done
 }
 
 while true; do
-    if [ $quit -eq 0 ]; then 
-        kill -9 $mtpid
-        exit
+    if [ -f /tmp/$(whoami)-wsxt ]; then 
+        rm /tmp/$(whoami)-wsxt
+        break
+    fi
+    if [ -f /tmp/$(whoami)-wsxmen ]; then
+         rm /tmp/$(whoami)-wsxmen
+         startmt menu
+         break
     fi
     sleep 1
     if check_host $srv $prt; then
-        if ! ps $mtpid >/dev/null 2>&1 && [ $quit -eq 1 ]; then startmt; fi
+        if ! ps $mtpid >/dev/null 2>&1 && [ ! -f /tmp/$(whoami)-wsxmen ] && [ ! -f /tmp/$(whoami)-wsxt ]; then startmt& fi
+        mtpid=$!
     fi
     sleep 1
 done

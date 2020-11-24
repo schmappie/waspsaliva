@@ -171,11 +171,13 @@ struct LocalFormspecHandler : public TextDest
 			}
 
 			if (fields.find("btn_exit_menu") != fields.end()) {
+				std::cout << "AUTOMT exit to menu" << std::endl;
 				g_gamecallback->disconnect();
 				return;
 			}
 
 			if (fields.find("btn_exit_os") != fields.end()) {
+				std::cout << "AUTOMT Actually Quit" << std::endl;
 				g_gamecallback->exitToOS();
 #ifndef __ANDROID__
 				RenderingEngine::get_raw_device()->closeDevice();
