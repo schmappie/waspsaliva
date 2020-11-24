@@ -10,7 +10,6 @@ chatlogdir=~/.wschat
 mtpid=0
 mtpath=$(dirname $0)
 dbg=1
-quit=1
 if [ ! -z $4 ]; then dbg=0; fi
 mkdir -p $chatlogdir
 if [ -f $pwf ]; then pas=$(cat $pwf); fi
@@ -25,10 +24,10 @@ amt="$mt --go --address $srv --port $prt --name $usr --password $passwd"
 
 startmt() {  
     if [ ! -z $1 ]; then mmt=$mt; else mmt=$amt; fi
-    $mmt 2>&1 | while read l; do
-       if [ "$(echo $l |grep '\[cchat\]')" != "" ]; then
+    $mmt 2>&1|sed 's/[\x01-\x1F\x7F]//g' | while read l; do
+       if [ "$(echo $l |grep '\[cchat\]\|\[hignore\]')" != "" ]; then
             srvstr=$(echo $l|cut -d ' ' -f 5)
-            lgstr=$(echo $l|sed 's/ACTION\[Main\]: \[cchat\] //'|sed "s/$srvstr//")
+            lgstr=$(echo $l|sed 's/ACTION\[Main\]://'|sed "s/ \[cchat\] //;s/$srvstr//")
             if [ "$(echo $l |grep '\[sent\]')" != "" ]; then continue; fi
             echo $lgstr >> $chatlogdir/$srvstr.txt
         else 
