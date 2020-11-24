@@ -46,6 +46,8 @@ from src/client/game.cpp remove
 
 autofly = {}
 wps={}
+
+
 local landing_distance=100
 local speed=0;
 local ltime=0
@@ -56,6 +58,7 @@ local lpos={x=0,y=0,z=0}
 local info=minetest.get_server_info()
 local stprefix="autofly-".. info['address']  .. '-'
 autofly.flying=false
+autofly.cruiseheight = 30
 
 local modname = minetest.get_current_modname()
 local modpath = minetest.get_modpath(modname)
@@ -233,17 +236,94 @@ function autofly.arrived()
     minetest.sound_play({name = "default_alert", gain = 1.0})
 end
 
+local cruise_wason=false
+local nfctr=0
+local nodenames_ground = {
+    'mcl_core:dirt',
+    'mcl_core:stone',
+    'mcl_core:sand',
+    'mcl_core:redsand',
+    'mcl_colorblocks:hardened_clay',
+    'mcl_colorblocks:hardened_clay_orange',
+    'mcl_colorblocks:hardened_clay_yellow',
+    'mcl_colorblocks:hardened_clay_red',
+    'mcl_core:endstone',
+    'mcl_core:netherrack',
+    'mcl_core:gravel',
+    'mcl_core:water_source',
+    'mcl_core:water_flowing',
+    'mcl_core:lava_source',
+    'mcl_core:lava_flowing',
+    }
+
 function autofly.cruise()
-    if not minetest.settings:get_bool('afly_cruise') then return end
+    if not minetest.settings:get_bool('afly_cruise') then
+        if cruise_wason then
+            cruise_wason=false
+            core.set_keypress("jump",false)
+            core.set_keypress("sneak",false)
+        end
+    return end
+
     local lp=minetest.localplayer:get_pos()
-    local pos2=vector.add(lp,{x=0,y=-50,z=0})
-    local air, blck = minetest.line_of_sight(lp, pos2)
-    if blck==nil then return end
-    local nd=minetest.get_node_or_nil(blck)
-    if not air and nd ~= nil then
-        minetest.localplayer:set_pos({x=lp.x,y=blck.y+25,z=lp.z} )
-        minetest.settings:set_bool("free_move",true)
+    local pos1 = vector.add(lp,{x=8,y=100,z=8})
+    local pos2 = vector.add(lp,{x=-8,y=-100,z=-8})
+    local nds=minetest.find_nodes_in_area(pos1, pos2, nodenames_ground)
+    local y=0
+    local found=false
+
+
+    for k,v in ipairs(nds) do
+        local nd = minetest.get_node_or_nil(v)
+        if nd ~= nil and nd.name ~= "air" then
+            if v.y > y then
+                y=v.y
+                found=true
+            end
+        end
     end
+    if (autofly.cruiseheight ~= nil) then y=y+autofly.cruiseheight end
+    local diff = math.ceil(lp.y - y)
+
+    if not cruise_wason then --initially set the cruiseheight to the current value above ground
+        if not found then return end --wait with activation til a ground node has been found.
+        autofly.cruiseheight = diff
+        cruise_wason=true
+        minetest.display_chat_message("cruise mode activated. target height set to " .. diff .. " nodes above ground.")
+    end
+
+    if not found then
+        if nfctr<20 then nfctr = nfctr + 1 return end
+        --minetest.display_chat_message("no nodes found for 20 iterations. lowering altitude.")
+        nfctr=0
+        minetest.settings:set_bool("free_move",false)
+        core.set_keypress("jump",false)
+        core.set_keypress("sneak",false)
+        return
+    end
+
+    local tolerance = 1
+    if diff < -tolerance then
+        minetest.settings:set_bool("free_move",true)
+        core.set_keypress("jump",true)
+        core.set_keypress("sneak",false)
+        --minetest.display_chat_message("too low: " .. y)
+    elseif diff > tolerance * 10 then
+        core.set_keypress("jump",false)
+        core.set_keypress("sneak",true)
+        minetest.settings:set_bool("free_move",false)
+        --minetest.display_chat_message("too high: " .. y)
+    elseif diff > tolerance then
+        core.set_keypress("jump",false)
+        core.set_keypress("sneak",true)
+    else
+        minetest.settings:set_bool("free_move",true)
+        core.set_keypress("jump",false)
+        core.set_keypress("sneak",false)
+        --minetest.display_chat_message("target height reached: " .. y)
+    end
+
+
 end
 
 function autofly.aim(tpos)
