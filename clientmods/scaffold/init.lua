@@ -93,6 +93,12 @@ function scaffold.place_if_needed(items, pos, place)
     end
 end
 
+function scaffold.place_if_able(pos)
+    if scaffold.can_place_wielded_at(pos) then
+        minetest.place_node(pos)
+    end
+end
+
 local mpath = minetest.get_modpath(minetest.get_current_modname())
 dofile(mpath .. "/sapscaffold.lua")
 dofile(mpath .. "/slowscaffold.lua")
@@ -100,13 +106,17 @@ dofile(mpath .. "/autofarm.lua")
 
 
 scaffold.register_template_scaffold("CheckScaffold", "scaffold_check", function(pos)
-    if scaffold.can_place_wielded_at(pos) then
-        minetest.place_node(pos)
-    end
+    scaffold.place_if_able(pos)
 end)
 
 scaffold.register_template_scaffold("HereScaffold", "scaffold_here", function(pos)
-    if scaffold.can_place_wielded_at(pos) then
-        minetest.place_node(pos)
-    end
+    scaffold.place_if_able(pos)
 end, {x = 0, y = 0, z = 0})
+
+if turtle then
+    scaffold.register_template_scaffold("TriScaffold", "scaffold_three_wide", function(pos)
+        scaffold.place_if_able(pos)
+        scaffold.place_if_able(turtle.dircoord(0, -1, 1))
+        scaffold.place_if_able(turtle.dircoord(0, -1, -1))
+    end)
+end
