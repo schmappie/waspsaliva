@@ -287,7 +287,10 @@ function autofly.cruise()
 
     if not cruise_wason then --initially set the cruiseheight to the current value above ground
         if not found then return end --wait with activation til a ground node has been found.
-        autofly.cruiseheight = diff
+
+        if diff < 1 then autofly.cruiseheight = 20
+        else autofly.cruiseheight = diff end
+
         cruise_wason=true
         minetest.display_chat_message("cruise mode activated. target height set to " .. diff .. " nodes above ground.")
     end
