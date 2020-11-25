@@ -1,5 +1,5 @@
 #!/bin/sh
-if [ -z $1 ] || [ -z $2 ] || [ -z $3 ]; then echo "usage: automat server username password"; exit 1; fi 
+if [ $# -lt 1 ]; then echo "usage: automt [ menu ] || [server username password]"; exit 1; fi 
 pwf=~/.mtpw
 srv=$1
 prt=30000
@@ -13,6 +13,10 @@ dbg=1
 if [ ! -z $4 ]; then dbg=0; fi
 mkdir -p $chatlogdir
 if [ -f $pwf ]; then pas=$(cat $pwf); fi
+if [ "$(echo $srv|grep ':')" != "" ]; then
+    prt=$(echo $srv|cut -d ':' -f2)
+    srv=$(echo $srv|cut -d ':' -f1)
+fi
 check_host() {
     if [ -x $(which nc) ]; then return 0; fi
     nc -zu $1 $2 && return 0;
@@ -21,9 +25,9 @@ check_host() {
 
 mt=$mtpath/bin/minetest
 amt="$mt --go --address $srv --port $prt --name $usr --password $passwd"
+if [ "$1" = "menu" ]; then mmt=$mt; else mmt=$amt; fi
 
 startmt() {  
-    if [ ! -z $1 ]; then mmt=$mt; else mmt=$amt; fi
     $mmt 2>&1|sed 's/[\x01-\x1F\x7F]//g' | while read l; do
        if [ "$(echo $l |grep '\[cchat\]\|\[hignore\]')" != "" ]; then
             srvstr=$(echo $l|cut -d ' ' -f 5)
@@ -31,7 +35,7 @@ startmt() {
             if [ "$(echo $l |grep '\[sent\]')" != "" ]; then continue; fi
             echo $lgstr >> $chatlogdir/$srvstr.txt
         else 
-                echo $l >> $logfile; 
+                echo $l >> $logfile 2>&1; 
                 if [ "$(echo $l|grep 'AUTOMT exit to menu')" != "" ]; then
                     # kill -9 $mtpid
                     touch /tmp/$(whoami)-wsxmen
@@ -59,7 +63,7 @@ while true; do
     fi
     sleep 1
     if check_host $srv $prt; then
-        if ! ps $mtpid >/dev/null 2>&1 && [ ! -f /tmp/$(whoami)-wsxmen ] && [ ! -f /tmp/$(whoami)-wsxt ]; then startmt& fi
+        if ! ps $mtpid >/dev/null 2>&1 && [ ! -f /tmp/$(whoami)-wsxmen ] && [ ! -f /tmp/$(whoami)-wsxt ]; then  startmt&  fi
         mtpid=$!
     fi
     sleep 1
