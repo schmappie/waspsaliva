@@ -128,6 +128,17 @@ function fren.name_of(qualified)
     return qualified:match("(.-)@")
 end
 
+function fren.on_server(name)
+    local qname=fren.qualify(name)
+    for k,v in pairs(fren.friends) do
+        if k == qname then return true end
+    end
+    for k,v in pairs(fren.enemies) do
+        if k == qname then return true end
+    end
+    return false
+end
+
 
 -- player required, color/level optional
 function fren.friend(player, color, level)
@@ -300,6 +311,16 @@ local function filter(filter, source)
 end
 
 function fren.get_online_friends()
+    if is_time(friend_online_cached_last) then
+        friend_online_cached_last = os.clock()
+
+        friend_online_cached = filter(fren.is_friend, fren.get_online_players())
+    end
+
+    return friend_online_cached
+end
+
+function fren.get_all_friends()
     if is_time(friend_online_cached_last) then
         friend_online_cached_last = os.clock()
 
