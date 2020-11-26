@@ -9,11 +9,11 @@ local formspec = ""
 	.. "set_focus[btn_respawn;true]"
 
 minetest.register_on_death(function()
-	local warp_success, warp_msg = warp.set_here("death")
-	if warp_success then
-		minetest.display_chat_message(warp_msg)
-	else
-		minetest.display_chat_message("You died at " .. minetest.pos_to_string(minetest.localplayer:get_pos()) .. ".")
+	if minetest.settings:get_bool("deathwarp") then
+		local warp_success, warp_msg = warp.set_here("death")
+		if warp_success then
+			minetest.display_chat_message(warp_msg)
+		end
 	end
 	if minetest.settings:get_bool("autorespawn") then
 		minetest.send_respawn()
@@ -45,3 +45,4 @@ minetest.register_chatcommand("respawn", {
 })
 
 minetest.register_cheat("AutoRespawn", "Player", "autorespawn")
+minetest.register_cheat("DeathWarp", "Player", "deathwarp")
