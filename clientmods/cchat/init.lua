@@ -62,6 +62,20 @@ local function set_my_name()
 end
 
 
+
+local function loglastlogs()
+    if not fren then return end
+    for k,v in pairs(fren.friends) do
+        minetest.display_chat_message('Last login of friend ' .. fren.name_of(k))
+        minetest.send_chat_message("/last-login "..fren.name_of(k))
+    end
+    for k,v in pairs(fren.enemies) do
+        minetest.display_chat_message('Last login of enemy ' .. fren.name_of(k))
+        minetest.send_chat_message("/last-login "..fren.name_of(k))
+    end
+end
+minetest.after("5.0",function() loglastlogs() end)
+
 if minetest.register_on_connect then
     minetest.register_on_connect(set_my_name)
 elseif minetest.register_on_mods_loaded then
