@@ -149,9 +149,9 @@ end
 function fren.enemy(player, color, level)
     local n = fren.qualify(player)
 
-    fren.enemy[n] = {placeholder = true}
-    fren.enemy[n].color = color
-    fren.enemy[n].level = level
+    fren.enemies[n] = {placeholder = true}
+    fren.enemies[n].color = color
+    fren.enemies[n].level = level
 
     fren.store()
 end
