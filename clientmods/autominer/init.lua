@@ -7,12 +7,8 @@ local dmg=false
 local digging=false
 local radius=6
 
+local nodes=nlist.get("autominer")
 
---local nodes={'mcl_core:stone_with_coal','mcl_core:stone_with_gold','mcl_core:stone_with_iron','mcl_core:stone_with_diamond','mcl_core:stone_with_lapis_lazuli','mcl_core:stone_with_lapislazuli'}
-local nodes={'mcl_core:stone_with_gold','mcl_core:stone_with_iron','mcl_core:stone_with_diamond','mcl_core:stone_with_lapis'}
---local nodes={'mcl_core:stone_with_coal','mcl_core:stone_with_gold','mcl_core:stone_with_iron','mcl_core:stone_with_diamond','mcl_core:stone_with_redstone','mcl_core:stone_with_lapislazuli'}
---local nodes={'mcl_core:tree'}
---local nodes={'mcl_core:stone_with_diamond'}
 
 local function sleep(n)  -- seconds
   local t0 = os.clock()
@@ -100,7 +96,8 @@ local function dighead()
             local ppos=vector.add(minetest.localplayer:get_pos(),{x=0,y=1,z=0})
             local n=get_hnode()
             if n==nil or n['name'] == 'air' then return end
-            amautotool(ppos)
+            --amautotool(ppos)
+	    minetest.localplayer:set_wield_index(0)
             minetest.dig_node(ppos)
             minetest.dig_node(vector.add(ppos,{x=0,y=1,z=0}))
             digging=false
