@@ -6,11 +6,9 @@ local nled_hud
 local edmode_wason=false
 minetest.register_globalstep(function()
     if not minetest.settings:get_bool('nlist_edmode') then
-        if edmode_wason then
-            if nled_hud then minetest.localplayer:hud_remove(nled_hud) end
-            edmode_wason=false
-        end
-    return end
+        if (edmode_wason) then edmode_wason=false nlist.hide() end
+        return
+    end
     edmode_wason=true
     nlist.show_list(sl,true)
 end)
@@ -28,19 +26,17 @@ end)
 
 function nlist.add(list,node)
     if node == "" then mode=1 return end
-    local str=storage:get_string(tostring(list))
-    local tb=str:split(',')
+    local tb=nlist.get(list)
     for k,v in pairs(tb) do
         if v == node then return end
     end
-    str=str..','..node
+    local str=str..','..node
     storage:set_string(list,str)
 end
 
 function nlist.remove(list,node)
     if node == "" then mode=2 return end
-    local str=storage:get_string(list)
-    local tb=str:split(',')
+    local tb=nlist.get(list)
     local rstr=''
     for k,v in pairs(tb) do
         if v ~= node then rstr = rstr .. ',' .. v end
@@ -60,14 +56,18 @@ function nlist.getd()
     return nlist.get_string(minetest.get_current_modname())
 end
 
-function nlist.show_list(list)
+function nlist.show_list(list,hlp)
     if not list then return end
+    local act="add"
+    if mode == 2 then act="remove" end
     local txt=list .. "\n --\n" .. table.concat(nlist.get(list),"\n")
+    local htxt="Nodelist edit mode\n .nla/.nlr to switch\n punch node to ".. act .. "\n.nlc to clear\n"
+    if hlp then txt=htxt .. txt end
     set_nled_hud(txt)
 end
 
 function nlist.hide()
-    if nled_hud then minetest.localplayer:hud_remove(nled_hud) end
+    if nled_hud then minetest.localplayer:hud_remove(nled_hud) nled_hud=nil end
 end
 
 function nlist.random(list)
@@ -81,21 +81,20 @@ function nlist.random(list)
 end
 
 
-function set_nled_hud(ttext,help)
+function set_nled_hud(ttext)
     if not minetest.localplayer then return end
     if type(ttext) ~= "string" then return end
-    local act="add"
-    if mode == 2 then act="remove" end
-    local htext="Nodelist edit mode\n .nla/.nlr to switch\n punch node to ".. act .. "\n.nlc to clear\n"
-    local text ="List: ".. ttext
-    if help then text=htext..text end
+
+
+    local dtext ="List: ".. ttext
+
     if nled_hud then
-        minetest.localplayer:hud_change(nled_hud,'text',text)
+        minetest.localplayer:hud_change(nled_hud,'text',dtext)
     else
         nled_hud = minetest.localplayer:hud_add({
             hud_elem_type = 'text',
             name          = "Nodelist",
-            text          = text,
+            text          = dtext,
             number        = 0x00ff00,
             direction   = 0,
             position = {x=0.8,y=0.40},
