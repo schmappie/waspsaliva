@@ -11,7 +11,7 @@ local stpos={x=0,y=0,z=0}
 
 nodes=nlist.get("esp")
 
-local wps={}
+local esp_wps={}
 local hud2=nil
 local hud;
 local lastch=0
@@ -19,16 +19,18 @@ local wason=false
 
 minetest.register_globalstep(function()
     if not minetest.settings:get_bool("espactive") then
-        if wason then
-            for k,v in pairs(wps) do
+        if #esp_wps > 0 then
+            for k,v in pairs(esp_wps) do
                 minetest.localplayer:hud_remove(v)
-                table.remove(wps,k)
+                table.remove(esp_wps,k)
             end
+            wason=false
             nlist.hide()
         end
         return
     end
     if not minetest.localplayer then return end
+    wason=true
 
     if os.time() < lastch + espinterval then return end
     lastch=os.time()
@@ -38,11 +40,11 @@ minetest.register_globalstep(function()
     local pos2 = vector.add(pos,{x=-radius,y=-radius,z=-radius})
     local epos=minetest.find_nodes_in_area(pos1, pos2, nodes, true)
 
-    for k,v in pairs(wps) do --clear waypoints out of range
+    for k,v in pairs(esp_wps) do --clear waypoints out of range
         local hd=minetest.localplayer:hud_get(v)
         if not hd or vector.distance(pos,hd.world_pos) > radius + 50 then
             minetest.localplayer:hud_remove(v)
-            table.remove(wps,k)
+            table.remove(esp_wps,k)
             end
     end
 
@@ -59,7 +61,7 @@ minetest.register_globalstep(function()
                     end
                 end
                 ii=ii+1
-                table.insert(wps,minetest.localplayer:hud_add({
+                table.insert(esp_wps,minetest.localplayer:hud_add({
                     hud_elem_type = 'waypoint',
                     name          = m,
                     text          = "m",
