@@ -9,26 +9,30 @@ local esplimit=30; -- display at most this many waypoints
 local espinterval=4 --number of seconds to wait between scans (a lower number can induce clientside lag)
 local stpos={x=0,y=0,z=0}
 
---nodes={"group:chest",'mcl_chests:chest','mcl_chests:chest_left','mcl_chests:ender_chest','group:shulker_box','mcl_crafting_table:crafting_table','mcl_furnaces:furnace'}
-nodes={'mcl_chests:chest','mcl_chests:chest_left','mcl_chests:ender_chest','group:shulker_box','mcl_furnaces:furnace','mcl_chests:violet_shulker_box'}
+nodes=nlist.get("esp")
 
 local wps={}
 local hud2=nil
 local hud;
 local lastch=0
+local wason=false
 
 minetest.register_globalstep(function()
     if not minetest.settings:get_bool("espactive") then
-        for k,v in pairs(wps) do
+        if wason then
+            for k,v in pairs(wps) do
                 minetest.localplayer:hud_remove(v)
                 table.remove(wps,k)
+            end
+            nlist.hide()
         end
         return
     end
+    if not minetest.localplayer then return end
 
     if os.time() < lastch + espinterval then return end
     lastch=os.time()
-
+    if not minetest.settings:get_bool('nlist_edmode') then nlist.show_list("esp") end
     local pos = minetest.localplayer:get_pos()
 	local pos1 = vector.add(pos,{x=radius,y=radius,z=radius})
     local pos2 = vector.add(pos,{x=-radius,y=-radius,z=-radius})
@@ -36,8 +40,7 @@ minetest.register_globalstep(function()
 
     for k,v in pairs(wps) do --clear waypoints out of range
         local hd=minetest.localplayer:hud_get(v)
-        local dst=vector.distance(pos,hd.world_pos)
-        if (dst > radius + 50 ) then
+        if not hd or vector.distance(pos,hd.world_pos) > radius + 50 then
             minetest.localplayer:hud_remove(v)
             table.remove(wps,k)
             end
