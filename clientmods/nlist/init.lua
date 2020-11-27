@@ -3,11 +3,16 @@ local storage=minetest.get_mod_storage()
 local sl="default"
 local mode=1 --1:add, 2:remove
 local nled_hud
+local edmode_wason=false
 minetest.register_globalstep(function()
     if not minetest.settings:get_bool('nlist_edmode') then
-        if nled_hud then minetest.localplayer:hud_remove(nled_hud) end
+        if edmode_wason then
+            if nled_hud then minetest.localplayer:hud_remove(nled_hud) end
+            edmode_wason=false
+        end
     return end
-    nlist.show_list(sl)
+    edmode_wason=true
+    nlist.show_list(sl,true)
 end)
 
 minetest.register_on_punchnode(function(p, n)
@@ -61,6 +66,10 @@ function nlist.show_list(list)
     set_nled_hud(txt)
 end
 
+function nlist.hide()
+    if nled_hud then minetest.localplayer:hud_remove(nled_hud) end
+end
+
 function nlist.random(list)
     local str=storage:get(list)
     local tb=str:split(',')
@@ -72,12 +81,14 @@ function nlist.random(list)
 end
 
 
-function set_nled_hud(ttext)
+function set_nled_hud(ttext,help)
     if not minetest.localplayer then return end
     if type(ttext) ~= "string" then return end
     local act="add"
     if mode == 2 then act="remove" end
-    local text="Nodelist edit mode\n .nla/.nlr to switch\n punch node to ".. act .. "\n.nlc to clear\n List:" .. ttext
+    local htext="Nodelist edit mode\n .nla/.nlr to switch\n punch node to ".. act .. "\n.nlc to clear\n"
+    local text ="List: ".. ttext
+    if help then text=htext..text end
     if nled_hud then
         minetest.localplayer:hud_change(nled_hud,'text',text)
     else
