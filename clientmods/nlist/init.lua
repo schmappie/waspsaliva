@@ -27,10 +27,12 @@ end)
 function nlist.add(list,node)
     if node == "" then mode=1 return end
     local tb=nlist.get(list)
+    local str=''
     for k,v in pairs(tb) do
+        str=str..','..v
         if v == node then return end
     end
-    local str=str..','..node
+    str=str..','..node
     storage:set_string(list,str)
 end
 
