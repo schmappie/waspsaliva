@@ -103,6 +103,7 @@ local mpath = minetest.get_modpath(minetest.get_current_modname())
 dofile(mpath .. "/sapscaffold.lua")
 dofile(mpath .. "/slowscaffold.lua")
 dofile(mpath .. "/autofarm.lua")
+dofile(mpath .. "/railscaffold.lua")
 
 
 scaffold.register_template_scaffold("CheckScaffold", "scaffold_check", function(pos)
