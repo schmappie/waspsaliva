@@ -121,3 +121,11 @@ if turtle then
         scaffold.place_if_able(turtle.dircoord(0, -1, -1))
     end)
 end
+
+scaffold.register_template_scaffold("RandomScaff", "scaffold_rnd", function(below)
+   -- local tpos=turtle.dircoord(0,-1,0)
+    minetest.dig_node(below)
+    minetest.after("0.0",function()
+        scaffold.place_if_needed(nlist.get_random('randomscaffold'), below )
+    end)
+end)
