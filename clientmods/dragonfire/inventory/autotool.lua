@@ -37,8 +37,9 @@ function autotool.autotool(pos)
 			new_index = index - 1
 		end
 	end
-	odx = player:get_wield_index()
+	local odx = player:get_wield_index()
 	player:set_wield_index(new_index)
+	minetest.after(best_time + 0.05,function() player:set_wield_index(odx) end)
 end
 
 minetest.register_on_punchnode(function(pos,node)
