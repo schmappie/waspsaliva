@@ -73,3 +73,5 @@ while true; do
         sleep 1
     done
 fi
+rm -f /tmp/$(whoami)-wsxt
+rm -f /tmp/$(whoami)-wsmen
