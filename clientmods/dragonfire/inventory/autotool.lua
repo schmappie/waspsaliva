@@ -17,8 +17,10 @@ function autotool.check_tool(stack, node_groups, old_best_time)
 	return best_time < old_best_time, best_time
 end
 
-minetest.register_on_punchnode(function(pos, node)
+function autotool.autotool(pos)
 	if not minetest.settings:get_bool("autotool") then return end
+	local node = minetest.get_node_or_nil(pos)
+	if not node then return end
 	local player = minetest.localplayer
 	local inventory = minetest.get_inventory("current_player")
 	local node_groups = minetest.get_node_def(node.name).groups
@@ -37,7 +39,10 @@ minetest.register_on_punchnode(function(pos, node)
 	end
 	odx = player:get_wield_index()
 	player:set_wield_index(new_index)
+end
+
+minetest.register_on_punchnode(function(pos,node)
+	autotool.autotool(pos)
 end)
 
 minetest.register_cheat("AutoTool", "Inventory", "autotool")
- 
