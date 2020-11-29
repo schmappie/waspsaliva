@@ -22,9 +22,7 @@ scaffold.register_template_scaffold("RailScaffold", "scaffold_rails", function(b
     local fpos1=turtle.dircoord(1,1,0)
     local fpos2=turtle.dircoord(1,-1,0)
     local fpos3=turtle.dircoord(1,0,0)
-    if checknode(fpos1) then minetest.after(0.4,function()
-     minetest.localplayer:set_wield_index(0)
-     minetest.dig_node(fpos1) end) end
-    if checknode(fpos2) then minetest.after(0.45,function() minetest.dig_node(fpos2) end) end
-    if checknode(fpos3) then minetest.after(0.5,function() minetest.dig_node(fpos3) end) end
+    if checknode(fpos1) then minetest.after("0",function() scaffold.dig(fpos1) end) end
+    if checknode(fpos2) then minetest.after("0",function() scaffold.dig(fpos2) end) end
+    if checknode(fpos3) then minetest.after("0",function() scaffold.dig(fpos3) end) end
 end)
