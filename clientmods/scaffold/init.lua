@@ -121,11 +121,27 @@ if turtle then
         scaffold.place_if_able(turtle.dircoord(0, -1, -1))
     end)
 end
+if turtle then
+    scaffold.register_template_scaffold("QuintScaffold", "scaffold_five_wide", function(pos)
+        scaffold.place_if_able(pos)
+        scaffold.place_if_able(turtle.dircoord(0, -1, 1))
+        scaffold.place_if_able(turtle.dircoord(0, -1, -1))
+        scaffold.place_if_able(turtle.dircoord(0, -1, 2))
+        scaffold.place_if_able(turtle.dircoord(0, -1, -2))
+    end)
+end
+function scaffold.dig(pos)
+    local n=minetest.get_node_or_nil(pos)
+    if not n or n.name == "air"then return true end
+    autotool.autotool(pos)
+    return minetest.dig_node(pos)
+end
 
 scaffold.register_template_scaffold("RandomScaff", "scaffold_rnd", function(below)
    -- local tpos=turtle.dircoord(0,-1,0)
-    minetest.dig_node(below)
-    minetest.after("0.0",function()
-        scaffold.place_if_needed(nlist.get_random('randomscaffold'), below )
-    end)
+    local n = minetest.get_node_or_nil(below)
+    if scaffold.in_list(n.name,nlist.get('randomscaffold')) then return end
+    scaffold.dig(below)
+    scaffold.place_if_needed(nlist.get_random('randomscaffold'), below )
+    --minetest.after("0.1",function()  end)
 end)
