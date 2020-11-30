@@ -90,7 +90,7 @@ local function stopflight()
 end
 
 minetest.register_globalstep(function()
-    if not minetest.settings:get_bool("crystalkamikaze") and not minetest.localplayer:get_name():find("kamikaze") then
+    if not minetest.settings:get_bool("kamikaze") and not minetest.localplayer:get_name():find("kamikaze") then
         if hud_wp then
             minetest.localplayer:hud_remove(hud_wp) hud_wp=nil
             minetest.settings:set_bool("continuous_forward",false)
@@ -118,8 +118,8 @@ minetest.register_globalstep(function()
 end)
 
 minetest.register_on_death(function()
-    if not minetest.settings:get_bool("crystalkamikaze") then return end
+    if not minetest.settings:get_bool("kamikaze") then return end
     fnd=false
 end)
 
-minetest.register_cheat("CrystalKamikaze", "Combat", "crystalkamikaze")
+minetest.register_cheat("Kamikaze", "Combat", "kamikaze")
