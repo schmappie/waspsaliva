@@ -67,17 +67,22 @@ local function loglastlogs()
     if not fren then return end
     for k,v in pairs(fren.friends) do
         if fren.on_server(fren.name_of(k)) then
+            log("LASTLOGLOG START")
             --minetest.display_chat_message('Last login of friend ' .. fren.name_of(k))
+            log("Last login of friend "..fren.name_of(k))
             minetest.send_chat_message("/last-login "..fren.name_of(k))
         end
     end
     for k,v in pairs(fren.enemies) do
         if fren.on_server(fren.name_of(k)) then
+            log("Last login of enemy "..fren.name_of(k))
             --minetest.display_chat_message('Last login of friend ' .. fren.name_of(k))
             minetest.send_chat_message("/last-login "..fren.name_of(k))
+            minetest.after("5.0",function() log("LASTLOGLOG END") end)
         end
     end
 end
+
 minetest.after("5.0",function() loglastlogs() end)
 
 if minetest.register_on_connect then
