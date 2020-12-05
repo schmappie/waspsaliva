@@ -3,8 +3,8 @@ local cpos={x=0,y=0,z=0}
 local crange=500
 local hud_wp=nil
 local zz={x=0,y=64,z=0}
-local badnodes={'mcl_tnt:tnt'}
-local searchheight=250
+local badnodes={'mcl_tnt:tnt','mcl_sponges:sponge','mcl_sponges:sponge_wet'}
+local searchheight=64
 
 local function set_kwp(name,pos)
     if hud_wp then
@@ -24,7 +24,9 @@ local nextzz=0
 local function randomzz()
     if nextzz > os.clock() then return false end
     math.randomseed(os.time())
+    zz.x=math.random(-128,128)
     zz.y=math.random(64,searchheight)
+    zz.z=math.random(-128,128)
     nextzz=os.clock()+ 15
 end
 
@@ -52,13 +54,15 @@ local function find_bad_things()
     end
 
     local epos=minetest.find_nodes_in_area(vector.add(lp,{x=79,y=79,z=79}), vector.add(lp,{x=-79,y=-79,z=-79}), badnodes, true)
+    local odst=0
     if epos then
         for k,v in pairs(epos) do for kk,vv in pairs(v) do
-            cpos=vv
-            set_kwp('mcl_tnt:tnt',cpos)
+            local dst=vector.distance(lp,vv)
+            if odst > dst then cpos=vv end
+            odst=dst
             fnd=true
-            return true
         end end
+        if fnd then set_kwp('badnode',cpos) return true end
     end
 
     set_kwp('nothing found',zz)
