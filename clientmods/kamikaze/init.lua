@@ -3,7 +3,8 @@ local cpos={x=0,y=0,z=0}
 local crange=500
 local hud_wp=nil
 local zz={x=0,y=64,z=0}
-local badnodes={'mcl_tnt:tnt','mcl_sponges:sponge','mcl_sponges:sponge_wet'}
+local badnodes={'mcl_tnt:tnt','mcl_fire:basic_flame','mcl_fire:eternal_fire','mcl_fire:fire','mcl_fire:fire_charge','mcl_sponges:sponge','mcl_sponges:sponge_wet'}
+--
 local searchheight=64
 
 local function set_kwp(name,pos)
@@ -54,13 +55,12 @@ local function find_bad_things()
     end
 
     local epos=minetest.find_nodes_in_area(vector.add(lp,{x=79,y=79,z=79}), vector.add(lp,{x=-79,y=-79,z=-79}), badnodes, true)
-    local odst=0
+    local odst=500
     if epos then
         for k,v in pairs(epos) do for kk,vv in pairs(v) do
+            lp=minetest.localplayer:get_pos()
             local dst=vector.distance(lp,vv)
-            if odst > dst then cpos=vv end
-            odst=dst
-            fnd=true
+            if odst > dst then odst=dst cpos=vv fnd=true end
         end end
         if fnd then set_kwp('badnode',cpos) return true end
     end
