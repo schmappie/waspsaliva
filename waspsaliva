@@ -11,6 +11,8 @@ chatlogdir=~/.wschat
 mtpid=0
 mtpath=$(dirname $0)
 dbg=1
+rm -f /tmp/$(whoami)-wsxt
+rm -f /tmp/$(whoami)-wsmen
 if [ "$(echo $*|grep debug)" != "" ] || [ ! -z $4 ]; then dbg=0; fi
 mkdir -p $chatlogdir
 if [ -f $pwf ]; then pas=$(cat $pwf); fi
@@ -55,7 +57,7 @@ startmt() {
 if [ $tomenu -eq 0 ]; then 
         startmt menu
     else
-while true; do
+    while true; do
         if [ -f /tmp/$(whoami)-wsxt ]; then 
             rm -f /tmp/$(whoami)-wsxt
             break

@@ -3,8 +3,8 @@ local cpos={x=0,y=0,z=0}
 local crange=500
 local hud_wp=nil
 local zz={x=0,y=64,z=0}
-local badnodes={'mcl_tnt:tnt','mcl_fire:basic_flame','mcl_fire:eternal_fire','mcl_fire:fire','mcl_fire:fire_charge','mcl_sponges:sponge','mcl_sponges:sponge_wet'}
---
+local badnodes={'mcl_tnt:tnt','mcl_fire:basic_flame','mcl_fire:eternal_fire','mcl_fire:fire','mcl_fire:fire_charge'}
+--'mcl_sponges:sponge','mcl_sponges:sponge_wet'
 local searchheight=64
 
 local function set_kwp(name,pos)
