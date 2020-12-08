@@ -1,0 +1,1 @@
+optimize_water_drops (Hide water drops, improves framerates in watery areas) bool false

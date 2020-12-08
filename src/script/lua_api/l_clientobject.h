@@ -57,4 +57,10 @@ private:
 
     // get_hp(self)
     static int l_get_max_hp(lua_State *L);
+
+    // set_visible(self, visible)
+    static int l_set_visible(lua_State *L);
+
+    // remove_from_scene(self, permanent)
+    static int l_remove_from_scene(lua_State *L);
 };

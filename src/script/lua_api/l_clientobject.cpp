@@ -110,6 +110,22 @@ int ClientObjectRef::l_get_item_textures(lua_State *L)
     return 1;
 }
 
+int ClientObjectRef::l_set_visible(lua_State *L)
+{
+    ClientObjectRef *ref = checkobject(L, 1);
+    GenericCAO *gcao = get_generic_cao(ref, L);
+    gcao->setVisible(readParam<bool>(L, -1));
+    return 0;
+}
+
+int ClientObjectRef::l_remove_from_scene(lua_State *L)
+{
+    ClientObjectRef *ref = checkobject(L, 1);
+    GenericCAO *gcao = get_generic_cao(ref, L);
+    gcao->removeFromScene(readParam<bool>(L, -1));
+    return 0;
+}
+
 int ClientObjectRef::l_get_max_hp(lua_State *L)
 {
     ClientObjectRef *ref = checkobject(L, 1);
@@ -178,5 +194,7 @@ luaL_Reg ClientObjectRef::methods[] = {
     luamethod(ClientObjectRef, get_nametag),
     luamethod(ClientObjectRef, get_item_textures),
     luamethod(ClientObjectRef, get_max_hp),
+    luamethod(ClientObjectRef, set_visible),
+    luamethod(ClientObjectRef, remove_from_scene),
     {0, 0}
 };
