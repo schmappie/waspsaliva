@@ -130,6 +130,13 @@ if turtle then
     end)
 end
 if turtle then
+    scaffold.register_template_scaffold("headTriScaff", "scaffold_three_wide_head", function(pos)
+        scaffold.place_if_able(turtle.dircoord(0, 3, 0))
+        scaffold.place_if_able(turtle.dircoord(0, 3, 1))
+        scaffold.place_if_able(turtle.dircoord(0, 3, -1))
+    end)
+end
+if turtle then
     scaffold.register_template_scaffold("QuintScaffold", "scaffold_five_wide", function(pos)
         scaffold.place_if_able(pos)
         scaffold.place_if_able(turtle.dircoord(0, -1, 1))
