@@ -36,6 +36,7 @@ Environment::Environment(IGameDef *gamedef):
 	m_cache_active_block_mgmt_interval = g_settings->getFloat("active_block_mgmt_interval");
 	m_cache_abm_interval = g_settings->getFloat("abm_interval");
 	m_cache_nodetimer_interval = g_settings->getFloat("nodetimer_interval");
+	m_cache_abm_time_budget = g_settings->getFloat("abm_time_budget");
 
 	m_time_of_day = g_settings->getU32("world_start_time");
 	m_time_of_day_f = (float)m_time_of_day / 24000.0f;
@@ -106,8 +107,10 @@ bool Environment::line_of_sight(v3f pos1, v3f pos2, v3s16 *p)
 	Check if a node is pointable
 */
 inline static bool isPointableNode(const MapNode &n,
-	const NodeDefManager *nodedef , bool liquids_pointable)
+	const NodeDefManager *nodedef , bool liquids_pointable, bool nodes_pointable)
 {
+	if (! nodes_pointable)
+		return false;
 	const ContentFeatures &features = nodedef->get(n);
 	return features.pointable ||
 	       ((liquids_pointable || g_settings->getBool("point_liquids")) && features.isLiquid());
@@ -180,7 +183,7 @@ void Environment::continueRaycast(RaycastState *state, PointedThing *result)
 
 			n = map.getNode(np, &is_valid_position);
 			if (!(is_valid_position && isPointableNode(n, nodedef,
-					state->m_liquids_pointable))) {
+					state->m_liquids_pointable, state->m_nodes_pointable))) {
 				continue;
 			}
 

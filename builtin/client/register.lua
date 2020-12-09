@@ -4,6 +4,13 @@ core.callback_origins = {}
 local getinfo = debug.getinfo
 debug.getinfo = nil
 
+--- Runs given callbacks.
+--
+-- Note: this function is also called from C++
+-- @tparam table  callbacks a table with registered callbacks, like `core.registered_on_*`
+-- @tparam number mode      a RunCallbacksMode, as defined in src/script/common/c_internal.h
+-- @param         ...       arguments for the callback
+-- @return depends on mode
 function core.run_callbacks(callbacks, mode, ...)
 	assert(type(callbacks) == "table")
 	local cb_len = #callbacks
@@ -83,6 +90,7 @@ core.registered_on_mods_loaded, core.register_on_mods_loaded = make_registration
 core.registered_on_shutdown, core.register_on_shutdown = make_registration()
 core.registered_on_receiving_chat_message, core.register_on_receiving_chat_message = make_registration()
 core.registered_on_sending_chat_message, core.register_on_sending_chat_message = make_registration()
+core.registered_on_chatcommand, core.register_on_chatcommand = make_registration()
 core.registered_on_death, core.register_on_death = make_registration()
 core.registered_on_hp_modification, core.register_on_hp_modification = make_registration()
 core.registered_on_damage_taken, core.register_on_damage_taken = make_registration()
@@ -96,3 +104,6 @@ core.registered_on_modchannel_signal, core.register_on_modchannel_signal = make_
 core.registered_on_inventory_open, core.register_on_inventory_open = make_registration()
 core.registered_on_receiving_inventory_form, core.register_on_receiving_inventory_form = make_registration()
 core.registered_on_nodemeta_form_open, core.register_on_nodemeta_form_open = make_registration()
+core.registered_on_recieve_physics_override, core.register_on_recieve_physics_override = make_registration()
+core.registered_on_play_sound, core.register_on_play_sound = make_registration()
+core.registered_on_spawn_particle, core.register_on_spawn_particle = make_registration()

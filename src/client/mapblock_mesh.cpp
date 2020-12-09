@@ -35,11 +35,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	MeshMakeData
 */
 
-MeshMakeData::MeshMakeData(Client *client, bool use_shaders,
-		bool use_tangent_vertices):
+MeshMakeData::MeshMakeData(Client *client, bool use_shaders):
 	m_client(client),
-	m_use_shaders(use_shaders),
-	m_use_tangent_vertices(use_tangent_vertices)
+	m_use_shaders(use_shaders)
 {}
 
 void MeshMakeData::fillBlockDataBegin(const v3s16 &blockpos)
@@ -79,33 +77,6 @@ void MeshMakeData::fill(MapBlock *block)
 		if(b)
 			fillBlockData(dir, b->getData());
 	}
-}
-
-void MeshMakeData::fillSingleNode(MapNode *node)
-{
-	m_blockpos = v3s16(0,0,0);
-
-	v3s16 blockpos_nodes = v3s16(0,0,0);
-	VoxelArea area(blockpos_nodes-v3s16(1,1,1)*MAP_BLOCKSIZE,
-			blockpos_nodes+v3s16(1,1,1)*MAP_BLOCKSIZE*2-v3s16(1,1,1));
-	s32 volume = area.getVolume();
-	s32 our_node_index = area.index(1,1,1);
-
-	// Allocate this block + neighbors
-	m_vmanip.clear();
-	m_vmanip.addArea(area);
-
-	// Fill in data
-	MapNode *data = new MapNode[volume];
-	for(s32 i = 0; i < volume; i++)
-	{
-		if (i == our_node_index)
-			data[i] = *node;
-		else
-			data[i] = MapNode(CONTENT_AIR, LIGHT_MAX, 0);
-	}
-	m_vmanip.copyFrom(data, area, area.MinEdge, area.MinEdge, area.getExtent());
-	delete[] data;
 }
 
 void MeshMakeData::setCrack(int crack_level, v3s16 crack_pos)
@@ -422,7 +393,16 @@ static void getNodeVertexDirs(const v3s16 &dir, v3s16 *vertex_dirs)
 	u8 idx = (dir.X + 2 * dir.Y + 3 * dir.Z) & 7;
 	idx = (idx - 1) * 4;
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#if __GNUC__ > 7
+#pragma GCC diagnostic ignored "-Wclass-memaccess"
+#endif
+#endif
 	memcpy(vertex_dirs, &vertex_dirs_table[idx], 4 * sizeof(v3s16));
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 }
 
 static void getNodeTextureCoords(v3f base, const v3f &scale, const v3s16 &dir, float *u, float *v)
@@ -818,9 +798,9 @@ static void getTileInfo(
 		u16 *lights,
 		u8 &waving,
 		TileSpec &tile,
+		// lol more Input
 		bool xray,
-		std::set<content_t> xraySet
-	)
+		std::set<content_t> xraySet)
 {
 	VoxelManipulator &vmanip = data->m_vmanip;
 	const NodeDefManager *ndef = data->m_client->ndef();
@@ -831,7 +811,6 @@ static void getTileInfo(
 	content_t c0 = n0.getContent();
 	if (xray && xraySet.find(c0) != xraySet.end())
 		c0 = CONTENT_AIR;
-
 	// Don't even try to get n1 if n0 is already CONTENT_IGNORE
 	if (c0 == CONTENT_IGNORE) {
 		makes_face = false;
@@ -946,7 +925,7 @@ static void updateFastFaceRow(
 		// the face must be drawn anyway
 		if (j != MAP_BLOCKSIZE - 1) {
 			p += translate_dir;
-
+			
 			getTileInfo(data, p, face_dir,
 					next_makes_face, next_p_corrected,
 					next_face_dir_corrected, next_lights,
@@ -954,7 +933,7 @@ static void updateFastFaceRow(
 					next_tile,
 					xray,
 					xraySet);
-
+			
 			if (next_makes_face == makes_face
 					&& next_p_corrected == p_corrected + translate_dir
 					&& next_face_dir_corrected == face_dir_corrected
@@ -1077,10 +1056,9 @@ MapBlockMesh::MapBlockMesh(MeshMakeData *data, v3s16 camera_offset):
 	for (auto &m : m_mesh)
 		m = new scene::SMesh();
 	m_enable_shaders = data->m_use_shaders;
-	m_use_tangent_vertices = data->m_use_tangent_vertices;
 	m_enable_vbo = g_settings->getBool("enable_vbo");
 
-	if (g_settings->getBool("enable_minimap")) {
+	if (data->m_client->getMinimap()) {
 		m_minimap_mapblock = new MinimapMapblock;
 		m_minimap_mapblock->getMinimapNodes(
 			&data->m_vmanip, data->m_blockpos * MAP_BLOCKSIZE);
@@ -1096,9 +1074,11 @@ MapBlockMesh::MapBlockMesh(MeshMakeData *data, v3s16 camera_offset):
 		X-Ray
 	*/
 	bool xray = g_settings->getBool("xray");
-	std::set<content_t> xraySet;
+	std::set<content_t> xraySet, nodeESPSet;
 	if (xray)
 		xraySet = splitToContentT(g_settings->get("xray_nodes"), data->m_client->ndef());
+	
+	nodeESPSet = splitToContentT(g_settings->get("node_esp_nodes"), data->m_client->ndef());
 	
 	/*
 		We are including the faces of the trailing edges of the block.
@@ -1113,6 +1093,23 @@ MapBlockMesh::MapBlockMesh(MeshMakeData *data, v3s16 camera_offset):
 		updateAllFastFaceRows(data, fastfaces_new, xray, xraySet);
 	}
 	// End of slow part
+
+	/*
+		NodeESP
+	*/
+	{
+		v3s16 blockpos_nodes = data->m_blockpos * MAP_BLOCKSIZE;
+		for (s16 x = 0; x < MAP_BLOCKSIZE; x++) {
+			for (s16 y = 0; y < MAP_BLOCKSIZE; y++) {
+				for (s16 z = 0; z < MAP_BLOCKSIZE; z++) {
+					v3s16 pos = v3s16(x, y, z) + blockpos_nodes;
+					const MapNode &node = data->m_vmanip.getNodeRefUnsafeCheckFlags(pos);
+					if (nodeESPSet.find(node.getContent()) != nodeESPSet.end())
+						esp_nodes.insert(pos);
+				}
+			}
+		}
+	}
 
 	/*
 		Convert FastFaces to MeshCollector
@@ -1238,28 +1235,12 @@ MapBlockMesh::MapBlockMesh(MeshMakeData *data, v3s16 camera_offset):
 
 			scene::SMesh *mesh = (scene::SMesh *)m_mesh[layer];
 
-			// Create meshbuffer, add to mesh
-			if (m_use_tangent_vertices) {
-				scene::SMeshBufferTangents *buf =
-						new scene::SMeshBufferTangents();
-				buf->Material = material;
-				buf->Vertices.reallocate(p.vertices.size());
-				buf->Indices.reallocate(p.indices.size());
-				for (const video::S3DVertex &v: p.vertices)
-					buf->Vertices.push_back(video::S3DVertexTangents(v.Pos, v.Color, v.TCoords));
-				for (u16 i: p.indices)
-					buf->Indices.push_back(i);
-				buf->recalculateBoundingBox();
-				mesh->addMeshBuffer(buf);
-				buf->drop();
-			} else {
-				scene::SMeshBuffer *buf = new scene::SMeshBuffer();
-				buf->Material = material;
-				buf->append(&p.vertices[0], p.vertices.size(),
-					&p.indices[0], p.indices.size());
-				mesh->addMeshBuffer(buf);
-				buf->drop();
-			}
+			scene::SMeshBuffer *buf = new scene::SMeshBuffer();
+			buf->Material = material;
+			buf->append(&p.vertices[0], p.vertices.size(),
+				&p.indices[0], p.indices.size());
+			mesh->addMeshBuffer(buf);
+			buf->drop();
 		}
 
 		/*
@@ -1268,12 +1249,6 @@ MapBlockMesh::MapBlockMesh(MeshMakeData *data, v3s16 camera_offset):
 		m_camera_offset = camera_offset;
 		translateMesh(m_mesh[layer],
 			intToFloat(data->m_blockpos * MAP_BLOCKSIZE - camera_offset, BS));
-
-		if (m_use_tangent_vertices) {
-			scene::IMeshManipulator* meshmanip =
-				RenderingEngine::get_scene_manager()->getMeshManipulator();
-			meshmanip->recalculateTangents(m_mesh[layer], true, false, false);
-		}
 
 		if (m_mesh[layer]) {
 #if 0

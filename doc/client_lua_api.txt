@@ -219,7 +219,7 @@ For helper functions see "Vector helpers".
 ### pointed_thing
 * `{type="nothing"}`
 * `{type="node", under=pos, above=pos}`
-* `{type="object", id=ObjectID}`
+* `{type="object", ref=ClientObjectRef}`
 
 Flag Specifier Format
 ---------------------
@@ -674,9 +674,8 @@ Minetest namespace reference
 ### Global callback registration functions
 Call these functions only at load time!
 
-* `minetest.open_special_inventory()`
+* `minetest.open_enderchest()`
     * This function is called if the client uses the Keybind for it (by default "O")
-    * It is used for a client provided inventory
     * You can override it
 * `minetest.register_globalstep(function(dtime))`
     * Called every client environment step, usually interval of 0.1s
@@ -697,6 +696,18 @@ Call these functions only at load time!
     * Adds definition to minetest.registered_chatcommands
 * `minetest.unregister_chatcommand(name)`
     * Unregisters a chatcommands registered with register_chatcommand.
+* `minetest.register_list_command(command, desc, setting)`
+    * Registers a chatcommand `command` to manage a list that takes the args `del | add | list <param>`
+    * The list is stored comma-seperated in `setting`
+    * `desc` is the description
+    * `add` adds something to the list 
+    * `del` del removes something from the list
+    * `list` lists all items on the list
+* `minetest.register_on_chatcommand(function(command, params))`
+    * Called always when a chatcommand is triggered, before `minetest.registered_chatcommands`
+      is checked to see if that the command exists, but after the input is parsed.
+    * Return `true` to mark the command as handled, which means that the default
+      handlers will be prevented.
 * `minetest.register_on_death(function())`
     * Called when the local player dies
 * `minetest.register_on_hp_modification(function(hp))`
@@ -740,6 +751,18 @@ Call these functions only at load time!
     * Called when the local player open inventory
     * Newest functions are called first
     * If any function returns true, inventory doesn't open
+* `minetest.register_on_recieve_physics_override(function(override))`
+    * Called when recieving physics_override from server
+    * Newest functions are called first
+    * If any function returns true, the physics override does not change
+* `minetest.register_on_play_sound(function(SimpleSoundSpec))`
+    * Called when recieving a play sound command from server
+    * Newest functions are called first
+    * If any function returns true, the sound does not play
+* `minetest.register_on_spawn_partice(function(particle definition))`
+    * Called when recieving a spawn particle command from server
+    * Newest functions are called first
+    * If any function returns true, the particel does not spawn
 
 ### Setting-related
 * `minetest.settings`: Settings object containing all of the settings from the
@@ -837,6 +860,13 @@ Call these functions only at load time!
     * `pos2`: end of the ray
     * `objects`: if false, only nodes will be returned. Default is `true`.
     * `liquids`: if false, liquid nodes won't be returned. Default is `false`.
+* `minetest.get_pointed_thing()` returns `PointedThing`
+    * Returns the thing currently pointed by player
+* `minetest.get_pointed_thing_position(pointed_thing, above)`
+    * Returns the position of a `pointed_thing` or `nil` if the `pointed_thing`
+      does not refer to a node or entity.
+    * If the optional `above` parameter is true and the `pointed_thing` refers
+      to a node, then it will return the `above` position of the `pointed_thing`.
 * `minetest.find_path(pos1,pos2,searchdistance,max_jump,max_drop,algorithm)`
     * returns table containing path that can be walked on
     * returns a table of 3D points representing a path from `pos1` to `pos2` or
@@ -891,6 +921,9 @@ Call these functions only at load time!
 ### Client Environment
 * `minetest.get_player_names()`
     * Returns list of player names on server (nil if CSM_RF_READ_PLAYERINFO is enabled by server)
+* `minetest.get_objects_inside_radius(pos, radius)`: returns a list of
+  ClientObjectRefs.
+    * `radius`: using an euclidean metric
 * `minetest.disconnect()`
     * Disconnect from the server and exit to main menu.
     * Returns `false` if the client is already disconnecting otherwise returns `true`.
@@ -996,6 +1029,13 @@ Passed to `HTTPApiTable.fetch` callback. Returned by
     * e.g. minetest.set_keypress("jump", true) will cause te player to jump until minetest.set_keypress("jump", false) is called or the player presses & releases the space bar himself
 * `minetest.get_inventory(location)`
     * Returns the inventory at location
+* `minetest.find_item(item)`
+    * finds and an item in the inventory
+    * returns index on success or nil if item is not found
+* `minetest.switch_to_item(item)`
+    * `item` is an Itemstring
+    * searches to item in inventory, sets the wield index to it if found
+    * returns true on success, false if item was not found
 * `minetest.register_cheat(name, category, setting | function)`
     * Register an entry for the cheat menu
     * If the Category is nonexistant, it will be created
@@ -1060,6 +1100,8 @@ Passed to `HTTPApiTable.fetch` callback. Returned by
     * returns the exact position on the surface of a pointed node
 * `minetest.global_exists(name)`
     * Checks if a global variable has been set, without triggering a warning.
+* `minetest.make_screenshot()`
+    * Triggers the MT makeScreenshot functionality
 
 ### UI
 * `minetest.ui.minimap`
@@ -1069,6 +1111,14 @@ Passed to `HTTPApiTable.fetch` callback. Returned by
     * Reference to the camera object. See [`Camera`](#camera) class reference for methods.
 * `minetest.show_formspec(formname, formspec)` : returns true on success
 	* Shows a formspec to the player
+* `minetest.close_formspec(formname)`
+    * `formname`: has to exactly match the one given in `show_formspec`, or the
+      formspec will not close.
+    * calling `show_formspec(formname, "")` is equal to this
+      expression.
+    * to close a formspec regardless of the formname, call
+      `minetest.close_formspec("")`.
+      **USE THIS ONLY WHEN ABSOLUTELY NECESSARY!**
 * `minetest.display_chat_message(message)` returns true on success
 	* Shows a chat message to the current player.
 
@@ -1152,6 +1202,10 @@ Methods:
     * returns the yaw (degrees)
 * `set_yaw(yaw)`
     * sets the yaw (degrees)
+* `get_pitch()`
+    * returns the pitch (degrees)
+* `set_pitch(pitch)`
+    * sets the pitch (degrees)
 * `get_velocity()`
     * returns player speed vector
 * `set_velocity(vel)`
@@ -1161,9 +1215,9 @@ Methods:
 * `get_name()`
     * returns player name
 * `get_wield_index()`
-    * returns the index of the wielded item
+    * returns the index of the wielded item (starts at 1)
 * `set_wield_index()`
-    * sets the index
+    * sets the index (starts at 1)
 * `get_wielded_item()`
     * returns the itemstack the player is holding
 * `is_attached()`
@@ -1194,6 +1248,17 @@ Methods:
     }
 ```
 
+* `set_physics_override(override_table)`
+    * `override_table` is a table with the following fields:
+        * `speed`: multiplier to default walking speed value (default: `1`)
+        * `jump`: multiplier to default jump value (default: `1`)
+        * `gravity`: multiplier to default gravity value (default: `1`)
+        * `sneak`: whether player can sneak (default: `true`)
+        * `sneak_glitch`: whether player can use the new move code replications
+          of the old sneak side-effects: sneak ladders and 2 node sneak jump
+          (default: `false`)
+        * `new_move`: use new move/sneak code. When `false` the exact old code
+          is used for the specific old sneak behaviour (default: `true`)
 * `get_override_pos()`
     * returns override position
 * `get_last_pos()`
@@ -1255,8 +1320,8 @@ Methods:
        aux1 = boolean,
        sneak = boolean,
        zoom = boolean,
-       LMB = boolean,
-       RMB = boolean,
+       dig = boolean,
+       place = boolean,
     }
 ```
 
@@ -1273,6 +1338,8 @@ Methods:
     * change a value of a previously added HUD element
     * element `stat` values: `position`, `name`, `scale`, `text`, `number`, `item`, `dir`
     * Returns `true` on success, otherwise returns `nil`
+* `get_object()`
+    * Returns the ClientObjectRef for the player
 
 ### Settings
 An interface to read config files in the format of `minetest.conf`.
@@ -1301,6 +1368,26 @@ Can be obtained via `minetest.get_meta(pos)`.
     * `fields`: key-value storage
     * `inventory`: `{list1 = {}, ...}}`
 
+### ClientObjectRef
+
+Moving things in the game are generally these.
+This is basically a reference to a C++ `GenericCAO`.
+
+#### Methods
+
+* `get_pos()`: returns `{x=num, y=num, z=num}`
+* `get_velocity()`: returns the velocity, a vector
+* `get_acceleration()`: returns the acceleration, a vector
+* `get_rotation()`: returns the rotation, a vector (radians)
+* `is_player()`: returns true if the object is a player
+* `is_local_player()`: returns true if the object is the local player
+* `get_attach()`: returns parent or nil if it isn't attached.
+* `get_nametag()`: returns the nametag (string)
+* `get_item_textures()`: returns the textures
+* `get_max_hp()`: returns the maximum heath
+* `punch()`: punches the object
+* `rightclick()`: rightclicks the object
+    
 ### `Raycast`
 
 A raycast on the map. It works with selection boxes.
@@ -1480,6 +1567,8 @@ The following functions provide escape sequences:
       `minetest.get_color_escape_sequence(color) ..
        message ..
        minetest.get_color_escape_sequence("#ffffff")`
+* `minetest.rainbow(message)`:
+    * Rainbow colorizes the message.
 * `minetest.get_background_escape_sequence(color)`
     * `color` is a [ColorString](#colorstring)
     * The escape sequence sets the background of the whole text element to
@@ -1664,4 +1753,48 @@ Same as `image`, but does not accept a `position`; the position is instead deter
         texture = "image.png",
     --  ^ Uses texture (string)
     }
+
+### InventoryAction
+A reference to a C++ InventoryAction. You can move, drop and craft items in all accessible inventories using InventoryActions.
+
+#### methods
+
+* `InventoryAction(type)`:
+    * creates a new InventoryAction
+    * type is on of "move", "drop", or "craft", else returns nil
+    * indexing starts at 1
+* `apply()`:
+    * applies the InventoryAction (InventoryActions can be applied multible times)
+* `from(inventorylocation, listname, stack)`
+    * this is valid for move or drop actions
+    * when `apply()` is called items are moved / dropped from `listname` `inventorylocation` in` at `stack`
+* `to(inventorylocation, listname, stack)`
+    * this is valid for move actions
+    * when `apply()` is called items are moved to `listname` in`inventorylocation` at `stack`
+* `craft(inventoryaction)`
+    * this is valid for craft actions
+    * when `apply()` is called a craft event for this inventory will be triggered
+* `set_count(count)`
+    * this is valid for all actions
+    * it specifies how many items to drop / craft / move
+    * `0` means move all items
+    * default count: `0`
+    
+#### example
+    `local move_act = InventoryAction("move")
+    move_act:from("current_player", "main", 1)
+    move_act:to("current_player", "craft", 1)
+    move_act:set_count(1)
+    local craft_act = InventoryAction("craft")
+    craft_act:craft("current_player")
+    local drop_act = InventoryAction("drop")
+    drop_act:from("current_player", "craft_result",10)
+    move_act:apply()
+    craft_act:apply()
+    drop_act:apply()
+    `
+    * e.g. In first hotbar slot there are tree logs: Move one to craft field, then craft wood out of it and immediately drop it
+    
+
+    
 

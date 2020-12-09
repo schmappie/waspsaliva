@@ -53,6 +53,7 @@ build/.cmake/
 /worlds
 /world/
 /client/mod_storage/
+!/clientmods/mods_here.txt
 
 ## Configuration/log files
 minetest.conf

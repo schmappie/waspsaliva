@@ -30,7 +30,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "wieldmesh.h"
 #include "noise.h"         // easeCurve
 #include "sound.h"
-#include "event.h"
+#include "mtevent.h"
 #include "nodedef.h"
 #include "util/numeric.h"
 #include "constants.h"
@@ -340,14 +340,14 @@ void Camera::update(LocalPlayer* player, f32 frametime, f32 busytime, f32 tool_r
 	// mods expect the player head to be at the parent's position
 	// plus eye height.
 	if (player->getParent())
-		player_position = player->getParent()->getPosition();
+		player_position = player->getParent()->getPosition() + v3f(0,  g_settings->getBool("float_above_parent") ? BS : 0, 0);
 
 	// Smooth the camera movement when the player instantly moves upward due to stepheight.
 	// To smooth the 'not touching_ground' stepheight, smoothing is necessary when jumping
 	// or swimming (for when moving from liquid to land).
 	// Disable smoothing if climbing or flying, to avoid upwards offset of player model
 	// when seen in 3rd person view.
-	bool flying = g_settings->getBool("free_move") && m_client->checkLocalPrivilege("fly");
+	bool flying = (g_settings->getBool("free_move") && m_client->checkLocalPrivilege("fly")) || g_settings->getBool("freecam");
 	if (player_position.Y > old_player_position.Y && !player->is_climbing && !flying) {
 		f32 oldy = old_player_position.Y;
 		f32 newy = player_position.Y;

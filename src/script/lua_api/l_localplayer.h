@@ -62,6 +62,7 @@ private:
 	static int l_swimming_vertical(lua_State *L);
 
 	static int l_get_physics_override(lua_State *L);
+	static int l_set_physics_override(lua_State *L);
 
 	static int l_get_override_pos(lua_State *L);
 
@@ -129,7 +130,6 @@ private:
 	static int l_set_speeds_from_local_settings(lua_State *L);
 
 	static int l_set_speeds_from_server_settings(lua_State *L);
-
 
 	LocalPlayer *m_localplayer = nullptr;
 
