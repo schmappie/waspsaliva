@@ -7,7 +7,7 @@ function autoeat.eat()
 	local player = minetest.localplayer
 	local owx=player:get_wield_index()
 	autoeat.eating = true
-	player:set_wield_index(8)
+	player:set_wield_index(9)
 	minetest.place_node(player:get_pos())
 	minetest.after("0.2",function()
 		player:set_wield_index(owx)
