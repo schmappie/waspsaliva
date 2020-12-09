@@ -95,11 +95,11 @@ Where each location is on each platform:
     * `bin`   = `bin`
     * `share` = `.`
     * `user`  = `.`
-* Windows installed:
+* Windows installation:
     * `bin`   = `C:\Program Files\Minetest\bin (Depends on the install location)`
     * `share` = `C:\Program Files\Minetest (Depends on the install location)`
     * `user`  = `%APPDATA%\Minetest`
-* Linux installed:
+* Linux installation:
     * `bin`   = `/usr/bin`
     * `share` = `/usr/share/minetest`
     * `user`  = `~/.minetest`
