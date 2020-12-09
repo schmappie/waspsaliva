@@ -81,7 +81,8 @@ int LuaInventoryAction::l_craft(lua_State *L)
 	try {
 		loc.deSerialize(locStr);
 		dynamic_cast<ICraftAction *>(o->m_action)->craft_inv = loc;
-	} catch (SerializationError &) {}
+	} catch (SerializationError &) {
+	}
 
 	return 0;
 }
@@ -180,14 +181,16 @@ LuaInventoryAction::~LuaInventoryAction()
 	delete m_action;
 }
 
-void LuaInventoryAction::readFullInventoryLocationInto(lua_State *L, InventoryLocation *loc, std::string *list, s16 *index)
+void LuaInventoryAction::readFullInventoryLocationInto(
+		lua_State *L, InventoryLocation *loc, std::string *list, s16 *index)
 {
 	try {
 		loc->deSerialize(readParam<std::string>(L, 2));
 		std::string l = readParam<std::string>(L, 3);
 		*list = l;
-		*index = luaL_checkinteger(L, 4);
-	} catch (SerializationError &) {}
+		*index = luaL_checkinteger(L, 4) - 1;
+	} catch (SerializationError &) {
+	}
 }
 
 int LuaInventoryAction::create_object(lua_State *L)

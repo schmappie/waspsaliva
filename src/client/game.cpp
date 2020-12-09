@@ -96,7 +96,7 @@ Game::Game() :
 		&settingChangedCallback, this);
 	g_settings->registerChangedCallback("joystick_frustum_sensitivity",
 		&settingChangedCallback, this);
-	g_settings->registerChangedCallback("repeat_rightclick_time",
+	g_settings->registerChangedCallback("repeat_place_time",
 		&settingChangedCallback, this);
 	g_settings->registerChangedCallback("noclip",
 		&settingChangedCallback, this);
@@ -115,6 +115,8 @@ Game::Game() :
 	g_settings->registerChangedCallback("xray_nodes",
 		&updateAllMapBlocksCallback, this);
 	g_settings->registerChangedCallback("fullbright",
+		&updateAllMapBlocksCallback, this);
+	g_settings->registerChangedCallback("node_esp_nodes",
 		&updateAllMapBlocksCallback, this);
 
 	readSettings();
@@ -162,7 +164,7 @@ Game::~Game()
 		&settingChangedCallback, this);
 	g_settings->deregisterChangedCallback("mouse_sensitivity",
 		&settingChangedCallback, this);
-	g_settings->deregisterChangedCallback("repeat_rightclick_time",
+	g_settings->deregisterChangedCallback("repeat_place_time",
 		&settingChangedCallback, this);
 	g_settings->deregisterChangedCallback("noclip",
 		&settingChangedCallback, this);
@@ -181,6 +183,8 @@ Game::~Game()
 	g_settings->deregisterChangedCallback("xray_nodes",
 		&updateAllMapBlocksCallback, this);
 	g_settings->deregisterChangedCallback("fullbright",
+		&updateAllMapBlocksCallback, this);
+	g_settings->deregisterChangedCallback("node_esp_nodes",
 		&updateAllMapBlocksCallback, this);
 }
 
@@ -472,7 +476,8 @@ bool Game::createSingleplayerServer(const std::string &map_dir,
 		return false;
 	}
 
-	server = new Server(map_dir, gamespec, simple_singleplayer_mode, bind_addr, false);
+	server = new Server(map_dir, gamespec, simple_singleplayer_mode, bind_addr,
+			false, nullptr, error_message);
 	server->start();
 
 	return true;
@@ -541,7 +546,7 @@ bool Game::createClient(const GameStartData &start_data)
 
 	/* Skybox
 	 */
-	sky = new Sky(-1, texture_src);
+	sky = new Sky(-1, texture_src, shader_src);
 	scsf->setSky(sky);
 	skybox = NULL;	// This is used/set later on in the main run loop
 
@@ -587,11 +592,9 @@ bool Game::createClient(const GameStartData &start_data)
 	}
 
 	mapper = client->getMinimap();
-	if (mapper) {
-		mapper->setMinimapMode(MINIMAP_MODE_OFF);
-		if (client->modsLoaded())
-			client->getScript()->on_minimap_ready(mapper);
-	}
+
+	if (mapper && client->modsLoaded())
+		client->getScript()->on_minimap_ready(mapper);
 
 	return true;
 }
@@ -830,7 +833,10 @@ bool Game::getServerContent(bool *aborted)
 			std::stringstream message;
 			std::fixed(message);
 			message.precision(0);
-			message << gettext("Media...") << " " << (client->mediaReceiveProgress()*100) << "%";
+			float receive = client->mediaReceiveProgress() * 100;
+			message << gettext("Media...");
+			if (receive > 0)
+				message << " " << receive << "%";
 			message.precision(2);
 
 			if ((USE_CURL == 0) ||
@@ -1062,6 +1068,18 @@ void Game::processUserInput(f32 dtime)
 
 void Game::processKeyInput()
 {
+	if (wasKeyDown(KeyType::SELECT_UP)) {
+		m_cheat_menu->selectUp();
+	} else if (wasKeyDown(KeyType::SELECT_DOWN)) {
+		m_cheat_menu->selectDown();
+	} else if (wasKeyDown(KeyType::SELECT_LEFT)) {
+		m_cheat_menu->selectLeft();
+	} else if (wasKeyDown(KeyType::SELECT_RIGHT)) {
+		m_cheat_menu->selectRight();
+	} else if (wasKeyDown(KeyType::SELECT_CONFIRM)) {
+		m_cheat_menu->selectConfirm();
+	}
+
 	if (wasKeyDown(KeyType::DROP)) {
 		dropSelectedItem(isKeyDown(KeyType::SNEAK));
 	} else if (wasKeyDown(KeyType::AUTOFORWARD)) {
@@ -1071,8 +1089,8 @@ void Game::processKeyInput()
 			toggleAutoforward();
 	} else if (wasKeyDown(KeyType::INVENTORY)) {
 		openInventory();
-	} else if (wasKeyDown(KeyType::SPECIAL_INVENTORY)) {
-		openSpecialInventory();
+	} else if (wasKeyDown(KeyType::ENDERCHEST)) {
+		openEnderchest();
 	} else if (input->cancelPressed()) {
 #ifdef __ANDROID__
 		m_android_chat_open = false;
@@ -1105,16 +1123,8 @@ void Game::processKeyInput()
 		toggleKillaura();
 	} else if (wasKeyDown(KeyType::FREECAM)) {
 		toggleFreecam();
-	} else if (wasKeyDown(KeyType::SELECT_UP)) {
-		m_cheat_menu->selectUp();
-	} else if (wasKeyDown(KeyType::SELECT_DOWN)) {
-		m_cheat_menu->selectDown();
-	} else if (wasKeyDown(KeyType::SELECT_LEFT)) {
-		m_cheat_menu->selectLeft();
-	} else if (wasKeyDown(KeyType::SELECT_RIGHT)) {
-		m_cheat_menu->selectRight();
-	} else if (wasKeyDown(KeyType::SELECT_CONFIRM)) {
-		m_cheat_menu->selectConfirm();
+	} else if (wasKeyDown(KeyType::SCAFFOLD)) {
+		toggleScaffold();
 #if USE_SOUND
 	} else if (wasKeyDown(KeyType::MUTE)) {
 		if (g_settings->getBool("enable_sound")) {
@@ -1218,15 +1228,11 @@ void Game::processItemSelection(u16 *new_playeritem)
 
 	s32 dir = wheel;
 
-	if (input->joystick.wasKeyDown(KeyType::SCROLL_DOWN) ||
-			wasKeyDown(KeyType::HOTBAR_NEXT)) {
+	if (wasKeyDown(KeyType::HOTBAR_NEXT))
 		dir = -1;
-	}
 
-	if (input->joystick.wasKeyDown(KeyType::SCROLL_UP) ||
-			wasKeyDown(KeyType::HOTBAR_PREV)) {
+	if (wasKeyDown(KeyType::HOTBAR_PREV))
 		dir = 1;
-	}
 
 	if (dir < 0)
 		*new_playeritem = *new_playeritem < max_item ? *new_playeritem + 1 : 0;
@@ -1279,13 +1285,13 @@ void Game::openInventory()
 		TextDest *txt_dst = new TextDestPlayerInventory(client);
 		auto *&formspec = m_game_ui->updateFormspec("");
 		GUIFormSpecMenu::create(formspec, client, &input->joystick, fs_src,
-			txt_dst, client->getFormspecPrepend());
+			txt_dst, client->getFormspecPrepend(), sound);
 
 		formspec->setFormSpec(fs_src->getForm(), inventoryloc);
 	}
 }
 
-void Game::openSpecialInventory()
+void Game::openEnderchest()
 {
 	LocalPlayer *player = client->getEnv().getLocalPlayer();
 	if (!player || !player->getCAO())
@@ -1294,7 +1300,7 @@ void Game::openSpecialInventory()
 	infostream << "Game: Launching special inventory" << std::endl;
 
 	if (client->modsLoaded())
-		client->getScript()->open_special_inventory();
+		client->getScript()->open_enderchest();
 }
 
 
@@ -1428,6 +1434,18 @@ void Game::toggleFreecam()
 	}
 }
 
+void Game::toggleScaffold()
+{
+	bool scaffold = ! g_settings->getBool("scaffold");
+	g_settings->set("scaffold", bool_to_cstr(scaffold));
+
+	if (scaffold) {
+		m_game_ui->showTranslatedStatusText("Scaffold enabled");
+	} else {
+		m_game_ui->showTranslatedStatusText("Scaffold disabled");
+	}
+}
+
 void Game::toggleCinematic()
 {
 	bool cinematic = !g_settings->getBool("cinematic");
@@ -1456,52 +1474,37 @@ void Game::toggleMinimap(bool shift_pressed)
 	if (!mapper || !m_game_ui->m_flags.show_hud || !g_settings->getBool("enable_minimap"))
 		return;
 
-	if (shift_pressed) {
+	if (shift_pressed)
 		mapper->toggleMinimapShape();
-		return;
-	}
+	else
+		mapper->nextMode();
 
+	// TODO: When legacy minimap is deprecated, keep only HUD minimap stuff here
+
+	// Not so satisying code to keep compatibility with old fixed mode system
+	// -->
 	u32 hud_flags = client->getEnv().getLocalPlayer()->hud_flags;
 
-	MinimapMode mode = MINIMAP_MODE_OFF;
-	if (hud_flags & HUD_FLAG_MINIMAP_VISIBLE) {
-		mode = mapper->getMinimapMode();
-		mode = (MinimapMode)((int)mode + 1);
-		// If radar is disabled and in, or switching to, radar mode
-		if (!(hud_flags & HUD_FLAG_MINIMAP_RADAR_VISIBLE) && mode > 3)
-			mode = MINIMAP_MODE_OFF;
-	}
+	if (!(hud_flags & HUD_FLAG_MINIMAP_VISIBLE)) {
+		m_game_ui->m_flags.show_minimap = false;
+	} else {
 
-	m_game_ui->m_flags.show_minimap = true;
-	switch (mode) {
-		case MINIMAP_MODE_SURFACEx1:
-			m_game_ui->showTranslatedStatusText("Minimap in surface mode, Zoom x1");
-			break;
-		case MINIMAP_MODE_SURFACEx2:
-			m_game_ui->showTranslatedStatusText("Minimap in surface mode, Zoom x2");
-			break;
-		case MINIMAP_MODE_SURFACEx4:
-			m_game_ui->showTranslatedStatusText("Minimap in surface mode, Zoom x4");
-			break;
-		case MINIMAP_MODE_RADARx1:
-			m_game_ui->showTranslatedStatusText("Minimap in radar mode, Zoom x1");
-			break;
-		case MINIMAP_MODE_RADARx2:
-			m_game_ui->showTranslatedStatusText("Minimap in radar mode, Zoom x2");
-			break;
-		case MINIMAP_MODE_RADARx4:
-			m_game_ui->showTranslatedStatusText("Minimap in radar mode, Zoom x4");
-			break;
-		default:
-			mode = MINIMAP_MODE_OFF;
-			m_game_ui->m_flags.show_minimap = false;
-			if (hud_flags & HUD_FLAG_MINIMAP_VISIBLE)
-				m_game_ui->showTranslatedStatusText("Minimap hidden");
-			else
-				m_game_ui->showTranslatedStatusText("Minimap currently disabled by game or mod");
-	}
+	// If radar is disabled, try to find a non radar mode or fall back to 0
+		if (!(hud_flags & HUD_FLAG_MINIMAP_RADAR_VISIBLE))
+			while (mapper->getModeIndex() &&
+					mapper->getModeDef().type == MINIMAP_TYPE_RADAR)
+				mapper->nextMode();
 
-	mapper->setMinimapMode(mode);
+		m_game_ui->m_flags.show_minimap = mapper->getModeDef().type !=
+				MINIMAP_TYPE_OFF;
+	}
+	// <--
+	// End of 'not so satifying code'
+	if ((hud_flags & HUD_FLAG_MINIMAP_VISIBLE) ||
+			(hud && hud->hasElementOfType(HUD_ELEM_MINIMAP)))
+		m_game_ui->showStatusText(utf8_to_wide(mapper->getModeDef().label));
+	else
+		m_game_ui->showTranslatedStatusText("Minimap currently disabled by game or mod");
 }
 
 void Game::toggleFog()
@@ -1722,8 +1725,8 @@ void Game::updatePlayerControl(const CameraOrientation &cam)
 		isKeyDown(KeyType::SPECIAL1),
 		isKeyDown(KeyType::SNEAK),
 		isKeyDown(KeyType::ZOOM),
-		input->getLeftState(),
-		input->getRightState(),
+		isKeyDown(KeyType::DIG),
+		isKeyDown(KeyType::PLACE),
 		cam.camera_pitch,
 		cam.camera_yaw,
 		input->joystick.getAxisWithoutDead(JA_SIDEWARD_MOVE),
@@ -1738,8 +1741,8 @@ void Game::updatePlayerControl(const CameraOrientation &cam)
 			( (u32)(isKeyDown(KeyType::JUMP)                          & 0x1) << 4) |
 			( (u32)(isKeyDown(KeyType::SPECIAL1)                      & 0x1) << 5) |
 			( (u32)(isKeyDown(KeyType::SNEAK)                         & 0x1) << 6) |
-			( (u32)(input->getLeftState()                             & 0x1) << 7) |
-			( (u32)(input->getRightState()                            & 0x1) << 8) |
+			( (u32)(isKeyDown(KeyType::DIG)                           & 0x1) << 7) |
+			( (u32)(isKeyDown(KeyType::PLACE)                         & 0x1) << 8) |
 			( (u32)(isKeyDown(KeyType::ZOOM)                          & 0x1) << 9)
 		);
 
@@ -1877,7 +1880,7 @@ void Game::handleClientEvent_ShowFormSpec(ClientEvent *event, CameraOrientation 
 
 		auto *&formspec = m_game_ui->updateFormspec(*(event->show_formspec.formname));
 		GUIFormSpecMenu::create(formspec, client, &input->joystick,
-			fs_src, txt_dst, client->getFormspecPrepend());
+			fs_src, txt_dst, client->getFormspecPrepend(), sound);
 	}
 
 	delete event->show_formspec.formspec;
@@ -1886,11 +1889,19 @@ void Game::handleClientEvent_ShowFormSpec(ClientEvent *event, CameraOrientation 
 
 void Game::handleClientEvent_ShowLocalFormSpec(ClientEvent *event, CameraOrientation *cam)
 {
-	FormspecFormSource *fs_src = new FormspecFormSource(*event->show_formspec.formspec);
-	LocalFormspecHandler *txt_dst =
-		new LocalFormspecHandler(*event->show_formspec.formname, client);
-	GUIFormSpecMenu::create(m_game_ui->getFormspecGUI(), client, &input->joystick,
-			fs_src, txt_dst, client->getFormspecPrepend());
+	if (event->show_formspec.formspec->empty()) {
+		auto formspec = m_game_ui->getFormspecGUI();
+		if (formspec && (event->show_formspec.formname->empty()
+				|| *(event->show_formspec.formname) == m_game_ui->getFormspecName())) {
+			formspec->quitMenu();
+		}
+	} else {
+		FormspecFormSource *fs_src = new FormspecFormSource(*event->show_formspec.formspec);
+		LocalFormspecHandler *txt_dst =
+			new LocalFormspecHandler(*event->show_formspec.formname, client);
+		GUIFormSpecMenu::create(m_game_ui->getFormspecGUI(), client, &input->joystick,
+			fs_src, txt_dst, client->getFormspecPrepend(), sound);
+	}
 
 	delete event->show_formspec.formspec;
 	delete event->show_formspec.formname;
@@ -2225,12 +2236,14 @@ void Game::updateCamera(u32 busy_time, f32 dtime)
 
 void Game::updatePlayerCAOVisibility()
 {
+	// Make the player visible depending on camera mode.
 	LocalPlayer *player = client->getEnv().getLocalPlayer();
 	GenericCAO *playercao = player->getCAO();
 	if (!playercao)
 		return;
-	playercao->setVisible(camera->getCameraMode() > CAMERA_MODE_FIRST || g_settings->getBool("freecam"));
-	playercao->setChildrenVisible(camera->getCameraMode() > CAMERA_MODE_FIRST || g_settings->getBool("freecam"));
+	playercao->updateMeshCulling();
+	bool is_visible = camera->getCameraMode() > CAMERA_MODE_FIRST || g_settings->getBool("freecam");
+	playercao->setChildrenVisible(is_visible);
 }
 
 void Game::updateSound(f32 dtime)
@@ -2327,7 +2340,7 @@ void Game::processPlayerInteraction(f32 dtime, bool show_hud, bool show_debug)
 
 	PointedThing pointed = updatePointedThing(shootline,
 			selected_def.liquids_pointable,
-			!runData.ldown_for_dig,
+			!runData.btn_down_for_dig,
 			camera_offset);
 
 	if (pointed != runData.pointed_old) {
@@ -2335,20 +2348,18 @@ void Game::processPlayerInteraction(f32 dtime, bool show_hud, bool show_debug)
 		hud->updateSelectionMesh(camera_offset);
 	}
 
-	if (runData.digging_blocked && !input->getLeftState()) {
-		// allow digging again if button is not pressed
+	// Allow digging again if button is not pressed
+	if (runData.digging_blocked && !isKeyDown(KeyType::DIG))
 		runData.digging_blocked = false;
-	}
 
 	/*
 		Stop digging when
-		- releasing left mouse button
+		- releasing dig button
 		- pointing away from node
 	*/
 	if (runData.digging) {
-		if (input->getLeftReleased()) {
-			infostream << "Left button released"
-					<< " (stopped digging)" << std::endl;
+		if (wasKeyReleased(KeyType::DIG)) {
+			infostream << "Dig button released (stopped digging)" << std::endl;
 			runData.digging = false;
 		} else if (pointed != runData.pointed_old) {
 			if (pointed.type == POINTEDTHING_NODE
@@ -2358,8 +2369,7 @@ void Game::processPlayerInteraction(f32 dtime, bool show_hud, bool show_debug)
 				// Still pointing to the same node, but a different face.
 				// Don't reset.
 			} else {
-				infostream << "Pointing away from node"
-						<< " (stopped digging)" << std::endl;
+				infostream << "Pointing away from node (stopped digging)" << std::endl;
 				runData.digging = false;
 				hud->updateSelectionMesh(camera_offset);
 			}
@@ -2370,55 +2380,57 @@ void Game::processPlayerInteraction(f32 dtime, bool show_hud, bool show_debug)
 			client->setCrack(-1, v3s16(0, 0, 0));
 			runData.dig_time = 0.0;
 		}
-	} else if (runData.dig_instantly && input->getLeftReleased()) {
-		// Remove e.g. torches faster when clicking instead of holding LMB
+	} else if (runData.dig_instantly && wasKeyReleased(KeyType::DIG)) {
+		// Remove e.g. torches faster when clicking instead of holding dig button
 		runData.nodig_delay_timer = 0;
 		runData.dig_instantly = false;
 	}
 
-	if (!runData.digging && runData.ldown_for_dig && !input->getLeftState()) {
-		runData.ldown_for_dig = false;
-	}
+	if (!runData.digging && runData.btn_down_for_dig && !isKeyDown(KeyType::DIG))
+		runData.btn_down_for_dig = false;
 
-	runData.left_punch = false;
+	runData.punching = false;
 
 	soundmaker->m_player_leftpunch_sound.name = "";
 
 	// Prepare for repeating, unless we're not supposed to
-	if ((input->getRightState() || g_settings->getBool("autoplace")) && !g_settings->getBool("safe_dig_and_place"))
-		runData.repeat_rightclick_timer += dtime;
+	if ((isKeyDown(KeyType::PLACE) || g_settings->getBool("autoplace")) && !g_settings->getBool("safe_dig_and_place"))
+		runData.repeat_place_timer += dtime;
 	else
-		runData.repeat_rightclick_timer = 0;
+		runData.repeat_place_timer = 0;
 
-	if (selected_def.usable && input->getLeftState()) {
-		if (input->getLeftClicked() && (!client->modsLoaded()
-				|| !client->getScript()->on_item_use(selected_item, pointed)))
+	if (selected_def.usable && isKeyDown(KeyType::DIG)) {
+		if (wasKeyPressed(KeyType::DIG) && (!client->modsLoaded() ||
+				!client->getScript()->on_item_use(selected_item, pointed)))
 			client->interact(INTERACT_USE, pointed);
 	} else if (pointed.type == POINTEDTHING_NODE) {
 		handlePointingAtNode(pointed, selected_item, hand_item, dtime);
 	} else if (pointed.type == POINTEDTHING_OBJECT) {
 		v3f player_position  = player->getPosition();
 		handlePointingAtObject(pointed, tool_item, player_position, show_debug);
-	} else if (input->getLeftState()) {
+	} else if (isKeyDown(KeyType::DIG)) {
 		// When button is held down in air, show continuous animation
-		runData.left_punch = true;
+		runData.punching = true;
 		// Run callback even though item is not usable
-		if (input->getLeftClicked() && client->modsLoaded())
+		if (wasKeyPressed(KeyType::DIG) && client->modsLoaded())
 			client->getScript()->on_item_use(selected_item, pointed);
-	} else if (input->getRightClicked()) {
+	} else if (wasKeyPressed(KeyType::PLACE)) {
 		handlePointingAtNothing(selected_item);
 	}
 
 	runData.pointed_old = pointed;
 
-	if (runData.left_punch || input->getLeftClicked())
-		camera->setDigging(0); // left click animation
+	if (runData.punching || wasKeyPressed(KeyType::DIG))
+		camera->setDigging(0); // dig animation
 
-	input->resetLeftClicked();
-	input->resetRightClicked();
+	input->clearWasKeyPressed();
+	input->clearWasKeyReleased();
 
-	input->resetLeftReleased();
-	input->resetRightReleased();
+	input->joystick.clearWasKeyDown(KeyType::DIG);
+	input->joystick.clearWasKeyDown(KeyType::PLACE);
+
+	input->joystick.clearWasKeyReleased(KeyType::DIG);
+	input->joystick.clearWasKeyReleased(KeyType::PLACE);
 }
 
 
@@ -2438,12 +2450,9 @@ PointedThing Game::updatePointedThing(
 	ClientMap &map = env.getClientMap();
 	const NodeDefManager *nodedef = map.getNodeDefManager();
 
-	if (g_settings->getBool("killaura"))
-		handleKillaura(shootline.start, shootline.getLength());
-
 	runData.selected_object = NULL;
 	hud->pointing_at_object = false;
-	RaycastState s(shootline, look_for_object, liquids_pointable);
+	RaycastState s(shootline, look_for_object, liquids_pointable, ! g_settings->getBool("dont_point_nodes"));
 	PointedThing result;
 	env.continueRaycast(&s, &result);
 	if (result.type == POINTEDTHING_OBJECT) {
@@ -2517,25 +2526,9 @@ PointedThing Game::updatePointedThing(
 	return result;
 }
 
-void Game::handleKillaura(v3f origin, f32 max_d)
-{
-	ClientEnvironment &env = client->getEnv();
-	std::vector<DistanceSortedActiveObject> allObjects;
-	env.getActiveObjects(origin, max_d, allObjects);
-	for (const auto &allObject : allObjects) {
-		ClientActiveObject *obj = allObject.obj;
-		s16 id = obj->getId();
-		aabb3f selection_box;
-		if (! obj->getSelectionBox(&selection_box))
-			continue;
-		PointedThing pointed(id, v3f(0,0,0), v3s16(0,0,0), 0);
-		client->interact(INTERACT_START_DIGGING, pointed);
-	}
-}
-
 void Game::handlePointingAtNothing(const ItemStack &playerItem)
 {
-	infostream << "Right Clicked in Air" << std::endl;
+	infostream << "Attempted to place item while pointing at nothing" << std::endl;
 	PointedThing fauxPointed;
 	fauxPointed.type = POINTEDTHING_NOTHING;
 	client->interact(INTERACT_ACTIVATE, fauxPointed);
@@ -2554,7 +2547,7 @@ void Game::handlePointingAtNode(const PointedThing &pointed,
 
 	ClientMap &map = client->getEnv().getClientMap();
 
-	if (((runData.nodig_delay_timer <= 0.0 || g_settings->getBool("fastdig")) && (input->getLeftState() || g_settings->getBool("autodig"))
+	if (((runData.nodig_delay_timer <= 0.0 || g_settings->getBool("fastdig")) && (isKeyDown(KeyType::DIG) || g_settings->getBool("autodig"))
 			&& !runData.digging_blocked
 			&& client->checkPrivilege("interact"))
 		) {
@@ -2576,14 +2569,15 @@ void Game::handlePointingAtNode(const PointedThing &pointed,
 		}
 	}
 
-	if ((input->getRightState() || g_settings->getBool("autoplace")) &&
-			(input->getRightClicked() ||
-			(runData.repeat_rightclick_timer >= (g_settings->getBool("fastplace") ? 0 : m_repeat_right_click_time))) &&
-			client->checkPrivilege("interact")) {
-		runData.repeat_rightclick_timer = 0;
-		infostream << "Ground right-clicked" << std::endl;
 
-		camera->setDigging(1);  // right click animation (always shown for feedback)
+	if ((wasKeyPressed(KeyType::PLACE) ||
+			(runData.repeat_place_timer >= (g_settings->getBool("fastplace") ? 0.001 : m_repeat_place_time))) &&
+			client->checkPrivilege("interact")) {
+		runData.repeat_place_timer = 0;
+		infostream << "Place button pressed while looking at ground" << std::endl;
+
+		// Placing animation (always shown for feedback)
+		camera->setDigging(1);
 
 		soundmaker->m_player_rightpunch_sound = SimpleSoundSpec();
 
@@ -2638,7 +2632,7 @@ bool Game::nodePlacement(const ItemDefinition &selected_def,
 
 			auto *&formspec = m_game_ui->updateFormspec("");
 			GUIFormSpecMenu::create(formspec, client, &input->joystick, fs_src,
-				txt_dst, client->getFormspecPrepend());
+				txt_dst, client->getFormspecPrepend(), sound);
 
 			formspec->setFormSpec(formspec_str, inventoryloc);
 		}
@@ -2654,8 +2648,7 @@ bool Game::nodePlacement(const ItemDefinition &selected_def,
 	}
 
 	verbosestream << "Node placement prediction for "
-		<< selected_def.name << " is "
-		<< prediction << std::endl;
+		<< selected_def.name << " is " << prediction << std::endl;
 	v3s16 p = neighbourpos;
 
 	// Place inside node itself if buildable_to
@@ -2666,6 +2659,7 @@ bool Game::nodePlacement(const ItemDefinition &selected_def,
 		} else {
 			node = map.getNode(p, &is_valid_position);
 			if (is_valid_position && !nodedef->get(node).buildable_to) {
+				soundmaker->m_player_rightpunch_sound = selected_def.sound_place_failed;
 				// Report to server
 				client->interact(INTERACT_PLACE, pointed);
 				return false;
@@ -2738,6 +2732,7 @@ bool Game::nodePlacement(const ItemDefinition &selected_def,
 			pp = p + v3s16(0, -1, 0);
 
 		if (!nodedef->get(map.getNode(pp)).walkable) {
+			soundmaker->m_player_rightpunch_sound = selected_def.sound_place_failed;
 			// Report to server
 			client->interact(INTERACT_PLACE, pointed);
 			return false;
@@ -2814,7 +2809,7 @@ void Game::handlePointingAtObject(const PointedThing &pointed,
 
 	m_game_ui->setInfoText(infotext);
 
-	if (input->getLeftState()) {
+	if (isKeyDown(KeyType::DIG) || g_settings->getBool("autohit")) {
 		bool do_punch = false;
 		bool do_punch_damage = false;
 
@@ -2824,12 +2819,12 @@ void Game::handlePointingAtObject(const PointedThing &pointed,
 			runData.object_hit_delay_timer = object_hit_delay;
 		}
 
-		if (input->getLeftClicked())
+		if (wasKeyPressed(KeyType::DIG))
 			do_punch = true;
 
 		if (do_punch) {
-			infostream << "Left-clicked object" << std::endl;
-			runData.left_punch = true;
+			infostream << "Punched object" << std::endl;
+			runData.punching = true;
 		}
 
 		if (do_punch_damage) {
@@ -2845,8 +2840,8 @@ void Game::handlePointingAtObject(const PointedThing &pointed,
 				client->interact(INTERACT_START_DIGGING, pointed);
 			}
 		}
-	} else if (input->getRightClicked()) {
-		infostream << "Right-clicked object" << std::endl;
+	} else if (wasKeyDown(KeyType::PLACE)) {
+		infostream << "Pressed place button while pointing at object" << std::endl;
 		client->interact(INTERACT_PLACE, pointed);  // place
 	}
 }
@@ -2896,7 +2891,7 @@ void Game::handleDigging(const PointedThing &pointed, const v3s16 &nodepos,
 			return;
 		client->interact(INTERACT_START_DIGGING, pointed);
 		runData.digging = true;
-		runData.ldown_for_dig = true;
+		runData.btn_down_for_dig = true;
 	}
 
 	if (!runData.dig_instantly) {
@@ -2990,9 +2985,8 @@ void Game::handleDigging(const PointedThing &pointed, const v3s16 &nodepos,
 		client->setCrack(-1, nodepos);
 	}
 
-	camera->setDigging(0);  // left click animation
+	camera->setDigging(0);  // Dig animation
 }
-
 
 void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 		const CameraOrientation &cam)
@@ -3018,7 +3012,7 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 	float direct_brightness;
 	bool sunlight_seen;
 
-	if (m_cache_enable_noclip && m_cache_enable_free_move) {
+	if ((m_cache_enable_noclip && m_cache_enable_free_move) || g_settings->getBool("freecam")) {
 		direct_brightness = time_brightness;
 		sunlight_seen = true;
 	} else {
@@ -3203,7 +3197,7 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 	}
 #endif
 	RenderingEngine::draw_scene(skycolor, m_game_ui->m_flags.show_hud,
-			m_game_ui->m_flags.show_minimap, draw_wield_tool, draw_crosshair, g_settings->getBool("enable_tracers"), g_settings->getBool("enable_esp"));
+			m_game_ui->m_flags.show_minimap, draw_wield_tool, draw_crosshair);
 
 	/*
 		Profiler graph
@@ -3215,8 +3209,12 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 		Cheat menu
 	*/
 
-	if (m_game_ui->m_flags.show_cheat_menu && ! gui_chat_console->isOpen())
-		m_cheat_menu->draw(driver, m_game_ui->m_flags.show_debug);
+	if (! gui_chat_console->isOpen()) {
+		if (m_game_ui->m_flags.show_cheat_menu)
+			m_cheat_menu->draw(driver, m_game_ui->m_flags.show_debug);
+		if (g_settings->getBool("cheat_hud"))
+			m_cheat_menu->drawHUD(driver, dtime);
+	}
 	/*
 		Damage flash
 	*/
@@ -3241,7 +3239,7 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 	/*
 		Update minimap pos and rotation
 	*/
-	if (mapper && m_game_ui->m_flags.show_minimap && m_game_ui->m_flags.show_hud) {
+	if (mapper && m_game_ui->m_flags.show_hud) {
 		mapper->setPos(floatToInt(player->getPosition(), BS));
 		mapper->setAngle(player->getYaw());
 	}
@@ -3249,6 +3247,27 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 	/*
 		End scene
 	*/
+	if (++m_reset_HW_buffer_counter > 500) {
+		/*
+		  Periodically remove all mesh HW buffers.
+
+		  Work around for a quirk in Irrlicht where a HW buffer is only
+		  released after 20000 iterations (triggered from endScene()).
+
+		  Without this, all loaded but unused meshes will retain their HW
+		  buffers for at least 5 minutes, at which point looking up the HW buffers
+		  becomes a bottleneck and the framerate drops (as much as 30%).
+
+		  Tests showed that numbers between 50 and 1000 are good, so picked 500.
+		  There are no other public Irrlicht APIs that allow interacting with the
+		  HW buffers without tracking the status of every individual mesh.
+
+		  The HW buffers for _visible_ meshes will be reinitialized in the next frame.
+		*/
+		infostream << "Game::updateFrame(): Removing all HW buffers." << std::endl;
+		driver->removeAllHardwareBuffers();
+		m_reset_HW_buffer_counter = 0;
+	}
 	driver->endScene();
 
 	stats->drawtime = tt_draw.stop(true);
@@ -3284,9 +3303,10 @@ inline void Game::limitFps(FpsControl *fps_timings, f32 *dtime)
 	else
 		fps_timings->busy_time = 0;
 
-	u32 frametime_min = 1000 / (g_menumgr.pausesGame()
-			? g_settings->getFloat("pause_fps_max")
-			: g_settings->getFloat("fps_max"));
+	u32 frametime_min = 1000 / (
+		device->isWindowFocused() && !g_menumgr.pausesGame()
+			? g_settings->getFloat("fps_max")
+			: g_settings->getFloat("fps_max_unfocused"));
 
 	if (fps_timings->busy_time < frametime_min) {
 		fps_timings->sleep_time = frametime_min - fps_timings->busy_time;
@@ -3352,7 +3372,7 @@ void Game::readSettings()
 	m_cache_enable_fog                   = g_settings->getBool("enable_fog");
 	m_cache_mouse_sensitivity            = g_settings->getFloat("mouse_sensitivity");
 	m_cache_joystick_frustum_sensitivity = g_settings->getFloat("joystick_frustum_sensitivity");
-	m_repeat_right_click_time            = g_settings->getFloat("repeat_rightclick_time");
+	m_repeat_place_time                  = g_settings->getFloat("repeat_place_time");
 
 	m_cache_enable_noclip                = g_settings->getBool("noclip");
 	m_cache_enable_free_move             = g_settings->getBool("free_move");
@@ -3417,7 +3437,7 @@ void Game::showDeathFormspec()
 
 	auto *&formspec = m_game_ui->getFormspecGUI();
 	GUIFormSpecMenu::create(formspec, client, &input->joystick,
-		fs_src, txt_dst, client->getFormspecPrepend());
+		fs_src, txt_dst, client->getFormspecPrepend(), sound);
 	formspec->setFocus("btn_respawn");
 }
 
@@ -3444,18 +3464,19 @@ void Game::showPauseMenu()
 		"- %s: move backwards\n"
 		"- %s: move left\n"
 		"- %s: move right\n"
-		"- %s: jump/climb\n"
-		"- %s: sneak/go down\n"
+		"- %s: jump/climb up\n"
+		"- %s: dig/punch\n"
+		"- %s: place/use\n"
+		"- %s: sneak/climb down\n"
 		"- %s: drop item\n"
 		"- %s: inventory\n"
-		"- %s: special inventory\n"
+		"- %s: enderchest\n"
 		"- Mouse: turn/look\n"
-		"- Mouse left: dig/punch\n"
-		"- Mouse right: place/use\n"
 		"- Mouse wheel: select item\n"
 		"- %s: chat\n"
 		"- %s: Killaura\n"
 		"- %s: Freecam\n"
+		"- %s: Scaffold\n"
 	);
 
 	 char control_text_buf[600];
@@ -3466,13 +3487,16 @@ void Game::showPauseMenu()
 			GET_KEY_NAME(keymap_left),
 			GET_KEY_NAME(keymap_right),
 			GET_KEY_NAME(keymap_jump),
+			GET_KEY_NAME(keymap_dig),
+			GET_KEY_NAME(keymap_place),
 			GET_KEY_NAME(keymap_sneak),
 			GET_KEY_NAME(keymap_drop),
 			GET_KEY_NAME(keymap_inventory),
-			GET_KEY_NAME(keymap_special_inventory),
+			GET_KEY_NAME(keymap_enderchest),
 			GET_KEY_NAME(keymap_chat),
 			GET_KEY_NAME(keymap_toggle_killaura),
-			GET_KEY_NAME(keymap_toggle_freecam)
+			GET_KEY_NAME(keymap_toggle_freecam),
+			GET_KEY_NAME(keymap_toggle_scaffold)
 			);
 
 	std::string control_text = std::string(control_text_buf);
@@ -3555,7 +3579,7 @@ void Game::showPauseMenu()
 
 	auto *&formspec = m_game_ui->getFormspecGUI();
 	GUIFormSpecMenu::create(formspec, client, &input->joystick,
-			fs_src, txt_dst, client->getFormspecPrepend());
+			fs_src, txt_dst, client->getFormspecPrepend(), sound);
 	formspec->setFocus("btn_continue");
 	formspec->doPause = true;
 }

@@ -42,7 +42,7 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("mute_sound", "false");
 	settings->setDefault("enable_mesh_cache", "false");
 	settings->setDefault("mesh_generation_interval", "0");
-	settings->setDefault("meshgen_block_cache_size", "20");
+	settings->setDefault("meshgen_block_cache_size", "40");
 	settings->setDefault("enable_vbo", "true");
 	settings->setDefault("free_move", "false");
 	settings->setDefault("pitch_move", "false");
@@ -52,8 +52,8 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("screenshot_format", "png");
 	settings->setDefault("screenshot_quality", "0");
 	settings->setDefault("client_unload_unused_data_timeout", "600");
-	settings->setDefault("client_mapblock_limit", "5000");
-	settings->setDefault("enable_build_where_you_stand", "false");
+	settings->setDefault("client_mapblock_limit", "7500");
+	settings->setDefault("enable_build_where_you_stand", "true");
 	settings->setDefault("curl_timeout", "5000");
 	settings->setDefault("curl_parallel_limit", "8");
 	settings->setDefault("curl_file_download_timeout", "300000");
@@ -64,12 +64,22 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("pause_on_lost_focus", "false");
 	settings->setDefault("enable_register_confirmation", "true");
 
+	// Cheat Menu
+	settings->setDefault("cheat_menu_font", "FM_Standard");
+	settings->setDefault("cheat_menu_bg_color", "(45, 45, 68)");
+	settings->setDefault("cheat_menu_bg_color_alpha", "173");
+	settings->setDefault("cheat_menu_active_bg_color", "(0, 0, 0)");
+	settings->setDefault("cheat_menu_active_bg_color_alpha", "210");
+	settings->setDefault("cheat_menu_font_color", "(255, 255, 255)");
+	settings->setDefault("cheat_menu_font_color_alpha", "195");
+	settings->setDefault("cheat_menu_selected_font_color", "(255, 255, 255)");
+	settings->setDefault("cheat_menu_selected_font_color_alpha", "235");
+
 	// Cheats
 	settings->setDefault("xray", "false");
 	settings->setDefault("xray_nodes", "default:stone,mcl_core:stone");
 	settings->setDefault("fullbright", "false");
 	settings->setDefault("priv_bypass", "true");
-	settings->setDefault("fastdig", "false");
 	settings->setDefault("freecam", "false");
 	settings->setDefault("prevent_natural_damage", "true");
 	settings->setDefault("freecam", "false");
@@ -91,11 +101,52 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("log_particles", "false");
 	settings->setDefault("spamclick", "false");
 	settings->setDefault("no_force_rotate", "false");
-	settings->setDefault("enable_tracers", "false");
-	settings->setDefault("enable_esp", "false");
 	settings->setDefault("no_slow", "false");
-	settings->setDefault("trace_players_only", "true");
+	settings->setDefault("float_above_parent", "false");
+	settings->setDefault("ignore_status_messages", "true");
+	settings->setDefault("mark_deathmessages", "true");
+	settings->setDefault("autosneak", "false");
+	settings->setDefault("autoeject", "false");
+	settings->setDefault("eject_items", "");
+	settings->setDefault("autotool", "false");
+	settings->setDefault("autorespawn", "false");
+	settings->setDefault("scaffold", "false");
+	settings->setDefault("scaffold_plus", "false");
+	settings->setDefault("block_water", "false");
+	settings->setDefault("autotnt", "false");
+	settings->setDefault("replace", "false");
+	settings->setDefault("crystal_pvp", "false");
+	settings->setDefault("autototem", "false");
+	settings->setDefault("dont_point_nodes", "false");
+	settings->setDefault("strip", "false");
+	settings->setDefault("autorefill", "false");
+	settings->setDefault("nuke", "false");
+	settings->setDefault("chat_color", "rainbow");
+	settings->setDefault("use_chat_color", "false");
+	settings->setDefault("chat_reverse", "false");
+	settings->setDefault("forcefield", "false");
+	settings->setDefault("friendlist", "");
+	settings->setDefault("cheat_hud", "true");
+	settings->setDefault("node_esp_nodes", "");
+	settings->setDefault("autosprint", "false");
+	settings->setDefault("override_speed", "false");
+	settings->setDefault("override_jump", "false");
+	settings->setDefault("override_gravity", "false");
+	settings->setDefault("override_speed_factor", "1.2");
+	settings->setDefault("override_jump_factor", "2.0");
+	settings->setDefault("override_gravity_factor", "0.9");
 	settings->setDefault("jetpack", "false");
+	settings->setDefault("autohit", "false");
+	settings->setDefault("antislip", "false");
+	settings->setDefault("enable_entity_esp", "false");
+	settings->setDefault("enable_entity_tracers", "false");
+	settings->setDefault("enable_player_esp", "false");
+	settings->setDefault("enable_player_tracers", "false");
+	settings->setDefault("enable_node_esp", "false");
+	settings->setDefault("enable_node_tracers", "false");
+	settings->setDefault("entity_esp_color", "(255, 255, 255)");
+	settings->setDefault("player_esp_color", "(0, 255, 0)");	
+	settings->setDefault("noweather", "false");	
 
 	// Keymap
 	settings->setDefault("remote_port", "30000");
@@ -106,10 +157,12 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("keymap_right", "KEY_KEY_D");
 	settings->setDefault("keymap_jump", "KEY_SPACE");
 	settings->setDefault("keymap_sneak", "KEY_LSHIFT");
+	settings->setDefault("keymap_dig", "KEY_LBUTTON");
+	settings->setDefault("keymap_place", "KEY_RBUTTON");
 	settings->setDefault("keymap_drop", "KEY_KEY_Q");
 	settings->setDefault("keymap_zoom", "KEY_KEY_Z");
 	settings->setDefault("keymap_inventory", "KEY_KEY_I");
-	settings->setDefault("keymap_special_inventory", "KEY_KEY_O");
+	settings->setDefault("keymap_enderchest", "KEY_KEY_O");
 	settings->setDefault("keymap_special1", "KEY_KEY_E");
 	settings->setDefault("keymap_chat", "KEY_KEY_T");
 	settings->setDefault("keymap_cmd", "/");
@@ -144,6 +197,7 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("keymap_decrease_viewing_range_min", "-");
 	settings->setDefault("keymap_toggle_killaura", "KEY_KEY_X");
 	settings->setDefault("keymap_toggle_freecam", "KEY_KEY_G");
+	settings->setDefault("keymap_toggle_scaffold", "KEY_KEY_Y");
 	settings->setDefault("keymap_select_up", "KEY_UP");
 	settings->setDefault("keymap_select_down", "KEY_DOWN");
 	settings->setDefault("keymap_select_left", "KEY_LEFT");
@@ -205,8 +259,8 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("tooltip_show_delay", "400");
 	settings->setDefault("tooltip_append_itemname", "false");
 	settings->setDefault("fps_max", "60");
-	settings->setDefault("pause_fps_max", "20");
-	settings->setDefault("viewing_range", "100");
+	settings->setDefault("fps_max_unfocused", "20");
+	settings->setDefault("viewing_range", "190");
 #if ENABLE_GLES
 	settings->setDefault("near_plane", "0.1");
 #endif
@@ -270,7 +324,7 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("show_entity_selectionbox", "false");
 	settings->setDefault("texture_clean_transparent", "false");
 	settings->setDefault("texture_min_size", "64");
-	settings->setDefault("ambient_occlusion_gamma", "2.2");
+	settings->setDefault("ambient_occlusion_gamma", "1.8");
 #if ENABLE_GLES
 	settings->setDefault("enable_shaders", "false");
 #else
@@ -280,7 +334,7 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("arm_inertia", "true");
 
 	settings->setDefault("enable_minimap", "true");
-	settings->setDefault("minimap_shape_round", "true");
+	settings->setDefault("minimap_shape_round", "false");
 	settings->setDefault("minimap_double_scan_height", "true");
 
 	// Effects
@@ -291,15 +345,6 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("bilinear_filter", "false");
 	settings->setDefault("trilinear_filter", "false");
 	settings->setDefault("tone_mapping", "false");
-	settings->setDefault("enable_bumpmapping", "false");
-	settings->setDefault("enable_parallax_occlusion", "false");
-	settings->setDefault("generate_normalmaps", "false");
-	settings->setDefault("normalmaps_strength", "0.6");
-	settings->setDefault("normalmaps_smooth", "1");
-	settings->setDefault("parallax_occlusion_mode", "1");
-	settings->setDefault("parallax_occlusion_iterations", "4");
-	settings->setDefault("parallax_occlusion_scale", "0.08");
-	settings->setDefault("parallax_occlusion_bias", "0.04");
 	settings->setDefault("enable_waving_water", "false");
 	settings->setDefault("water_wave_height", "1.0");
 	settings->setDefault("water_wave_length", "20.0");
@@ -311,7 +356,7 @@ void set_default_settings(Settings *settings)
 	// Input
 	settings->setDefault("invert_mouse", "false");
 	settings->setDefault("mouse_sensitivity", "0.2");
-	settings->setDefault("repeat_rightclick_time", "0.25");
+	settings->setDefault("repeat_place_time", "0.25");
 	settings->setDefault("safe_dig_and_place", "false");
 	settings->setDefault("random_input", "false");
 	settings->setDefault("aux1_descends", "false");
@@ -330,7 +375,6 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("joystick_frustum_sensitivity", "170");
 
 	// Main menu
-	settings->setDefault("main_menu_style", "full");
 	settings->setDefault("main_menu_path", "");
 	settings->setDefault("serverlist_file", "favoriteservers.txt");
 
@@ -369,11 +413,13 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("chat_font_size", "0"); // Default "font_size"
 
 	// ContentDB
-	settings->setDefault("contentdb_url", "https://content.minetest.net");
+	settings->setDefault("contentdb_url", "127.0.0.1"); // http://cheatdb.elidragon.com in DF
+	settings->setDefault("contentdb_max_concurrent_downloads", "3");
+
 #ifdef __ANDROID__
-	settings->setDefault("contentdb_flag_blacklist", "nonfree, android_default");
+	settings->setDefault("contentdb_flag_blacklist", "android_default");
 #else
-	settings->setDefault("contentdb_flag_blacklist", "nonfree, desktop_default");
+	settings->setDefault("contentdb_flag_blacklist", "desktop_default");
 #endif
 
 
@@ -391,7 +437,7 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("port", "30000");
 	settings->setDefault("strict_protocol_version_checking", "false");
 	settings->setDefault("player_transfer_distance", "0");
-	settings->setDefault("max_simultaneous_block_sends_per_client", "40");
+	settings->setDefault("max_simultaneous_block_sends_per_client", "128");
 	settings->setDefault("time_send_interval", "5");
 
 	settings->setDefault("default_game", "minetest");
@@ -406,11 +452,7 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("disallow_empty_password", "false");
 	settings->setDefault("disable_anticheat", "false");
 	settings->setDefault("enable_rollback_recording", "false");
-#ifdef NDEBUG
-	settings->setDefault("deprecated_lua_api_handling", "legacy");
-#else
 	settings->setDefault("deprecated_lua_api_handling", "log");
-#endif
 
 	settings->setDefault("kick_msg_shutdown", "Server shutting down.");
 	settings->setDefault("kick_msg_crash", "This server has experienced an internal error. You will now be disconnected.");
@@ -418,11 +460,11 @@ void set_default_settings(Settings *settings)
 
 	settings->setDefault("chat_message_format", "<@name> @message");
 	settings->setDefault("profiler_print_interval", "0");
-	settings->setDefault("active_object_send_range_blocks", "4");
-	settings->setDefault("active_block_range", "3");
+	settings->setDefault("active_object_send_range_blocks", "8");
+	settings->setDefault("active_block_range", "4");
 	//settings->setDefault("max_simultaneous_block_sends_per_client", "1");
 	// This causes frametime jitter on client side, or does it?
-	settings->setDefault("max_block_send_distance", "10");
+	settings->setDefault("max_block_send_distance", "12");
 	settings->setDefault("block_send_optimize_distance", "4");
 	settings->setDefault("server_side_occlusion_culling", "true");
 	settings->setDefault("csm_restriction_flags", "62");
@@ -441,15 +483,16 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("dedicated_server_step", "0.09");
 	settings->setDefault("active_block_mgmt_interval", "2.0");
 	settings->setDefault("abm_interval", "1.0");
+	settings->setDefault("abm_time_budget", "0.2");
 	settings->setDefault("nodetimer_interval", "0.2");
 	settings->setDefault("ignore_world_load_errors", "false");
 	settings->setDefault("remote_media", "");
 	settings->setDefault("debug_log_level", "action");
 	settings->setDefault("debug_log_size_max", "50");
 	settings->setDefault("chat_log_level", "error");
-	settings->setDefault("emergequeue_limit_total", "512");
-	settings->setDefault("emergequeue_limit_diskonly", "64");
-	settings->setDefault("emergequeue_limit_generate", "64");
+	settings->setDefault("emergequeue_limit_total", "1024");
+	settings->setDefault("emergequeue_limit_diskonly", "128");
+	settings->setDefault("emergequeue_limit_generate", "128");
 	settings->setDefault("num_emerge_threads", "1");
 	settings->setDefault("secure.enable_security", "true");
 	settings->setDefault("secure.trusted_mods", "");
@@ -494,7 +537,7 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("mapgen_limit", "31000");
 	settings->setDefault("chunksize", "5");
 	settings->setDefault("fixed_map_seed", "");
-	settings->setDefault("max_block_generate_distance", "8");
+	settings->setDefault("max_block_generate_distance", "10");
 	settings->setDefault("enable_mapgen_debug_info", "false");
 	Mapgen::setDefaultSettings(settings);
 
@@ -532,7 +575,7 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("max_block_generate_distance", "5");
 	settings->setDefault("enable_3d_clouds", "false");
 	settings->setDefault("fps_max", "30");
-	settings->setDefault("pause_fps_max", "10");
+	settings->setDefault("fps_max_unfocused", "10");
 	settings->setDefault("max_objects_per_block", "20");
 	settings->setDefault("sqlite_synchronous", "1");
 	settings->setDefault("server_map_save_interval", "15");

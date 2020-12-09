@@ -503,7 +503,7 @@ void Client::handleCommand_ActiveObjectMessages(NetworkPacket* pkt)
 			if (!is.good())
 				break;
 
-			std::string message = deSerializeString(is);
+			std::string message = deSerializeString16(is);
 
 			// Pass on to the environment
 			m_env.processActiveObjectMessage(id, message);
@@ -872,7 +872,12 @@ void Client::handleCommand_PlaySound(NetworkPacket* pkt)
 		*pkt >> pitch;
 		*pkt >> ephemeral;
 	} catch (PacketError &e) {};
-
+	
+	SimpleSoundSpec sound_spec(name, gain, fade, pitch);
+	
+	if (m_mods_loaded && m_script->on_play_sound(sound_spec))
+		return;
+	
 	// Start playing
 	int client_id = -1;
 	switch(type) {
@@ -1024,10 +1029,12 @@ void Client::handleCommand_SpawnParticle(NetworkPacket* pkt)
 	event->type           = CE_SPAWN_PARTICLE;
 	event->spawn_particle = new ParticleParameters(p);
 
-
 	if (g_settings->getBool("log_particles")) {
 		std::cout << p.pos.X << " " << p.pos.Y << " " << p.pos.Z << std::endl;
 	}
+	
+	if (m_mods_loaded && m_script->on_spawn_particle(*event->spawn_particle))
+		return;
 
 	m_client_event_queue.push(event);
 }
@@ -1054,7 +1061,7 @@ void Client::handleCommand_AddParticleSpawner(NetworkPacket* pkt)
 	p.minsize            = readF32(is);
 	p.maxsize            = readF32(is);
 	p.collisiondetection = readU8(is);
-	p.texture            = deSerializeLongString(is);
+	p.texture            = deSerializeString32(is);
 
 	server_id = readU32(is);
 
@@ -1222,26 +1229,32 @@ void Client::handleCommand_HudSetFlags(NetworkPacket* pkt)
 	player->hud_flags |= flags;
 
 	if (g_settings->getBool("hud_flags_bypass"))
-		player->hud_flags = HUD_FLAG_HOTBAR_VISIBLE    | HUD_FLAG_HEALTHBAR_VISIBLE |
+		player->hud_flags = HUD_FLAG_HOTBAR_VISIBLE	| HUD_FLAG_HEALTHBAR_VISIBLE |
 			HUD_FLAG_CROSSHAIR_VISIBLE | HUD_FLAG_WIELDITEM_VISIBLE |
 			HUD_FLAG_BREATHBAR_VISIBLE | HUD_FLAG_MINIMAP_VISIBLE   |
 			HUD_FLAG_MINIMAP_RADAR_VISIBLE;
 
-
 	m_minimap_disabled_by_server = !(player->hud_flags & HUD_FLAG_MINIMAP_VISIBLE);
 	bool m_minimap_radar_disabled_by_server = !(player->hud_flags & HUD_FLAG_MINIMAP_RADAR_VISIBLE);
+
+	// Not so satisying code to keep compatibility with old fixed mode system
+	// -->
 
 	// Hide minimap if it has been disabled by the server
 	if (m_minimap && m_minimap_disabled_by_server && was_minimap_visible)
 		// defers a minimap update, therefore only call it if really
 		// needed, by checking that minimap was visible before
-		m_minimap->setMinimapMode(MINIMAP_MODE_OFF);
+		m_minimap->setModeIndex(0);
 
-	// Switch to surface mode if radar disabled by server
-	if (m_minimap && m_minimap_radar_disabled_by_server && was_minimap_radar_visible)
-		m_minimap->setMinimapMode(MINIMAP_MODE_SURFACEx1);
-
-
+	// If radar has been disabled, try to find a non radar mode or fall back to 0
+	if (m_minimap && m_minimap_radar_disabled_by_server
+			&& was_minimap_radar_visible) {
+		while (m_minimap->getModeIndex() > 0 &&
+				m_minimap->getModeDef().type == MINIMAP_TYPE_RADAR)
+			m_minimap->nextMode();
+	}
+	// <--
+	// End of 'not so satifying code'
 }
 
 void Client::handleCommand_HudSetParam(NetworkPacket* pkt)
@@ -1276,11 +1289,11 @@ void Client::handleCommand_HudSetSky(NetworkPacket* pkt)
 
 		SkyboxParams skybox;
 		skybox.bgcolor = video::SColor(readARGB8(is));
-		skybox.type = std::string(deSerializeString(is));
+		skybox.type = std::string(deSerializeString16(is));
 		u16 count = readU16(is);
 
 		for (size_t i = 0; i < count; i++)
-			skybox.textures.emplace_back(deSerializeString(is));
+			skybox.textures.emplace_back(deSerializeString16(is));
 
 		skybox.clouds = true;
 		try {
@@ -1681,4 +1694,31 @@ void Client::handleCommand_ModChannelSignal(NetworkPacket *pkt)
 	// If signal is valid, forward it to client side mods
 	if (valid_signal)
 		m_script->on_modchannel_signal(channel, signal);
+}
+
+void Client::handleCommand_MinimapModes(NetworkPacket *pkt)
+{
+	u16 count; // modes
+	u16 mode;  // wanted current mode index after change
+
+	*pkt >> count >> mode;
+
+	if (m_minimap)
+		m_minimap->clearModes();
+
+	for (size_t index = 0; index < count; index++) {
+		u16 type;
+		std::string label;
+		u16 size;
+		std::string texture;
+		u16 scale;
+
+		*pkt >> type >> label >> size >> texture >> scale;
+
+		if (m_minimap)
+			m_minimap->addMode(MinimapType(type), size, label, texture, scale);
+	}
+
+	if (m_minimap)
+		m_minimap->setModeIndex(mode);
 }

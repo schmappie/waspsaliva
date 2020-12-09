@@ -30,6 +30,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "cpp_api/s_base.h"
 #include "gettext.h"
 #include "l_internal.h"
+#include "l_clientobject.h"
 #include "lua_api/l_nodemeta.h"
 #include "gui/mainmenumanager.h"
 #include "map.h"
@@ -564,67 +565,67 @@ int ModApiClient::l_interact(lua_State *L)
 {
 	std::string mode = luaL_checkstring(L, 1);
 	PointedThing pointed;
-    int imode;
+	int imode;
 
-    if (lua_gettop(L) > 1) {
-        v3s16 pos = check_v3s16(L, 2);
-	    pointed.type = POINTEDTHING_NODE;
-	    pointed.node_abovesurface = pos;
-	    pointed.node_undersurface = pos;
-    } else {
-	    Camera *camera = getClient(L)->getCamera();
-	    const v3f camera_direction = camera->getDirection();
-	    const v3s16 camera_offset  = camera->getOffset();
+	if (lua_gettop(L) > 1) {
+		v3s16 pos = check_v3s16(L, 2);
+		pointed.type = POINTEDTHING_NODE;
+		pointed.node_abovesurface = pos;
+		pointed.node_undersurface = pos;
+	} else {
+		Camera *camera = getClient(L)->getCamera();
+		const v3f camera_direction = camera->getDirection();
+		const v3s16 camera_offset  = camera->getOffset();
 
-	    IItemDefManager *itemdef_manager = createItemDefManager();
-	    ItemStack selected_item, hand_item;
-	    const ItemDefinition &selected_def = selected_item.getDefinition(itemdef_manager);
-	    f32 d = getToolRange(selected_def, hand_item.getDefinition(itemdef_manager));
+		IItemDefManager *itemdef_manager = createItemDefManager();
+		ItemStack selected_item, hand_item;
+		const ItemDefinition &selected_def = selected_item.getDefinition(itemdef_manager);
+		f32 d = getToolRange(selected_def, hand_item.getDefinition(itemdef_manager));
 
-	    if (g_settings->getBool("increase_tool_range"))
-		    d += 2;
-	    if (g_settings->getBool("increase_tool_range_plus"))
-		    d = 1000;
+		if (g_settings->getBool("increase_tool_range"))
+			d += 2;
+		if (g_settings->getBool("increase_tool_range_plus"))
+			d = 1000;
 
-	    core::line3d<f32> shootline;
+		core::line3d<f32> shootline;
 
-	    switch (camera->getCameraMode()) {
-	    case CAMERA_MODE_FIRST:
-		    // Shoot from camera position, with bobbing
-		    shootline.start = camera->getPosition();
-		    break;
-	    case CAMERA_MODE_THIRD:
-		    // Shoot from player head, no bobbing
-		    shootline.start = camera->getHeadPosition();
-		    break;
-	    case CAMERA_MODE_THIRD_FRONT:
-		    shootline.start = camera->getHeadPosition();
-		    // prevent player pointing anything in front-view
-		    d = 0;
-		    break;
-	    }
-	    shootline.end = shootline.start + camera_direction * BS * d;
-	    GameRunData runData = GameRunData();
+		switch (camera->getCameraMode()) {
+		case CAMERA_MODE_FIRST:
+			// Shoot from camera position, with bobbing
+			shootline.start = camera->getPosition();
+			break;
+		case CAMERA_MODE_THIRD:
+			// Shoot from player head, no bobbing
+			shootline.start = camera->getHeadPosition();
+			break;
+		case CAMERA_MODE_THIRD_FRONT:
+			shootline.start = camera->getHeadPosition();
+			// prevent player pointing anything in front-view
+			d = 0;
+			break;
+		}
+		shootline.end = shootline.start + camera_direction * BS * d;
+		GameRunData runData = GameRunData();
 
-	    pointed = g_game->updatePointedThing(shootline,
-			    selected_def.liquids_pointable,
-			    !runData.ldown_for_dig,
-			    camera_offset);
-    }
+		pointed = g_game->updatePointedThing(shootline,
+				selected_def.liquids_pointable,
+				!runData.btn_down_for_dig,
+				camera_offset);
+	}
 
-    struct EnumString interact_modes[] = {
-        {INTERACT_START_DIGGING, "start_digging"},
-        {INTERACT_STOP_DIGGING, "stop_digging"},
-        {INTERACT_DIGGING_COMPLETED, "digging_completed"},
-        {INTERACT_PLACE, "place"},
-        {INTERACT_USE, "use"},
-        {INTERACT_ACTIVATE, "activate"},
-        {0, NULL}
-    };
+	struct EnumString interact_modes[] = {
+		{INTERACT_START_DIGGING, "start_digging"},
+		{INTERACT_STOP_DIGGING, "stop_digging"},
+		{INTERACT_DIGGING_COMPLETED, "digging_completed"},
+		{INTERACT_PLACE, "place"},
+		{INTERACT_USE, "use"},
+		{INTERACT_ACTIVATE, "activate"},
+		{0, NULL}
+	};
 
-    string_to_enum(interact_modes, imode, mode);
+	string_to_enum(interact_modes, imode, mode);
 
-    getClient(L)->interact((InteractAction)imode, pointed);
+	getClient(L)->interact((InteractAction)imode, pointed);
 
 	lua_pushboolean(L, true);
 	return 0;
@@ -640,6 +641,26 @@ int ModApiClient::l_hide_huds(lua_State *L)
 {
 	g_game->hide_huds();
 	return 0;
+}
+
+// get_objects_inside_radius(pos, radius)
+int ModApiClient::l_get_objects_inside_radius(lua_State *L)
+{
+	ClientEnvironment &env = getClient(L)->getEnv();
+
+	v3f pos = checkFloatPos(L, 1);
+	float radius = readParam<float>(L, 2) * BS;
+
+	std::vector<DistanceSortedActiveObject> objs;
+	env.getActiveObjects(pos, radius, objs);
+
+	int i = 0;
+	lua_createtable(L, objs.size(), 0);
+	for (const auto obj : objs) {
+		ClientObjectRef::create(L, obj.obj);							// TODO: getObjectRefOrCreate
+		lua_rawseti(L, -2, ++i);
+	}
+	return 1;
 }
 
 void ModApiClient::Initialize(lua_State *L, int top)
@@ -681,4 +702,5 @@ void ModApiClient::Initialize(lua_State *L, int top)
 	API_FCT(interact);
 	API_FCT(show_huds);
 	API_FCT(hide_huds);
+	API_FCT(get_objects_inside_radius);
 }

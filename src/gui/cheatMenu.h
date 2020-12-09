@@ -19,34 +19,46 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #pragma once
 
+#include "client/client.h"
 #include "irrlichttypes_extrabloated.h"
+#include "script/scripting_client.h"
+#include "client/fontengine.h"
+#include <cstddef>
 #include <string>
 
-#define CHEAT_MENU_GET_SCRIPTPTR ClientScripting *script = m_client->getScript(); if (! script || ! script->m_cheats_loaded) return;
+#define CHEAT_MENU_GET_SCRIPTPTR                                                         \
+	ClientScripting *script = m_client->getScript();                                 \
+	if (!script || !script->m_cheats_loaded)                                         \
+		return;
 
-class Client;
-
-typedef enum
+enum CheatMenuEntryType
 {
 	CHEAT_MENU_ENTRY_TYPE_HEAD,
 	CHEAT_MENU_ENTRY_TYPE_CATEGORY,
 	CHEAT_MENU_ENTRY_TYPE_ENTRY,
-}
-CheatMenuEntryType;
+};
 
 class CheatMenu
 {
 public:
-	CheatMenu(Client* client);
+	CheatMenu(Client *client);
 
-	void draw(video::IVideoDriver* driver, bool show_debug);
+	ClientScripting *getScript() { return m_client->getScript(); }
 
-	void drawEntry(video::IVideoDriver* driver, std::string name, int number, bool selected, bool active, CheatMenuEntryType entry_type = CHEAT_MENU_ENTRY_TYPE_ENTRY);
+	void draw(video::IVideoDriver *driver, bool show_debug);
+
+	void drawHUD(video::IVideoDriver *driver, double dtime);
+
+	void drawEntry(video::IVideoDriver *driver, std::string name, int number,
+			bool selected, bool active,
+			CheatMenuEntryType entry_type = CHEAT_MENU_ENTRY_TYPE_ENTRY);
+
 	void selectUp();
 	void selectDown();
 	void selectLeft();
 	void selectRight();
 	void selectConfirm();
+
 private:
 	bool m_cheat_layer = false;
 	int m_selected_cheat = 0;
@@ -62,9 +74,12 @@ private:
 	video::SColor m_font_color = video::SColor(255, 0, 255, 0);
 	video::SColor m_selected_font_color = video::SColor(255, 250, 250, 250);
 
+	FontMode fontStringToEnum(std::string str);
 
 	Client *m_client;
 
 	gui::IGUIFont *m_font = nullptr;
 	v2u32 m_fontsize;
+
+	float m_rainbow_offset = 0.0;
 };

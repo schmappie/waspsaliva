@@ -38,6 +38,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "serverenvironment.h"
 #include "clientiface.h"
 #include "chatmessage.h"
+#include "translation.h"
 #include <string>
 #include <list>
 #include <map>
@@ -117,6 +118,14 @@ struct ServerPlayingSound
 	std::unordered_set<session_t> clients; // peer ids
 };
 
+struct MinimapMode {
+	MinimapType type = MINIMAP_TYPE_OFF;
+	std::string label;
+	u16 size = 0;
+	std::string texture;
+	u16 scale = 1;
+};
+
 class Server : public con::PeerHandler, public MapEventReceiver,
 		public IGameDef
 {
@@ -131,7 +140,8 @@ public:
 		bool simple_singleplayer_mode,
 		Address bind_addr,
 		bool dedicated,
-		ChatInterface *iface = nullptr
+		ChatInterface *iface = nullptr,
+		std::string *on_shutdown_errmsg = nullptr
 	);
 	~Server();
 	DISABLE_CLASS_COPY(Server);
@@ -315,7 +325,6 @@ public:
 	void acceptAuth(session_t peer_id, bool forSudoMode);
 	void DenyAccess_Legacy(session_t peer_id, const std::wstring &reason);
 	void DisconnectPeer(session_t peer_id);
-	void RedirectPeer(session_t peer_id, const std::string address, u16 port);
 	bool getClientConInfo(session_t peer_id, con::rtt_stat_type type, float *retval);
 	bool getClientInfo(session_t peer_id, ClientState *state, u32 *uptime,
 			u8* ser_vers, u16* prot_vers, u8* major, u8* minor, u8* patch,
@@ -330,6 +339,10 @@ public:
 	void SendPlayerSpeed(session_t peer_id, const v3f &added_vel);
 	void SendPlayerFov(session_t peer_id);
 
+	void SendMinimapModes(session_t peer_id,
+			std::vector<MinimapMode> &modes,
+			size_t wanted_mode);
+
 	void sendDetachedInventories(session_t peer_id, bool incremental);
 
 	virtual bool registerModStorage(ModMetadata *storage);
@@ -343,8 +356,8 @@ public:
 	// Send block to specific player only
 	bool SendBlock(session_t peer_id, const v3s16 &blockpos);
 
-	// Load translations for a language
-	void loadTranslationLanguage(const std::string &lang_code);
+	// Get or load translations for a language
+	Translations *getTranslationLanguage(const std::string &lang_code);
 
 	// Bind address
 	Address m_bind_addr;
@@ -381,7 +394,6 @@ private:
 	void SendAccessDenied(session_t peer_id, AccessDeniedCode reason,
 		const std::string &custom_reason, bool reconnect = false);
 	void SendAccessDenied_Legacy(session_t peer_id, const std::wstring &reason);
-	void SendRedirect(session_t peer_id, const std::string address, u16 port);
 	void SendDeathscreen(session_t peer_id, bool set_camera_point_target,
 		v3f camera_point_target);
 	void SendItemDef(session_t peer_id, IItemDefManager *itemdef, u16 protocol_version);
@@ -558,6 +570,8 @@ private:
 	// Mods
 	std::unique_ptr<ServerModManager> m_modmgr;
 
+	std::unordered_map<std::string, Translations> server_translations;
+
 	/*
 		Threads
 	*/
@@ -597,6 +611,10 @@ private:
 
 	ChatInterface *m_admin_chat;
 	std::string m_admin_nick;
+
+	// if a mod-error occurs in the on_shutdown callback, the error message will
+	// be written into this
+	std::string *const m_on_shutdown_errmsg;
 
 	/*
 		Map edit event queue. Automatically receives all map edits.

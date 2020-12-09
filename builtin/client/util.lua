@@ -41,7 +41,7 @@ end
 
 function core.get_pointed_thing()
 	local pos = core.camera:get_pos()
-	local pos2 = vector.add(pos, vector.multiply(core.camera:get_look_dir(), 5))
+	local pos2 = vector.add(pos, vector.multiply(core.camera:get_look_dir(), 7))
 	local player = core.localplayer
 	if not player then return end
 	local item = player:get_wielded_item()
@@ -49,4 +49,8 @@ function core.get_pointed_thing()
 	local def = core.get_item_def(item:get_name())
 	local ray = core.raycast(pos, pos2, true, core.settings:get_bool("point_liquids") or def and def.liquids_pointable)
 	return ray and ray:next()
-end	
+end
+
+function core.close_formspec(formname)
+	return core.show_formspec(formname, "")
+end

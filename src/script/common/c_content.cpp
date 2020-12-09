@@ -23,6 +23,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "object_properties.h"
 #include "collision.h"
 #include "cpp_api/s_node.h"
+#include "lua_api/l_clientobject.h"
 #include "lua_api/l_object.h"
 #include "lua_api/l_item.h"
 #include "common/c_internal.h"
@@ -56,6 +57,7 @@ void read_item_definition(lua_State* L, int index,
 			es_ItemType, ITEM_NONE);
 	getstringfield(L, index, "name", def.name);
 	getstringfield(L, index, "description", def.description);
+	getstringfield(L, index, "short_description", def.short_description);
 	getstringfield(L, index, "inventory_image", def.inventory_image);
 	getstringfield(L, index, "inventory_overlay", def.inventory_overlay);
 	getstringfield(L, index, "wield_image", def.wield_image);
@@ -142,6 +144,8 @@ void push_item_definition_full(lua_State *L, const ItemDefinition &i)
 	lua_setfield(L, -2, "name");
 	lua_pushstring(L, i.description.c_str());
 	lua_setfield(L, -2, "description");
+	lua_pushstring(L, i.short_description.c_str());
+	lua_setfield(L, -2, "short_description");
 	lua_pushstring(L, type.c_str());
 	lua_setfield(L, -2, "type");
 	lua_pushstring(L, i.inventory_image.c_str());
@@ -330,6 +334,7 @@ void read_object_properties(lua_State *L, int index,
 	getfloatfield(L, -1, "zoom_fov", prop->zoom_fov);
 	getboolfield(L, -1, "use_texture_alpha", prop->use_texture_alpha);
 	getboolfield(L, -1, "shaded", prop->shaded);
+	getboolfield(L, -1, "show_on_minimap", prop->show_on_minimap);
 
 	getstringfield(L, -1, "damage_texture_modifier", prop->damage_texture_modifier);
 }
@@ -418,6 +423,8 @@ void push_object_properties(lua_State *L, ObjectProperties *prop)
 	lua_setfield(L, -2, "shaded");
 	lua_pushlstring(L, prop->damage_texture_modifier.c_str(), prop->damage_texture_modifier.size());
 	lua_setfield(L, -2, "damage_texture_modifier");
+	lua_pushboolean(L, prop->show_on_minimap);
+	lua_setfield(L, -2, "show_on_minimap");
 }
 
 /******************************************************************************/
@@ -490,12 +497,10 @@ TileDef read_tiledef(lua_State *L, int index, u8 drawtype)
 }
 
 /******************************************************************************/
-ContentFeatures read_content_features(lua_State *L, int index)
+void read_content_features(lua_State *L, ContentFeatures &f, int index)
 {
 	if(index < 0)
 		index = lua_gettop(L) + 1 + index;
-
-	ContentFeatures f;
 
 	/* Cache existence of some callbacks */
 	lua_getfield(L, index, "on_construct");
@@ -799,7 +804,6 @@ ContentFeatures read_content_features(lua_State *L, int index)
 	getstringfield(L, index, "node_dig_prediction",
 		f.node_dig_prediction);
 
-	return f;
 }
 
 void push_content_features(lua_State *L, const ContentFeatures &c)
@@ -1321,20 +1325,6 @@ void push_inventory(lua_State *L, Inventory *inventory)
 }
 
 /******************************************************************************/
-void push_inventory_list(lua_State *L, Inventory *inv, const char *name)
-{
-	InventoryList *invlist = inv->getList(name);
-	if(invlist == NULL){
-		lua_pushnil(L);
-		return;
-	}
-	std::vector<ItemStack> items;
-	for(u32 i=0; i<invlist->getSize(); i++)
-		items.push_back(invlist->getItem(i));
-	push_items(L, items);
-}
-
-/******************************************************************************/
 void read_inventory_list(lua_State *L, int tableindex,
 		Inventory *inv, const char *name, Server* srv, int forcesize)
 {
@@ -1361,6 +1351,19 @@ void read_inventory_list(lua_State *L, int tableindex,
 		invlist->deleteItem(index);
 		index++;
 	}
+}
+
+void push_inventory_list(lua_State *L, Inventory *inv, const char *name)
+{
+	InventoryList *invlist = inv->getList(name);
+	if(invlist == NULL){
+		lua_pushnil(L);
+		return;
+	}
+	std::vector<ItemStack> items;
+	for(u32 i=0; i<invlist->getSize(); i++)
+		items.push_back(invlist->getItem(i));
+	push_items(L, items);
 }
 
 /******************************************************************************/
@@ -1396,6 +1399,29 @@ struct TileAnimationParams read_animation_definition(lua_State *L, int index)
 	}
 
 	return anim;
+}
+
+void push_animation_definition(lua_State *L, struct TileAnimationParams anim)
+{
+	switch (anim.type) {
+	case TAT_NONE:
+		lua_pushnil(L);
+		break;
+	case TAT_VERTICAL_FRAMES:
+		lua_newtable(L);
+		setstringfield(L, -1, "type", "vertical_frames");
+		setfloatfield(L, -1, "aspect_w", anim.vertical_frames.aspect_w);
+		setfloatfield(L, -1, "aspect_h", anim.vertical_frames.aspect_h);
+		setfloatfield(L, -1, "length", anim.vertical_frames.length);
+		break;
+	case TAT_SHEET_2D:
+		lua_newtable(L);
+		setstringfield(L, -1, "type", "sheet_2d");
+		setintfield(L, -1, "frames_w", anim.sheet_2d.frames_w);
+		setintfield(L, -1, "frames_h", anim.sheet_2d.frames_h);
+		setintfield(L, -1, "frame_length", anim.sheet_2d.frame_length);
+		break;
+	}
 }
 
 /******************************************************************************/
@@ -1836,14 +1862,15 @@ void push_pointed_thing(lua_State *L, const PointedThing &pointed, bool csm,
 	} else if (pointed.type == POINTEDTHING_OBJECT) {
 		lua_pushstring(L, "object");
 		lua_setfield(L, -2, "type");
-
 		if (csm) {
-			lua_pushinteger(L, pointed.object_id);
-			lua_setfield(L, -2, "id");
+#ifndef SERVER
+			ClientObjectRef::create(L, pointed.object_id);
+#endif
 		} else {
 			push_objectRef(L, pointed.object_id);
-			lua_setfield(L, -2, "ref");
 		}
+		
+		lua_setfield(L, -2, "ref");
 	} else {
 		lua_pushstring(L, "nothing");
 		lua_setfield(L, -2, "type");
@@ -1975,9 +2002,10 @@ void push_hud_element(lua_State *L, HudElement *elem)
 HudElementStat read_hud_change(lua_State *L, HudElement *elem, void **value)
 {
 	HudElementStat stat = HUD_STAT_NUMBER;
+	std::string statstr;
 	if (lua_isstring(L, 3)) {
 		int statint;
-		std::string statstr = lua_tostring(L, 3);
+		statstr = lua_tostring(L, 3);
 		stat = string_to_enum(es_HudElementStat, statint, statstr) ?
 				(HudElementStat)statint : stat;
 	}
@@ -2005,6 +2033,8 @@ HudElementStat read_hud_change(lua_State *L, HudElement *elem, void **value)
 			break;
 		case HUD_STAT_ITEM:
 			elem->item = luaL_checknumber(L, 4);
+			if (elem->type == HUD_ELEM_WAYPOINT && statstr == "precision")
+				elem->item++;
 			*value = &elem->item;
 			break;
 		case HUD_STAT_DIR:
@@ -2093,4 +2123,28 @@ void push_collision_move_result(lua_State *L, const collisionMoveResult &res)
 	}
 	lua_setfield(L, -2, "collisions");
 	/**/
+}
+
+/******************************************************************************/
+void push_physics_override(lua_State *L, float speed, float jump, float gravity, bool sneak, bool sneak_glitch, bool new_move)
+{
+	lua_createtable(L, 0, 6);
+	
+	lua_pushnumber(L, speed);
+	lua_setfield(L, -2, "speed");
+
+	lua_pushnumber(L, jump);
+	lua_setfield(L, -2, "jump");
+
+	lua_pushnumber(L, gravity);
+	lua_setfield(L, -2, "gravity");
+
+	lua_pushboolean(L, sneak);
+	lua_setfield(L, -2, "sneak");
+
+	lua_pushboolean(L, sneak_glitch);
+	lua_setfield(L, -2, "sneak_glitch");
+
+	lua_pushboolean(L, new_move);
+	lua_setfield(L, -2, "new_move");
 }

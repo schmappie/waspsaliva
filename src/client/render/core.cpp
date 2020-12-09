@@ -27,6 +27,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "client/minimap.h"
 #include "client/content_cao.h"
 #include "settings.h"
+#include "mapblock.h"
+#include "mapsector.h"
 
 RenderingCore::RenderingCore(IrrlichtDevice *_device, Client *_client, Hud *_hud)
 	: device(_device), driver(device->getVideoDriver()), smgr(device->getSceneManager()),
@@ -56,7 +58,7 @@ void RenderingCore::updateScreenSize()
 }
 
 void RenderingCore::draw(video::SColor _skycolor, bool _show_hud, bool _show_minimap,
-		bool _draw_wield_tool, bool _draw_crosshair, bool _draw_tracers, bool _draw_esp)
+		bool _draw_wield_tool, bool _draw_crosshair)
 {
 	v2u32 ss = driver->getScreenSize();
 	if (screensize != ss) {
@@ -68,8 +70,16 @@ void RenderingCore::draw(video::SColor _skycolor, bool _show_hud, bool _show_min
 	show_minimap = _show_minimap;
 	draw_wield_tool = _draw_wield_tool;
 	draw_crosshair = _draw_crosshair;
-	draw_tracers = _draw_tracers;
-	draw_esp = _draw_esp;
+	draw_entity_esp = g_settings->getBool("enable_entity_esp");
+	draw_entity_tracers = g_settings->getBool("enable_entity_tracers");
+	draw_player_esp = g_settings->getBool("enable_player_esp");
+	draw_player_tracers = g_settings->getBool("enable_player_tracers");
+	draw_node_esp = g_settings->getBool("enable_node_esp");
+	draw_node_tracers = g_settings->getBool("enable_node_tracers");
+	v3f entity_color = g_settings->getV3F("entity_esp_color");
+	v3f player_color = g_settings->getV3F("player_esp_color");
+	entity_esp_color = video::SColor(255, entity_color.X, entity_color.Y, entity_color.Z);
+	player_esp_color = video::SColor(255, player_color.X, player_color.Y, player_color.Z);
 
 	beforeDraw();
 	drawAll();
@@ -79,11 +89,11 @@ void RenderingCore::drawTracersAndESP()
 {
 	ClientEnvironment &env = client->getEnv();
 	Camera *camera = client->getCamera();
-	
+
 	v3f camera_offset = intToFloat(camera->getOffset(), BS);
-	
+
 	v3f eye_pos = (camera->getPosition() + camera->getDirection() - camera_offset);
- 	
+
  	video::SMaterial material, oldmaterial;
  	oldmaterial = driver->getMaterial2D();
 	material.setFlag(video::EMF_LIGHTING, false);
@@ -91,29 +101,60 @@ void RenderingCore::drawTracersAndESP()
 	material.setFlag(video::EMF_ZBUFFER, false);
 	material.setFlag(video::EMF_ZWRITE_ENABLE, false);
 	driver->setMaterial(material);
- 	
-	auto allObjects = env.getAllActiveObjects();
-	for (auto &it : allObjects) {
-		ClientActiveObject *cao = it.second;
-		if (cao->isLocalPlayer() || cao->getParent())
-			continue;
-		GenericCAO *obj = dynamic_cast<GenericCAO *>(cao);
-		if (! obj)
-			continue;
-		aabb3f box;
-		if (! obj->getSelectionBox(&box))
-			continue;
-		v3f pos = obj->getPosition();
-		pos -= camera_offset;
-		box.MinEdge += pos;
-		box.MaxEdge += pos;
-		pos = box.getCenter();
-		if (draw_esp)
-			driver->draw3DBox(box, video::SColor(255, 255, 255, 255));
-		if (draw_tracers && (!g_settings->getBool("trace_players_only") || obj->isPlayer()))
-			driver->draw3DLine(eye_pos, pos, video::SColor(255, 255, 255, 255));
+
+ 	if (draw_entity_esp || draw_entity_tracers || draw_player_esp || draw_player_tracers) {
+		auto allObjects = env.getAllActiveObjects();
+		for (auto &it : allObjects) {
+			ClientActiveObject *cao = it.second;
+			if (cao->isLocalPlayer() || cao->getParent())
+				continue;
+			GenericCAO *obj = dynamic_cast<GenericCAO *>(cao);
+			if (! obj)
+				continue;
+			bool is_player = obj->isPlayer();
+			bool draw_esp = is_player ? draw_player_esp : draw_entity_esp;
+			bool draw_tracers = is_player ? draw_player_tracers : draw_entity_tracers;
+			video::SColor color = is_player ? player_esp_color : entity_esp_color;
+			if (! (draw_esp || draw_tracers))
+				continue;
+			aabb3f box;
+			if (! obj->getSelectionBox(&box))
+				continue;
+			v3f pos = obj->getPosition() - camera_offset;
+			box.MinEdge += pos;
+			box.MaxEdge += pos;
+			if (draw_esp)
+				driver->draw3DBox(box, color);
+			if (draw_tracers)
+				driver->draw3DLine(eye_pos, box.getCenter(), color);
+		}
 	}
-	
+	if (draw_node_esp || draw_node_tracers) {
+		Map &map = env.getMap();
+		std::vector<v3s16> positions;
+		map.listAllLoadedBlocks(positions);
+		for (v3s16 blockp : positions) {
+			MapBlock *block = map.getBlockNoCreate(blockp);
+			if (! block->mesh)
+				continue;
+			for (v3s16 p : block->mesh->esp_nodes) {
+				v3f pos = intToFloat(p, BS) - camera_offset;
+				MapNode node = map.getNode(p);
+				std::vector<aabb3f> boxes;
+				node.getSelectionBoxes(client->getNodeDefManager(), &boxes, node.getNeighbors(p, &map));
+				video::SColor color = client->getNodeDefManager()->get(node).minimap_color;
+				for (aabb3f box : boxes) {
+					box.MinEdge += pos;
+					box.MaxEdge += pos;
+					if (draw_node_esp)
+						driver->draw3DBox(box, color);
+					if (draw_node_tracers)
+						driver->draw3DLine(eye_pos, box.getCenter(), color);
+				}
+			}
+		}
+	}
+
 	driver->setMaterial(oldmaterial);
 }
 
@@ -124,7 +165,7 @@ void RenderingCore::draw3D()
 	if (!show_hud)
 		return;
 	hud->drawSelectionMesh();
-	if (draw_tracers || draw_esp)
+	if (draw_entity_esp || draw_entity_tracers || draw_player_esp || draw_player_tracers || draw_node_esp || draw_node_tracers)
 		drawTracersAndESP();
 	if (draw_wield_tool)
 		camera->drawWieldedTool();
