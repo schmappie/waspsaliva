@@ -413,7 +413,7 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("chat_font_size", "0"); // Default "font_size"
 
 	// ContentDB
-	settings->setDefault("contentdb_url", "http://cheatdb.elidragon.com");
+	settings->setDefault("contentdb_url", "127.0.0.1"); // http://cheatdb.elidragon.com in DF
 	settings->setDefault("contentdb_max_concurrent_downloads", "3");
 
 #ifdef __ANDROID__
