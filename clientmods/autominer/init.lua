@@ -61,7 +61,7 @@ local function amautotool(pos)
 	for index, stack in pairs(inventory.main) do
 		is_better, best_time = check_tool(stack, node_groups, best_time)
 		if is_better then
-			new_index = index - 1
+			new_index = index
 		end
 	end
 	player:set_wield_index(new_index)
@@ -97,7 +97,7 @@ local function dighead()
             local n=get_hnode()
             if n==nil or n['name'] == 'air' then return end
             --amautotool(ppos)
-	    minetest.localplayer:set_wield_index(0)
+	    minetest.localplayer:set_wield_index(1)
             minetest.dig_node(ppos)
             minetest.dig_node(vector.add(ppos,{x=0,y=1,z=0}))
             digging=false

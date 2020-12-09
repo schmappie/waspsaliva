@@ -5,14 +5,6 @@ local category = "Scaffold"
 scaffold = {}
 scaffold.registered_scaffolds = {}
 
-local function shuffle(tbl)
-  for i = #tbl, 2, -1 do
-    local j = math.random(i)
-    tbl[i], tbl[j] = tbl[j], tbl[i]
-  end
-  return tbl
-end
-
 function scaffold.register_scaffold(func)
     table.insert(scaffold.registered_scaffolds, func)
 end
@@ -61,7 +53,7 @@ function scaffold.find_any_swap(items)
     for i, v in ipairs(items) do
         local n = minetest.find_item(v)
         if n then
-            minetest.localplayer:set_wield_index(n - 1)
+            minetest.localplayer:set_wield_index(n)
             return true
         end
     end
@@ -157,5 +149,5 @@ scaffold.register_template_scaffold("RandomScaff", "scaffold_rnd", function(belo
     local n = minetest.get_node_or_nil(below)
     if n and scaffold.in_list(n.name,nlist.get('randomscaffold')) then return end
     scaffold.dig(below)
-    scaffold.place_if_needed(shuffle(nlist.get('randomscaffold')), below )
+    scaffold.place_if_needed(table.shuffle(nlist.get('randomscaffold')), below )
 end)

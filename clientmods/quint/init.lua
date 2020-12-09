@@ -34,7 +34,7 @@ end
 local function parse_invaction(lists, taction)
     local idx = format_inv(taction)
     local slot = taction.slot
-    local itemstack = lists[idx][slot + 1]
+    local itemstack = lists[idx][slot]
 
     return idx, slot, itemstack
 end
@@ -43,9 +43,6 @@ end
 local function simulate_invaction(lists, invaction)
     local fidx, fslot, fis = parse_invaction(lists, invaction:to_table().from)
     local tidx, tslot, tis = parse_invaction(lists, invaction:to_table().to)
-
-    tslot = tslot + 1
-    fslot = fslot + 1
 
     local tcount = invaction:to_table().count
     if tcount == 0 then
@@ -128,17 +125,17 @@ local function invaction_dump_slot(q, src, dst, srci, dstbounds)
     local sinv = q.current[format_inv(src)]
     local dinv = q.current[format_inv(dst)]
 
-    if sinv[srci + 1]:is_empty() then
+    if sinv[srci]:is_empty() then
         return true
     end
 
     for i = dstbounds.min, dstbounds.max do
-        if not empty and dinv[i + 1]:is_empty() then
+        if not empty and dinv[i]:is_empty() then
             empty = i
         end
 
-        if not matching and dinv[i + 1]:get_name() == sinv[srci + 1]:get_name() then
-            if dinv[i + 1]:get_free_space() ~= 0 then
+        if not matching and dinv[i]:get_name() == sinv[srci]:get_name() then
+            if dinv[i]:get_free_space() ~= 0 then
                 matching = i
             end
         end
@@ -149,8 +146,8 @@ local function invaction_dump_slot(q, src, dst, srci, dstbounds)
     end
 
     if matching then
-        local free = dinv[matching + 1]:get_free_space()
-        local scount = sinv[srci + 1]:get_count()
+        local free = dinv[matching]:get_free_space()
+        local scount = sinv[srci]:get_count()
         local count = math.min(free, scount)
 
         local act = InventoryAction("move")
@@ -188,8 +185,8 @@ local function rebind(lists, inv, bounds)
         bounds.max = #invlist
     end
 
-    bounds.min = math.max(bounds.min, 0)
-    bounds.max = math.min(bounds.max, #invlist - 1)
+    bounds.min = math.max(bounds.min, 1)
+    bounds.max = math.min(bounds.max, #invlist)
 
     return bounds
 end

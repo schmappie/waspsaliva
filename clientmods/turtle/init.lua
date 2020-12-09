@@ -87,7 +87,7 @@ function turtle.get_best_tool_index(x, y, z)
 
     local nodecaps = minetest.get_node_def(node.name).groups
 
-    local idx = minetest.localplayer:get_wield_index() + 1
+    local idx = minetest.localplayer:get_wield_index()
     local best = math.huge
 
     for i, v in ipairs(minetest.get_inventory("current_player").main) do
@@ -100,7 +100,7 @@ function turtle.get_best_tool_index(x, y, z)
         end
     end
 
-    return idx - 1
+    return idx
 end
 
 -- switch to the fastest tool to mine x, y, z
