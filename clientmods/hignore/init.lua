@@ -78,6 +78,10 @@ local function log(message)
 end
 
 local function display(message)
+    if minetest.settings:get_bool("hignore_strip_colors") then
+        message = minetest.strip_colors(message)
+    end
+
     local dm = message:match(".*rom (.*): .*")
     local pub = message:match("<(.*)>.*")
     local is_dm = false
@@ -125,6 +129,11 @@ local function display(message)
             minetest.colorize(
                 minetest.settings:get("hignore_highlight_all_color"),
                 message))
+        return true
+    end
+
+    if minetest.settings:get_bool("hignore_strip_colors") then
+        minetest.display_chat_message(message)
         return true
     end
 end
