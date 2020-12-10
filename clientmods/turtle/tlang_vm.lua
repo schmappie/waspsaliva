@@ -106,7 +106,7 @@ function tlang.call(state, target)
         target.pos = #state.code_stack
     end
 
-    state.locals[#state.locals + 1] = {pc = target}
+    state.locals[#state.locals + 1] = {vars = {}, pc = target}
 end
 
 function tlang.call_tos(state)
@@ -151,7 +151,7 @@ local function find_var_pos(state, name)
 
     for i = 1, slen do
         local v = state.locals[slen + 1 - i]
-        if in_keys("v" .. name, v) then
+        if in_keys(name, v.vars) then
             return slen + 1 - i
         end
     end
@@ -160,24 +160,82 @@ end
 function tlang.near_access(state, name)
     local n = find_var_pos(state, name)
     if n then
-        return state.locals[n]["v" .. name]
+        return state.locals[n].vars[name]
     end
 end
 
+function tlang.map_access_assign(state, index, start, assign)
+    local container
+    local curtab
+
+    if start then
+        container = start
+    elseif index[1] == "" and #index > 1 then
+        curtab = state.stack[#state.stack].value
+    else
+        local pos = find_var_pos(state, index[1])
+        -- assignments can go at the current scope
+        if assign then
+            pos = pos or #state.locals
+        end
+
+        container = state.locals[pos].vars
+    end
+
+    if not container and not curtab then
+        return
+    end
+
+    if #index == 1 then
+        if assign then
+            container[index[1]] = assign
+            return
+        else
+            return container[index[1]]
+        end
+    end
+
+    curtab = curtab or container[index[1]].value
+
+    for idx = 2, #index - 1 do
+        curtab = curtab[index[idx]]
+
+        if not curtab then
+            return nil
+        end
+
+        curtab = curtab.value
+    end
+
+    if assign then
+        curtab[index[#index]] = assign
+    else
+        return curtab[index[#index]]
+    end
+end
+
+function tlang.near_access_indexed(state, index)
+    return tlang.map_access_assign(state, index)
+end
+
+function tlang.near_assign_indexed(state, index, value)
+    tlang.map_access_assign(state, index, nil, value)
+end
+
 function tlang.global_assign(state, name, value)
-    state.locals[0]["v" .. name] = value
+    state.locals[0].vars[name] = value
 end
 
 function tlang.local_assign(state, name, value)
-    state.locals[#state.locals]["v" .. name] = value
+    state.locals[#state.locals].vars[name] = value
 end
 
 function tlang.near_assign(state, name, value)
     local n = find_var_pos(state, name)
     if n then
-        state.locals[n]["v" .. name] = value
+        state.locals[n].vars[name] = value
     else
-        state.locals[#state.locals]["v" .. name] = value
+        state.locals[#state.locals].vars[name] = value
     end
 end
 
@@ -190,7 +248,7 @@ local function accesspc(state, pc)
     if pc.sg == 0 then -- stack
         code = state.code_stack[pc.pos]
     elseif pc.sg == 1 then -- global
-        code = tlang.near_access(state, pc.pos)
+        code = tlang.near_access_indexed(state, pc.pos)
     end
 
     if code then
@@ -315,7 +373,7 @@ tlang.builtins["="] = function(state)
     local name = statepop_type(state, "quote")
     local value = tlang.pop_raw(state)
 
-    tlang.near_assign(state, name.value, value)
+    tlang.near_assign_indexed(state, name.value, value)
 end
 
 function tlang.unary(func)
@@ -325,7 +383,7 @@ function tlang.unary(func)
             statepush_num(state, func(tos.value))
         elseif tos.type == "quote" then
             local n = tlang.near_access(state, tos.value)
-            tlang.near_assign(state, tos.value, {type = "number", value = func(n.value)})
+            tlang.near_assign_indexed(state, tos.value, {type = "number", value = func(n.value)})
         end
     end
 end
@@ -657,13 +715,18 @@ function tlang.step(state)
     if in_list(cur.type, literals) then
         state.stack[#state.stack + 1] = cur
     elseif cur.type == "identifier" or cur.type == "symbol" then
-        if in_keys(cur.value, state.builtins) then
-            local f = state.builtins[cur.value]
+        local strname = cur.value
+        if type(cur.value) == "table" then
+            strname = cur.value[1]
+        end
+
+        if in_keys(strname, state.builtins) then
+            local f = state.builtins[strname]
             f(state)
         else
-            local var = tlang.near_access(state, cur.value)
+            local var = tlang.near_access_indexed(state, cur.value)
             if var == nil then
-                return "Undefined identifier: " .. cur.value
+                return "Undefined identifier: " .. table.concat(cur.value, ".")
             elseif var.type == "code" then
                 tlang.call_var(state, cur.value)
             else

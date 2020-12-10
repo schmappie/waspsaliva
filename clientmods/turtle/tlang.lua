@@ -68,10 +68,13 @@ function tlang.get_state(code)
 
     return {
         locals = {{
-            pc = {sg = 1, pos = "__ast__", elem = 1},
-            v__src__ = tlang.value_to_tlang(code),
-            v__lex__ = tlang.value_to_tlang(lexed),
-            v__ast__ = {type = "code", value = parsed}}},
+            pc = {sg = 1, pos = {"__ast__"}, elem = 1},
+            vars = {
+                __src__ = tlang.value_to_tlang(code),
+                __lex__ = tlang.value_to_tlang(lexed),
+                __ast__ = {type = "code", value = parsed}
+            }
+        }},
         stack = {},
         code_stack = {},
         builtins = tlang.builtins
@@ -87,6 +90,45 @@ function tlang.pretty_pc(pc)
     return tostring(pc.sg) .. ";" .. tostring(pc.pos) .. ";" .. tostring(pc.elem)
 end
 
+function tlang.format_table(t, depth, maxdepth)
+    depth = depth or 0
+    maxdepth = maxdepth or -1
+
+    if depth == maxdepth then
+        return "{...}"
+    end
+
+    local out = {}
+    out[1] = "{\n"
+
+    for k, v in pairs(t) do
+        local idx = k
+        if type(k) == "string" then
+            idx = '"' .. k .. '"'
+        elseif type(k) == "table" then
+            idx = "{...}"
+        end
+
+        out[#out + 1] = string.rep("\t", depth + 1) .. "[" .. idx .. "] = "
+
+        if type(v) == "table" then
+            out[#out + 1] = tlang.format_table(v, depth + 1, maxdepth)
+        elseif type(v) == "string" then
+            out[#out + 1] = '"' .. v .. '"'
+        else
+            out[#out + 1] = tostring(v)
+        end
+
+        out[#out + 1] = ",\n"
+    end
+
+    out[#out + 1] = string.rep("\t", depth) .. "}"
+    return table.concat(out)
+end
+
+function tlang.print_table(t, maxdepth)
+    print(tlang.format_table(t, nil, maxdepth))
+end
 
 local function test()
     local complex = [[{dup *} `square =
@@ -185,7 +227,25 @@ local function test()
 
     local paren_test = "('works' print) 'out' print"
 
-    tlang.exec(paren_test)
+    local mapdot_test = [[
+        [1 a:5 b:[a:2 b:3] ] `a =
+        4 `a.a =
+        a.a print
+        a.b.b print
+    ]]
+
+    local stackdot_test = [[
+        [a:1 b:2]
+        .b print
+        6 `.a =
+        .a print
+    ]]
+
+    local test = stackdot_test
+
+    --tlang.print_table(tlang.lex(test))
+    --tlang.print_table(tlang.parse(tlang.lex(test)))
+    tlang.exec(test)
 end
 
 if minetest == nil then
