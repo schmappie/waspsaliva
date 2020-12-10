@@ -13,6 +13,8 @@ symbol
 
 local tlang = {}
 
+local internal = {}
+
 local function sublist(list, istart, iend, inclusive)
     local o = {}
     local oi = 1
@@ -34,8 +36,6 @@ local function sublist(list, istart, iend, inclusive)
     return o
 end
 
-
---tlang.parse = function(lexed) end
 
 local function parse_peek(state)
     return state.lexed[state.position]
@@ -69,15 +69,19 @@ local function parse_map(state)
             local key = n.value
             local mr = parse_peek(state)
 
+            if type(key) == "table" then
+                key = key[1]
+            end
+
             if mr.type == "map_relation" then
                 parse_next(state)
-                local nval = tlang.parse({parse_next(state)})
+                local nval = internal.parse_step(state)
 
                 if nval == nil then
                     return nil -- ERROR
                 end
 
-                map[key] = nval[1]
+                map[key] = nval
                 skip = true
             end
         end
@@ -126,7 +130,7 @@ local function parse_code(state, open, close)
     }
 end
 
-local function parse_step(state)
+function internal.parse_step(state)
     local n = parse_peek(state)
 
     if n == nil then
@@ -171,7 +175,7 @@ function tlang.parse(lexed)
     local treei = 1
 
     while true do
-        local n = parse_step(state)
+        local n = internal.parse_step(state)
 
         if n == nil then
             if state.position <= #state.lexed then

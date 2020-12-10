@@ -131,16 +131,12 @@ local function lex_identifier_raw(state, top)
         end
     end
 
-    return table.concat(identifier)
+    return {table.concat(identifier)}
 end
 
 local function lex_identifier(state)
     local id = lex_identifier_raw(state, true)
-    if type(id) == "string" then
-        return {type = "literal", subtype = "identifier", value = id}
-    elseif type(id) == "table" then
-        return {type = "literal", subtype = "mapid", value = id}
-    end
+    return {type = "literal", subtype = "identifier", value = id}
 end
 
 -- `identifier
