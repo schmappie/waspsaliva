@@ -66,11 +66,11 @@ void set_default_settings(Settings *settings)
 
 	// Cheat Menu
 	settings->setDefault("cheat_menu_font", "FM_Standard");
-	settings->setDefault("cheat_menu_bg_color", "(45, 45, 68)");
-	settings->setDefault("cheat_menu_bg_color_alpha", "173");
-	settings->setDefault("cheat_menu_active_bg_color", "(0, 0, 0)");
+	settings->setDefault("cheat_menu_bg_color", "(0, 0, 0)");
+	settings->setDefault("cheat_menu_bg_color_alpha", "128");
+	settings->setDefault("cheat_menu_active_bg_color", "(0, 128, 0)");
 	settings->setDefault("cheat_menu_active_bg_color_alpha", "210");
-	settings->setDefault("cheat_menu_font_color", "(255, 255, 255)");
+	settings->setDefault("cheat_menu_font_color", "(0, 255, 0)");
 	settings->setDefault("cheat_menu_font_color_alpha", "195");
 	settings->setDefault("cheat_menu_selected_font_color", "(255, 255, 255)");
 	settings->setDefault("cheat_menu_selected_font_color_alpha", "235");
@@ -144,9 +144,9 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("enable_player_tracers", "false");
 	settings->setDefault("enable_node_esp", "false");
 	settings->setDefault("enable_node_tracers", "false");
-	settings->setDefault("entity_esp_color", "(255, 255, 255)");
-	settings->setDefault("player_esp_color", "(0, 255, 0)");	
-	settings->setDefault("noweather", "false");	
+	settings->setDefault("entity_esp_color", "(50, 50, 50)");
+	settings->setDefault("player_esp_color", "(0, 255, 0)");
+	settings->setDefault("noweather", "false");
 
 	// Keymap
 	settings->setDefault("remote_port", "30000");
@@ -380,14 +380,14 @@ void set_default_settings(Settings *settings)
 
 #if USE_FREETYPE
 	settings->setDefault("freetype", "true");
-	settings->setDefault("font_path", porting::getDataPath("fonts" DIR_DELIM "Arimo-Regular.ttf"));
+	settings->setDefault("font_path", porting::getDataPath("fonts" DIR_DELIM "Ubuntu-B.ttf"));
 	settings->setDefault("font_path_italic", porting::getDataPath("fonts" DIR_DELIM "Arimo-Italic.ttf"));
 	settings->setDefault("font_path_bold", porting::getDataPath("fonts" DIR_DELIM "Arimo-Bold.ttf"));
 	settings->setDefault("font_path_bold_italic", porting::getDataPath("fonts" DIR_DELIM "Arimo-BoldItalic.ttf"));
 	settings->setDefault("font_bold", "false");
 	settings->setDefault("font_italic", "false");
 	settings->setDefault("font_shadow", "1");
-	settings->setDefault("font_shadow_alpha", "127");
+	settings->setDefault("font_shadow_alpha", "200");
 	settings->setDefault("mono_font_path", porting::getDataPath("fonts" DIR_DELIM "Cousine-Regular.ttf"));
 	settings->setDefault("mono_font_path_italic", porting::getDataPath("fonts" DIR_DELIM "Cousine-Italic.ttf"));
 	settings->setDefault("mono_font_path_bold", porting::getDataPath("fonts" DIR_DELIM "Cousine-Bold.ttf"));
