@@ -228,8 +228,10 @@ local function test()
     local paren_test = "('works' print) 'out' print"
 
     local mapdot_test = [[
-        [1 a:5 b:[a:2 b:3] ] `a =
+        [1 a:5 b:[a:2 b:3] 3] `a =
         4 `a.a =
+        a.1 print
+        a.2 print
         a.a print
         a.b.b print
     ]]
@@ -241,7 +243,7 @@ local function test()
         .a print
     ]]
 
-    local test = stackdot_test
+    local test = mapdot_test
 
     --tlang.print_table(tlang.lex(test))
     --tlang.print_table(tlang.parse(tlang.lex(test)))

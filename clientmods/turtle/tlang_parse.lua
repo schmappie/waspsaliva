@@ -47,6 +47,18 @@ local function parse_next(state)
     return n
 end
 
+local function parse_identifier(state)
+    local lexid = parse_next(state).value
+
+    for i, v in ipairs(lexid) do
+        if v:match("^[0-9]+$") then
+            lexid[i] = tonumber(v)
+        end
+    end
+
+    return {type = "identifier", value = lexid}
+end
+
 local function parse_map(state)
     local map = {}
     local mapi = 1
@@ -155,8 +167,7 @@ function internal.parse_step(state)
             parse_next(state)
             return {type = "string", value = n.value}
         elseif n.subtype == "identifier" then
-            parse_next(state)
-            return {type = "identifier", value = n.value}
+            return parse_identifier(state)
         elseif n.subtype == "quote" then
             parse_next(state)
             return {type = "quote", value = n.value}
