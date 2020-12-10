@@ -4,7 +4,7 @@ local used_sneak = true
 local totem_move_action = InventoryAction("move")
 totem_move_action:to("current_player", "main", 9)
 
-minetest.register_list_command("friend", "Configure Friend List (friends dont get attacked by Killaura or Forcefield)", "friendlist")
+--minetest.register_list_command("friend", "Configure Friend List (friends dont get attacked by Killaura or Forcefield)", "friendlist")
 
 minetest.register_globalstep(function(dtime)
 	local player = minetest.localplayer
@@ -13,21 +13,12 @@ minetest.register_globalstep(function(dtime)
 	local pointed = minetest.get_pointed_thing()
 	local item = player:get_wielded_item():get_name()
 	if minetest.settings:get_bool("killaura") or minetest.settings:get_bool("forcefield") and control.dig then
-		local friendlist = minetest.settings:get("friendlist"):split(",")
 		for _, obj in ipairs(minetest.get_objects_inside_radius(player:get_pos(), 5)) do
 			local do_attack = true
-			if obj:is_local_player() then
-				do_attack = false
-			else
-				for _, friend in ipairs(friendlist) do
-					if obj:get_name() == friend or obj:get_nametag() == friend then
-						do_attack = false
-						break
-					end
-				end
-			end
+			if obj:is_local_player() then do_attack = false end
+			if(obj:is_player() and not fren.is_enemy(obj:get_name())) then do_attack=false end
 			if do_attack then
-				obj:punch()
+				 obj:punch()
 			end
 		end
 	elseif minetest.settings:get_bool("crystal_pvp") then
@@ -55,14 +46,14 @@ minetest.register_globalstep(function(dtime)
 					minetest.switch_to_item("mcl_end:crystal")
 					minetest.place_node(pos)
 					placed_crystal = true
-				end	
+				end
 			end
 			used_sneak = true
 		else
 			used_sneak = false
 		end
 	end
-	
+
 	if minetest.settings:get_bool("autototem") then
 		local totem_stack = minetest.get_inventory("current_player").main[9]
 		if totem_stack and totem_stack:get_name() ~= "mobs_mc:totem" then
