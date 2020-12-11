@@ -143,7 +143,7 @@ int LuaInventoryAction::l_to_table(lua_State *L)
 	lua_setfield(L, -2, "location");
 	lua_pushstring(L, act->from_list.c_str());
 	lua_setfield(L, -2, "inventory");
-	lua_pushinteger(L, act->from_i);
+	lua_pushinteger(L, act->from_i + 1);
 	lua_setfield(L, -2, "slot");
 	lua_setfield(L, -2, "from");
 
@@ -154,7 +154,7 @@ int LuaInventoryAction::l_to_table(lua_State *L)
 	lua_setfield(L, -2, "location");
 	lua_pushstring(L, act->to_list.c_str());
 	lua_setfield(L, -2, "inventory");
-	lua_pushinteger(L, act->to_i);
+	lua_pushinteger(L, act->to_i + 1);
 	lua_setfield(L, -2, "slot");
 	lua_setfield(L, -2, "to");
 
