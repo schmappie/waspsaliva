@@ -127,17 +127,13 @@ minetest.register_globalstep(function(dtime)
 	local item = player:get_wielded_item():get_name()
 	if minetest.settings:get_bool("killaura") or minetest.settings:get_bool("forcefield") and control.dig then
 		for _, obj in ipairs(minetest.get_objects_inside_radius(player:get_pos(), 5)) do
-			local do_attack = true
+			local do_attack = false
 			local txt=obj:get_item_textures()
-			if obj:is_local_player() then do_attack = false end
-			if txt:find('mcl_boat') then do_attack=false end
-			if txt:find('mcl_minecarts') then do_attack=false end
-			if(obj:is_player() and not fren.is_enemy(obj:get_name())) then do_attack=false end
-			for k,v in pairs(mobs_friends) do if txt:find(v) then do_attack=false end end
-			for k,v in pairs(dontattack) do	if txt:find(v) then do_attack=false end	end
+			if(obj:is_player() and fren.is_enemy(obj:get_name())) then do_attack=true end
+			for k,v in pairs(mobs_bad) do if txt:find(v) then do_attack=true end end
 			if do_attack then
 				local owx=core.localplayer:get_wield_index()
-				core.localplayer:set_wield_index(2)
+				minetest.switch_to_item('mcl_tools:sword_diamond')
 				obj:punch()
 				core.localplayer:set_wield_index(owx)
 			end
