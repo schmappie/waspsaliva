@@ -1,6 +1,6 @@
 -- CC0/Unlicense Emilia 2020
 
-local tlang = {}
+local tlang = ...
 
 local function in_list(value, list)
     for k, v in ipairs(list) do
@@ -343,5 +343,3 @@ function tlang.lex(code)
         end
     end
 end
-
-return tlang

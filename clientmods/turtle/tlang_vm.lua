@@ -1,6 +1,6 @@
 -- CC0/Unlicense Emilia 2020
 
-local tlang = {}
+local tlang = ...
 
 local function in_list(value, list)
     for k, v in ipairs(list) do
@@ -114,6 +114,10 @@ function tlang.call_tos(state)
 end
 
 function tlang.call_var(state, name)
+    if type(name) ~= "table" then
+        name = {name}
+    end
+
     tlang.call(state, {sg = 1, pos = name, elem = 1})
 end
 
@@ -157,13 +161,6 @@ local function find_var_pos(state, name)
     end
 end
 
-function tlang.near_access(state, name)
-    local n = find_var_pos(state, name)
-    if n then
-        return state.locals[n].vars[name]
-    end
-end
-
 function tlang.map_access_assign(state, index, start, assign)
     local container
     local curtab
@@ -177,6 +174,8 @@ function tlang.map_access_assign(state, index, start, assign)
         -- assignments can go at the current scope
         if assign then
             pos = pos or #state.locals
+        elseif not pos then
+            return nil -- ERROR, variable undefined
         end
 
         container = state.locals[pos].vars
@@ -214,29 +213,28 @@ function tlang.map_access_assign(state, index, start, assign)
     end
 end
 
-function tlang.near_access_indexed(state, index)
+function tlang.near_access(state, index)
     return tlang.map_access_assign(state, index)
 end
 
-function tlang.near_assign_indexed(state, index, value)
+function tlang.near_assign(state, index, value)
     tlang.map_access_assign(state, index, nil, value)
 end
 
-function tlang.global_assign(state, name, value)
-    state.locals[0].vars[name] = value
+function tlang.global_access(state, index)
+    tlang.map_access_assign(state, index, state.locals[1].vars)
 end
 
-function tlang.local_assign(state, name, value)
-    state.locals[#state.locals].vars[name] = value
+function tlang.global_assign(state, index, value)
+    tlang.map_access_assign(state, index, state.locals[1].vars, value)
 end
 
-function tlang.near_assign(state, name, value)
-    local n = find_var_pos(state, name)
-    if n then
-        state.locals[n].vars[name] = value
-    else
-        state.locals[#state.locals].vars[name] = value
-    end
+function tlang.local_access(state, index)
+    tlang.map_access_assign(state, index, state.locals[#state.locals].vars)
+end
+
+function tlang.local_assign(state, index, value)
+    tlang.map_access_assign(state, index, state.locals[#state.locals].vars, value)
 end
 
 function tlang.get_pc(state)
@@ -248,7 +246,7 @@ local function accesspc(state, pc)
     if pc.sg == 0 then -- stack
         code = state.code_stack[pc.pos]
     elseif pc.sg == 1 then -- global
-        code = tlang.near_access_indexed(state, pc.pos)
+        code = tlang.near_access(state, pc.pos)
     end
 
     if code then
@@ -373,7 +371,7 @@ tlang.builtins["="] = function(state)
     local name = statepop_type(state, "quote")
     local value = tlang.pop_raw(state)
 
-    tlang.near_assign_indexed(state, name.value, value)
+    tlang.near_assign(state, name.value, value)
 end
 
 function tlang.unary(func)
@@ -383,7 +381,7 @@ function tlang.unary(func)
             statepush_num(state, func(tos.value))
         elseif tos.type == "quote" then
             local n = tlang.near_access(state, tos.value)
-            tlang.near_assign_indexed(state, tos.value, {type = "number", value = func(n.value)})
+            tlang.near_assign(state, tos.value, {type = "number", value = func(n.value)})
         end
     end
 end
@@ -706,8 +704,12 @@ function tlang.step(state)
     local cur = getnext(state)
 
     if cur == nil then
-        state.finished = true
-        return false
+        if state.locals[1].nextpop then
+            state.finished = true
+            return false
+        else
+            return "Error: code exited early"
+        end
     else
         state.finished = false
     end
@@ -724,7 +726,7 @@ function tlang.step(state)
             local f = state.builtins[strname]
             f(state)
         else
-            local var = tlang.near_access_indexed(state, cur.value)
+            local var = tlang.near_access(state, cur.value)
             if var == nil then
                 return "Undefined identifier: " .. table.concat(cur.value, ".")
             elseif var.type == "code" then
@@ -737,5 +739,3 @@ function tlang.step(state)
 
     return true
 end
-
-return tlang

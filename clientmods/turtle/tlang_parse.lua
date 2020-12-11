@@ -11,7 +11,7 @@ number
 symbol
 --]]
 
-local tlang = {}
+local tlang = ...
 
 local internal = {}
 
@@ -206,5 +206,3 @@ function tlang.parse(lexed)
         end
     end
 end
-
-return tlang
