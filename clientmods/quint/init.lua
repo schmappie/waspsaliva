@@ -58,21 +58,23 @@ local function simulate_invaction(lists, invaction)
     if tis:is_empty() then
         lists[tidx][tslot] = fis
         lists[fidx][fslot] = ItemStack()
+        return
     end
 
     -- swap
     if ((fis:get_name() ~= tis:get_name())
-        or (fis:get_name() == tis:get_name()
-            and fis:get_count() > tis:get_free_space())
-        or (tcount > tis:get_free_space())) then
+          or (fis:get_name() == tis:get_name()
+            and tcount > tis:get_free_space())
+          or (tcount > tis:get_free_space())) then
         local t = fis
         lists[fidx][fslot] = tis
         lists[tidx][tslot] = t
+        return
     end
 
     -- fill
-    if fis:get_name() == tis:get_name() and fis:get_count() <= tis:get_free_space() then
-        count = math.min(fis:get_count(), tis:get_free_space(), tcount)
+    if fis:get_name() == tis:get_name() and tcount <= tis:get_free_space() then
+        local count = math.min(fis:get_count(), tis:get_free_space(), tcount)
 
         lists[tidx][tslot]:set_count(tis:get_count() + count)
 
@@ -81,6 +83,8 @@ local function simulate_invaction(lists, invaction)
         else
             lists[fidx][fslot]:set_count(fis:get_count() - count)
         end
+
+        return
     end
 end
 
