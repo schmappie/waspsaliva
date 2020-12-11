@@ -59,8 +59,6 @@ end)
 local etime = 0
 
 minetest.register_globalstep(function(dtime)
-	if not ( minetest.settings:get_bool("autotnt") or minetest.settings:get_bool("scaffold") or minetest.settings:get_bool("mscaffold") or minetest.settings:get_bool("highway_z") or minetest.settings:get_bool("block_water") ) then return end
-	--if true then return end
 	etime = etime + dtime
 	if etime < 1 then return end
 	local player = minetest.localplayer
@@ -115,7 +113,13 @@ minetest.register_globalstep(function(dtime)
 		elseif minetest.settings:get_bool("block_water") then
 			local positions = minetest.find_nodes_near(pos, 5, {"mcl_core:water_source", "mcl_core:water_flowing"}, true)
 			for i, p in pairs(positions) do
-				if i > nodes_per_tick then break end
+				if i > nodes_per_tick then return end
+				minetest.place_node(p)
+			end
+		elseif minetest.settings:get_bool("block_lava") then
+			local positions = minetest.find_nodes_near(pos, 5, {"mcl_core:lava_source", "mcl_core:lava_flowing"}, true)
+			for i, p in pairs(positions) do
+				if i > nodes_per_tick then return end
 				minetest.place_node(p)
 			end
 		elseif minetest.settings:get_bool("autotnt") then
@@ -149,6 +153,7 @@ minetest.register_cheat("mScaffold", "World", "mscaffold")
 minetest.register_cheat("Scaffold", "World", "scaffold")
 minetest.register_cheat("HighwayZ", "World", "highway_z")
 minetest.register_cheat("BlockWater", "World", "block_water")
-minetest.register_cheat("AutoTNT", "World", "autotnt")
+minetest.register_cheat("BlockLava", "World", "block_lava")
+minetest.register_cheat("PlaceOnTop", "World", "autotnt")
 minetest.register_cheat("Replace", "World", "replace")
 minetest.register_cheat("Nuke", "World", "nuke")
