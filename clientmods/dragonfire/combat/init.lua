@@ -53,7 +53,6 @@ local mobs_friends = {
 'mobs_mc_horse_markings_whitefield.png',
 'mobs_mc_horse_markings_white.png',
 'mobs_mc_horse_white.png',
-'mobs_mc_horse_zombie.png',
 'mobs_mc_snowman',
 'mobs_mc_chicken.png',
 'mobs_mc_cow.png'
@@ -114,11 +113,12 @@ local mobs_bad = {
 'mobs_mc_zombie_smith.png',
 'mobs_mc_zombie_villager.png',
 'mobs_mc_zombie_pigman.png',
-'mobs_mc_zombie.png'
+'mobs_mc_zombie.png',
+'mobs_mc_horse_zombie.png'
 }
 
 --minetest.register_list_command("friend", "Configure Friend List (friends dont get attacked by Killaura or Forcefield)", "friendlist")
-local dontattack = { 'mcl_boats','mcl_minecarts' }
+
 minetest.register_globalstep(function(dtime)
 	local player = minetest.localplayer
 	if not player then return end
@@ -126,7 +126,7 @@ minetest.register_globalstep(function(dtime)
 	local pointed = minetest.get_pointed_thing()
 	local item = player:get_wielded_item():get_name()
 	if minetest.settings:get_bool("killaura") or minetest.settings:get_bool("forcefield") and control.dig then
-		for _, obj in ipairs(minetest.get_objects_inside_radius(player:get_pos(), 5)) do
+		for _, obj in pairs(minetest.get_objects_inside_radius(player:get_pos(), 5)) do
 			local do_attack = false
 			local txt=obj:get_item_textures()
 			if(obj:is_player() and fren.is_enemy(obj:get_name())) then do_attack=true end
