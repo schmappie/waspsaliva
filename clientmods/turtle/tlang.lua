@@ -22,7 +22,7 @@ local function merge_tables(l1, l2)
 end
 
 local function load_api_file(file)
-    tlang = merge_tables(tlang, dofile(prefix .. file))
+    loadfile(prefix .. file)(tlang)
 end
 
 load_api_file("tlang_lex.lua")
@@ -87,7 +87,7 @@ function tlang.exec(code)
 end
 
 function tlang.pretty_pc(pc)
-    return tostring(pc.sg) .. ";" .. tostring(pc.pos) .. ";" .. tostring(pc.elem)
+    return tostring(pc.sg) .. ";" .. table.concat(pc.pos, ".") .. ";" .. tostring(pc.elem)
 end
 
 function tlang.format_table(t, depth, maxdepth)
@@ -243,7 +243,13 @@ local function test()
         .a print
     ]]
 
-    local test = mapdot_test
+    local funcfunc_test = [[
+    {dup *} `square =
+    {dup square *} `cube =
+    5 cube print
+    ]]
+
+    local test = funcfunc_test
 
     --tlang.print_table(tlang.lex(test))
     --tlang.print_table(tlang.parse(tlang.lex(test)))

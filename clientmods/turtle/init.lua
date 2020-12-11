@@ -325,7 +325,7 @@ end
 
 local quarry_tlang = [[
 # turtle.builtins: mine advance v3add descend rotate relativize swapg rectify
-# tlang operators: // .elem
+# tlang operators: //
 
 ################################
 # Mine ahead length nodes (including head and feet)
