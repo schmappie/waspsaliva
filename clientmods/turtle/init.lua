@@ -401,7 +401,7 @@ function turtle.get_symbolic(name)
 
     for i, v in ipairs(turtle.states) do
         if i == name or v.name == name then
-            dead[#dead + 1] = i
+            table.insert(dead, 1, i)
         end
     end
 
@@ -442,7 +442,7 @@ function turtle.run_states(dtime)
                 if type(ret) == "string" then
                     minetest.display_chat_message("Turtle/tlang ERROR in " .. v.name .. ": " .. ret)
                 end
-                dead[#dead + 1] = i
+                table.insert(dead, 1, i)
             end
         end
 
