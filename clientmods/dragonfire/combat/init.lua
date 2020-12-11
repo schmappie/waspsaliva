@@ -4,8 +4,121 @@ local used_sneak = true
 local totem_move_action = InventoryAction("move")
 totem_move_action:to("current_player", "main", 9)
 
---minetest.register_list_command("friend", "Configure Friend List (friends dont get attacked by Killaura or Forcefield)", "friendlist")
+local mobs_friends = {
+'mobs_mc_bat.png',
+'mobs_mc_cat_black.png',
+'mobs_mc_cat_ocelot.png',
+'mobs_mc_cat_red.png',
+'mobs_mc_cat_siamese.png',
+'mobs_mc_diamond_horse_armor.png',
+'mobs_mc_donkey.png',
+'mobs_mc_wolf_collar.png',
+'mobs_mc_wolf.png',
+'mobs_mc_wolf_tame.png',
+'mobs_mc_villager_butcher.png',
+'mobs_mc_villager_farmer.png',
+'mobs_mc_villager_librarian.png',
+'mobs_mc_villager.png',
+'mobs_mc_villager_priest.png',
+'mobs_mc_villager_smith.png',
+'mobs_mc_iron_golem.png',
+'mobs_mc_iron_horse_armor.png',
+'mobs_mc_magmacube.png',
+'mobs_mc_mooshroom.png',
+'mobs_mc_mule.png',
+'mobs_mc_pig.png',
+'mobs_mc_pig_saddle.png',
+'mobs_mc_polarbear.png',
+'mobs_mc_rabbit_black.png',
+'mobs_mc_rabbit_brown.png',
+'mobs_mc_rabbit_caerbannog.png',
+'mobs_mc_rabbit_gold.png',
+'mobs_mc_rabbit_salt.png',
+'mobs_mc_rabbit_toast.png',
+'mobs_mc_rabbit_white.png',
+'mobs_mc_rabbit_white_splotched.png',
+'mobs_mc_sheep_fur.png',
+'mobs_mc_sheep.png',
+'mobs_mc_horse_armor_diamond.png',
+'mobs_mc_horse_armor_gold.png',
+'mobs_mc_horse_armor_iron.png',
+'mobs_mc_horse_black.png',
+'mobs_mc_horse_brown.png',
+'mobs_mc_horse_chestnut.png',
+'mobs_mc_horse_darkbrown.png',
+'mobs_mc_horse_gray.png',
+'mobs_mc_horse_creamy.png',
+'mobs_mc_horse_markings_blackdots.png',
+'mobs_mc_horse_markings_whitedots.png',
+'mobs_mc_horse_markings_whitefield.png',
+'mobs_mc_horse_markings_white.png',
+'mobs_mc_horse_white.png',
+'mobs_mc_horse_zombie.png',
+'mobs_mc_snowman',
+'mobs_mc_chicken.png',
+'mobs_mc_cow.png'
+}
 
+local mobs_bad = {
+'mcl_totems_totem.png',
+'mobs_mc_blaze.png',
+'mobs_mc_cave_spider.png',
+'mobs_mc_creeper.png',
+'mobs_mc_dragon.png',
+'mobs_mc_endergolem.png',
+'mobs_mc_enderman_eyes.png',
+'mobs_mc_enderman.png',
+'mobs_mc_endermite.png',
+'mobs_mc_ghast.png',
+'mobs_mc_gold_horse_armor.png',
+'mobs_mc_guardian_elder.png',
+'mobs_mc_guardian.png',
+'mobs_mc_husk.png',
+'mobs_mc_shulker_black.png',
+'mobs_mc_shulker_blue.png',
+'mobs_mc_shulker_brown.png',
+'mobs_mc_shulker_cyan.png',
+'mobs_mc_shulker_gray.png',
+'mobs_mc_shulker_green.png',
+'mobs_mc_shulker_light_blue.png',
+'mobs_mc_shulker_lime.png',
+'mobs_mc_shulker_magenta.png',
+'mobs_mc_shulker_orange.png',
+'mobs_mc_shulker_pink.png',
+'mobs_mc_shulker_purple.png',
+'mobs_mc_shulker_red.png',
+'mobs_mc_shulker_silver.png',
+'mobs_mc_shulker_white.png',
+'mobs_mc_shulker_yellow.png',
+'mobs_mc_silverfish.png',
+'mobs_mc_skeleton.png',
+'mobs_mc_slime.png',
+'mobs_mc_spider_eyes.png',
+'mobs_mc_spider.png',
+'mobs_mc_squid.png',
+'mobs_mc_stray.png',
+'mobs_mc_stray_overlay.png',
+'mobs_mc_vex.png',
+'mobs_mc_vex_charging.png',
+'mobs_mc_vindicator.png',
+'mobs_mc_evoker.png',
+'mobs_mc_illusionist.png',
+'mobs_mc_witch.png',
+'mobs_mc_wither.png',
+'mobs_mc_wither_skeleton.png',
+'mobs_mc_wolf_angry.png',
+'mobs_mc_zombie_butcher.png',
+'mobs_mc_zombie_farmer.png',
+'mobs_mc_zombie_librarian.png',
+'mobs_mc_zombie_priest.png',
+'mobs_mc_zombie_smith.png',
+'mobs_mc_zombie_villager.png',
+'mobs_mc_zombie_pigman.png',
+'mobs_mc_zombie.png'
+}
+
+--minetest.register_list_command("friend", "Configure Friend List (friends dont get attacked by Killaura or Forcefield)", "friendlist")
+local dontattack = { 'mcl_boats','mcl_minecarts' }
 minetest.register_globalstep(function(dtime)
 	local player = minetest.localplayer
 	if not player then return end
@@ -15,10 +128,18 @@ minetest.register_globalstep(function(dtime)
 	if minetest.settings:get_bool("killaura") or minetest.settings:get_bool("forcefield") and control.dig then
 		for _, obj in ipairs(minetest.get_objects_inside_radius(player:get_pos(), 5)) do
 			local do_attack = true
+			local txt=obj:get_item_textures()
 			if obj:is_local_player() then do_attack = false end
+			if txt:find('mcl_boat') then do_attack=false end
+			if txt:find('mcl_minecarts') then do_attack=false end
 			if(obj:is_player() and not fren.is_enemy(obj:get_name())) then do_attack=false end
+			for k,v in pairs(mobs_friends) do if txt:find(v) then do_attack=false end end
+			for k,v in pairs(dontattack) do	if txt:find(v) then do_attack=false end	end
 			if do_attack then
-				 obj:punch()
+				local owx=core.localplayer:get_wield_index()
+				core.localplayer:set_wield_index(2)
+				obj:punch()
+				core.localplayer:set_wield_index(owx)
 			end
 		end
 	elseif minetest.settings:get_bool("crystal_pvp") then
