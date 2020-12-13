@@ -93,6 +93,7 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("autodig", "false");
 	settings->setDefault("jesus", "false");
 	settings->setDefault("fastplace", "false");
+	settings->setDefault("fastdig", "false");
 	settings->setDefault("autoplace", "false");
 	settings->setDefault("instant_break", "false");
 	settings->setDefault("no_night", "false");
