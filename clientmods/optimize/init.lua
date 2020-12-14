@@ -15,7 +15,7 @@ local function remove_drops(texture)
     end
 end
 
-local epoch = 0
+local epoch = os.clock()
 
 minetest.register_globalstep(function()
     if os.clock() > epoch + 1 then
