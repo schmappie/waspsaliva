@@ -1,4 +1,4 @@
--- CC0/Unlicense Emilia 2020
+-- CC0/Unlicense Emilia & cora 2020
 
 local category = "Scaffold"
 
@@ -99,6 +99,16 @@ function scaffold.place_if_able(pos)
     end
 end
 
+function scaffold.dig(pos)
+    local n = minetest.get_node_or_nil(pos)
+    -- there's a diggable attrib i think
+    if n and n.name ~= "air" then
+        autotool.autotool(pos)
+        return minetest.dig_node(pos)
+    end
+end
+
+
 local mpath = minetest.get_modpath(minetest.get_current_modname())
 dofile(mpath .. "/sapscaffold.lua")
 dofile(mpath .. "/slowscaffold.lua")
@@ -114,21 +124,28 @@ scaffold.register_template_scaffold("HereScaffold", "scaffold_here", function(po
     scaffold.place_if_able(pos)
 end, {x = 0, y = 0, z = 0})
 
+scaffold.register_template_scaffold("WaterScaffold", "scaffold_water", function(pos)
+    if (pos.x % 2 + pos.z % 2) == 0 then
+        scaffold.place_if_needed({
+            "mcl_buckets:bucket_water",
+            "mcl_core:water_source"
+        }, pos)
+    end
+end)
+
 if turtle then
     scaffold.register_template_scaffold("TriScaffold", "scaffold_three_wide", function(pos)
         scaffold.place_if_able(pos)
         scaffold.place_if_able(turtle.dircoord(0, -1, 1))
         scaffold.place_if_able(turtle.dircoord(0, -1, -1))
     end)
-end
-if turtle then
+
     scaffold.register_template_scaffold("headTriScaff", "scaffold_three_wide_head", function(pos)
         scaffold.place_if_able(turtle.dircoord(0, 3, 0))
         scaffold.place_if_able(turtle.dircoord(0, 3, 1))
         scaffold.place_if_able(turtle.dircoord(0, 3, -1))
     end)
-end
-if turtle then
+
     scaffold.register_template_scaffold("QuintScaffold", "scaffold_five_wide", function(pos)
         scaffold.place_if_able(pos)
         scaffold.place_if_able(turtle.dircoord(0, -1, 1))
@@ -137,17 +154,14 @@ if turtle then
         scaffold.place_if_able(turtle.dircoord(0, -1, -2))
     end)
 end
-function scaffold.dig(pos)
-    local n=minetest.get_node_or_nil(pos)
-    if not n or n.name == "air"then return true end
-    autotool.autotool(pos)
-    return minetest.dig_node(pos)
+
+if nlist then
+    scaffold.register_template_scaffold("RandomScaff", "scaffold_rnd", function(below)
+        local n = minetest.get_node_or_nil(below)
+        -- n == nil is ignore
+        if n and not scaffold.in_list(n.name, nlist.get('randomscaffold')) then
+            scaffold.dig(below)
+            scaffold.place_if_needed(table.shuffle(nlist.get('randomscaffold')), below)
+        end
+    end)
 end
-
-
-scaffold.register_template_scaffold("RandomScaff", "scaffold_rnd", function(below)
-    local n = minetest.get_node_or_nil(below)
-    if n and scaffold.in_list(n.name,nlist.get('randomscaffold')) then return end
-    scaffold.dig(below)
-    scaffold.place_if_needed(table.shuffle(nlist.get('randomscaffold')), below )
-end)
