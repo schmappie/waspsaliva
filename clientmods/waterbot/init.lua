@@ -1,6 +1,9 @@
 -- CC0/Unlicense Emilia 2020
 waterbot = {}
 
+-- TODO: FreeRefills tries to pick up too much at once
+--          quint time :]
+
 -- Lua doesnt have enums and tables look gross
 -- should still be a table tho
 local WATER_USABLE = 0  -- water source
@@ -104,3 +107,25 @@ function waterbot.find_renewable_water_near(pos, radius)
     local mint, safe = mogrify_stable(int, offset)
     return safe
 end
+
+
+local epoch = os.clock()
+
+minetest.register_globalstep(function()
+    if minetest.settings:get_bool("waterbot_refill") and os.clock() >= epoch + 2 then
+        local pos = minetest.localplayer:get_pos()
+        local sources = waterbot.find_renewable_water_near(pos, 6)
+
+        for i, v in ipairs(sources) do
+            if minetest.switch_to_item("mcl_buckets:bucket_empty") then
+                minetest.interact("place", v)
+            else
+                break
+            end
+        end
+
+        epoch = os.clock()
+    end
+end)
+
+minetest.register_cheat("FreeRefills", "Inventory", "waterbot_refill")
