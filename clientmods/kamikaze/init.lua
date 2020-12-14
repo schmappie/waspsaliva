@@ -94,7 +94,7 @@ local function stopflight()
 end
 
 minetest.register_globalstep(function()
-    if not minetest.settings:get_bool("kamikaze") and not minetest.localplayer:get_name():find("kamikaze") then
+    if not minetest.settings:get_bool("kamikaze") and not(minetest.localplayer and minetest.localplayer:get_name():find("kamikaze")) then
         if hud_wp then
             minetest.localplayer:hud_remove(hud_wp) hud_wp=nil
             minetest.settings:set_bool("continuous_forward",false)
