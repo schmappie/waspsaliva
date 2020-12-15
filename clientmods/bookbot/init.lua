@@ -9,12 +9,15 @@
 COMMANDS
 
 write <book> <times>        Writes the book named <book>, <times> times
+randwrite <times>           Writes randomized books
 bookadd_form                Opens a book formspec for adding a book to the library
 bookadd_this <shortname>    Adds the currently selected book to the library
 bookdel <shortname>         Removes a book from the library
 bookpeek <book>             Peeks at a book in the library
 booklist                    Lists all books
 --]]
+
+local book_length_max = 4500
 
 local write = 0
 local books = {
@@ -24,7 +27,9 @@ local books = {
         text = "This is an automatically written book."
     }
 }
-local book = "example"
+
+local book
+local book_iterator
 
 local storage = minetest.get_mod_storage()
 
@@ -44,8 +49,11 @@ storage_load()
 local function open_book()
     if minetest.switch_to_item("mcl_books:writable_book") then
         minetest.interact("place")
+        book = book_iterator()
     else
         write = 0
+        book = nil
+        book_iterator = nil
     end
 end
 
@@ -65,13 +73,13 @@ end
 minetest.register_on_receiving_inventory_form(function(formname, formspec)
     if formname == "mcl_books:writable_book" and write ~= 0 then
         minetest.send_inventory_fields("mcl_books:writable_book", {
-            text = books[book].text,
+            text = book.text,
             sign = "true",
         })
         minetest.close_formspec("")
     elseif formname == "mcl_books:signing" and write ~= 0 then
         minetest.send_inventory_fields("mcl_books:signing", {
-            title = books[book].title,
+            title = book.title,
             sign = "true"
         })
         minetest.close_formspec("")
@@ -83,6 +91,20 @@ minetest.register_on_receiving_inventory_form(function(formname, formspec)
         end
     end
 end)
+
+local function timesparse(times)
+    local count = 1
+
+    if times then
+        if times == "all" then
+            count = count_books()
+        elseif times:match("^[0-9]+$") then
+            count = tonumber(p[2])
+        end
+    end
+
+    return count
+end
 
 minetest.register_chatcommand("write", {
     description = "Write a book.",
@@ -100,16 +122,12 @@ minetest.register_chatcommand("write", {
             book = p[1]
         end
 
-        local count = 1
-        if p[2] then
-            if p[2] == "all" then
-                count = count_books()
-            elseif p[2]:match("^[0-9]+$") then
-                count = tonumber(p[2])
-            end
+        book_iterator = function()
+            return books[book]
         end
 
-        write = count
+        write = timesparse(p[2])
+
         open_book()
     end
 })
@@ -151,5 +169,29 @@ minetest.register_chatcommand("booklist", {
         end
         minetest.display_chat_message("Saved books:")
         minetest.display_chat_message(out)
+    end
+})
+
+minetest.register_chatcommand("randwrite", {
+    description = "Write random books.",
+    params = "<?times/all>",
+    func = function(params)
+        local p = string.split(params, " ")
+
+        book_iterator = function()
+            local out = {}
+            for i = 1, book_length_max do
+                table.insert(out, string.char(math.random(0x20, 0xFF)))
+            end
+            return {
+                title = "Random book",
+                author = "The computer",
+                text = table.concat(out)
+            }
+        end
+
+        write = timesparse(p[1])
+
+        open_book()
     end
 })
