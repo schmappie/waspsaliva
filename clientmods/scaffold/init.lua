@@ -132,7 +132,14 @@ scaffold.register_template_scaffold("WaterScaffold", "scaffold_water", function(
         }, pos)
     end
 end)
-
+scaffold.register_template_scaffold("WaterSpam", "scaffold_spamwater", function(pos)
+    --if (pos.x % 2 + pos.z % 2) == 0 then
+        scaffold.place_if_needed({
+            "mcl_buckets:bucket_water",
+            "mcl_core:water_source"
+        }, pos)
+    --end
+end)
 if turtle then
     scaffold.register_template_scaffold("TriScaffold", "scaffold_three_wide", function(pos)
         scaffold.place_if_able(pos)
