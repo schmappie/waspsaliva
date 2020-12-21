@@ -100,10 +100,10 @@ function scaffold.place_if_able(pos)
 end
 
 function scaffold.dig(pos)
-    local n = minetest.get_node_or_nil(pos)
+    local n = minetest.get_node_def(minetest.get_node_or_nil(pos).name)
     -- there's a diggable attrib i think
-    if n and n.name ~= "air" then
-        autotool.autotool(pos)
+    if n and n.diggable then
+        minetest.select_best_tool(n.name)
         return minetest.dig_node(pos)
     end
 end
