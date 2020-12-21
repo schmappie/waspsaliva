@@ -100,12 +100,14 @@ function scaffold.place_if_able(pos)
 end
 
 function scaffold.dig(pos)
-    local n = minetest.get_node_def(minetest.get_node_or_nil(pos).name)
-    -- there's a diggable attrib i think
+    local nd=minetest.get_node_or_nil(pos)
+    if not nd then return false end
+    local n = minetest.get_node_def(nd.name)
     if n and n.diggable then
-        minetest.select_best_tool(n.name)
+        minetest.select_best_tool(nd.name)
         return minetest.dig_node(pos)
     end
+    return false
 end
 
 
@@ -140,7 +142,41 @@ scaffold.register_template_scaffold("WaterSpam", "scaffold_spamwater", function(
         }, pos)
     --end
 end)
+local function checknode(pos)
+    local node = minetest.get_node_or_nil(pos)
+    if node then return true end
+    return false
+end
+
 if turtle then
+    scaffold.register_template_scaffold("TBM", "scaffold_tbm", function(pos)
+       scaffold.dig(turtle.dircoord(1,1,0))
+       scaffold.dig(turtle.dircoord(1,0,0))
+    end)
+
+    scaffold.register_template_scaffold("LanternTBM", "scaffold_ltbm", function(pos)
+       --scaffold.dig(turtle.dircoord(1,1,0)) -- let lTBM just be additionally place lanterns mode - useful for rail too.
+       --scaffold.dig(turtle.dircoord(1,0,0))
+       local dir=turtle.getdir()
+       local pl=false
+       if dir == "north" or dir == "south" then
+            if pos.z % 8 == 0 then
+                pl=true
+            end
+       else
+            if pos.x % 8 == 0 then
+                pl=true
+            end
+       end
+       if pl then
+            local lpos=turtle.dircoord(0,2,0)
+            local nd=minetest.get_node_or_nil(lpos)
+            if nd and nd.name ~= 'mcl_ocean:sea_lantern' then
+                scaffold.dig(lpos)
+                minetest.after("0.1",function() scaffold.place_if_needed({'mcl_ocean:sea_lantern'},lpos) end)
+            end
+       end
+    end)
     scaffold.register_template_scaffold("TriScaffold", "scaffold_three_wide", function(pos)
         scaffold.place_if_able(pos)
         scaffold.place_if_able(turtle.dircoord(0, -1, 1))

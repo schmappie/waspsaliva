@@ -72,7 +72,7 @@ function turtle.relativize(c1, c2)
     local c2z = turtle.zeroidx(c2)
 
     local rel = turtle.coord(c2z.x - c1z.x, c2z.y - c1z.y, c2z.z - c1z.z)
-    
+
     return c1, rel
 end
 
@@ -137,21 +137,33 @@ local function between(x, y, z) -- x is between y and z (inclusive)
     return y <= x and x <= z
 end
 
-function turtle.dircoord(f, y, r)
+function turtle.getdir() --
     local rot = minetest.localplayer:get_yaw() % 360
+    if between(rot, 315, 360) or between(rot, 0, 45) then
+        return "north"
+    elseif between(rot, 135, 225) then
+        return "south"
+    elseif between(rot, 225, 315) then
+        return "east"
+    elseif between(rot, 45, 135) then
+        return "west"
+    end
+end
 
+function turtle.dircoord(f, y, r)
+    local dir=turtle.getdir()
     local coord = turtle.optcoord(f, y, r)
     local f = coord.x
     local y = coord.y
     local r = coord.z
 
-    if between(rot, 315, 360) or between(rot, 0, 45) then -- north
+    if dir == "north" then -- north
         return turtle.relcoord(r, y, f)
-    elseif between(rot, 135, 225) then -- south
+    elseif dir == "south"  then -- south
         return turtle.relcoord(-r, y, -f)
-    elseif between(rot, 225, 315) then -- east
+    elseif dir == "east" then -- east
         return turtle.relcoord(f, y, -r)
-    elseif between(rot, 45, 135) then -- west
+    elseif dir== "west" then -- west
         return turtle.relcoord(-f, y, r)
     end
     return turtle.relcoord(0, 0, 0)
