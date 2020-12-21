@@ -1,11 +1,12 @@
--- CC0/Unlicense Emilia 2020
+-- CC0/Unlicense Emilia/cora 2020
 
-local dirt = {
+local ground = {
     "mesecons_torch:redstoneblock"
 }
 
-local saplings = {
-    "mcl_minecarts:golden_rail"
+local rails = {
+    "mcl_minecarts:golden_rail",
+    "mcl_minecarts:rail"
 }
 
 local function checknode(pos)
@@ -26,8 +27,8 @@ scaffold.register_template_scaffold("RailScaffold", "scaffold_rails", function(b
     if checknode(fpos1) then scaffold.dig(fpos1) end
 
     minetest.after("0.1",function()
-        if scaffold.place_if_needed(dirt, below) then
-            scaffold.place_if_needed(saplings, lp)
+        if scaffold.place_if_needed(ground, below) then
+            scaffold.place_if_needed(rails, lp)
         end
     end)
 end)
