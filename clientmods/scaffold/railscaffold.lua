@@ -17,9 +17,9 @@ end
 scaffold.register_template_scaffold("RailScaffold", "scaffold_rails", function(below)
     local lp = vector.round(minetest.localplayer:get_pos())
 
-    local fpos1=turtle.dircoord(1,2,0)
-    local fpos2=turtle.dircoord(1,1,0)
-    local fpos3=turtle.dircoord(1,0,0)
+    local fpos1=turtle.dircoord(1,1,0)
+    local fpos2=turtle.dircoord(1,0,0)
+    local fpos3=turtle.dircoord(1,-1,0)
 
     if checknode(fpos2) then scaffold.dig(fpos2) end
     if checknode(fpos3) then scaffold.dig(fpos3) end
