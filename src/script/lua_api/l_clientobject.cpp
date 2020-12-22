@@ -32,6 +32,13 @@ GenericCAO *ClientObjectRef::get_generic_cao(ClientObjectRef *ref, lua_State *L)
 	GenericCAO *gcao = env.getGenericCAO(obj->getId());
 	return gcao;
 }
+int ClientObjectRef::l_get_id(lua_State *L)
+{
+	ClientObjectRef *ref = checkobject(L, 1);
+	GenericCAO *gcao = get_generic_cao(ref, L);
+	lua_pushvalue(L, gcao->getId());
+	return 1;
+}
 
 int ClientObjectRef::l_get_pos(lua_State *L)
 {
@@ -224,6 +231,7 @@ void ClientObjectRef::Register(lua_State *L)
 
 const char ClientObjectRef::className[] = "ClientObjectRef";
 luaL_Reg ClientObjectRef::methods[] = {
+	luamethod(ClientObjectRef, get_id),
 	luamethod(ClientObjectRef, get_pos),
 	luamethod(ClientObjectRef, get_velocity),
 	luamethod(ClientObjectRef, get_acceleration),

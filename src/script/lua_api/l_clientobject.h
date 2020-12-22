@@ -31,6 +31,8 @@ private:
 
 	static int gc_object(lua_State *L);
 
+	static int l_get_id(lua_State *L);
+
 	// get_pos(self)
 	// returns: {x=num, y=num, z=num}
 	static int l_get_pos(lua_State *L);
