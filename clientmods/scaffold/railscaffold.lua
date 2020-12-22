@@ -9,6 +9,14 @@ local rails = {
     "mcl_minecarts:rail"
 }
 
+local tunnelmaterial = {
+    'mcl_core:cobble',
+    'mcl_core:andesite',
+    'mcl_core:diorite',
+    'mcl_core:granite',
+    'mcl_core:dirt'
+}
+minetest.register_cheat("RailT",'Scaffold','scaffold_railtunnel')
 local function checknode(pos)
     local node = minetest.get_node_or_nil(pos)
     if node and node.name ~="mesecons_torch:redstoneblock" and not node.name:find("_rail")  then return true end
@@ -31,4 +39,11 @@ scaffold.register_template_scaffold("RailScaffold", "scaffold_rails", function(b
             scaffold.place_if_needed(rails, lp)
         end
     end)
+    if minetest.settings:get_bool('scaffold_railtunnel') then
+        scaffold.place_if_needed(tunnelmaterial, turtle.dircoord(0,2,0))
+        scaffold.place_if_needed(tunnelmaterial, turtle.dircoord(0,0,1))
+        scaffold.place_if_needed(tunnelmaterial, turtle.dircoord(0,1,1))
+        scaffold.place_if_needed(tunnelmaterial, turtle.dircoord(0,0,-1))
+        scaffold.place_if_needed(tunnelmaterial, turtle.dircoord(0,1,-1))
+    end
 end)
