@@ -130,6 +130,7 @@ end
 
 function turtle.relcoord(x, y, z)
     local pos = minetest.localplayer:get_pos()
+    if pos.y > -5000 then pos.y=pos.y-1 end
     return turtle.cadd(pos, turtle.optcoord(x, y, z))
 end
 
@@ -149,6 +150,17 @@ function turtle.getdir() --
         return "west"
     end
 end
+function turtle.setdir(dir) --
+    if dir == "north" then
+        minetest.localplayer:set_yaw(0)
+    elseif dir == "south" then
+        minetest.localplayer:set_yaw(180)
+    elseif dir == "east" then
+        minetest.localplayer:set_yaw(270)
+    elseif dir == "west" then
+        minetest.localplayer:set_yaw(90)
+    end
+end
 
 function turtle.dircoord(f, y, r)
     local dir=turtle.getdir()
@@ -156,16 +168,17 @@ function turtle.dircoord(f, y, r)
     local f = coord.x
     local y = coord.y
     local r = coord.z
-
-    if dir == "north" then -- north
+    local lp=minetest.localplayer:get_pos()
+    if dir == "north" then
         return turtle.relcoord(r, y, f)
-    elseif dir == "south"  then -- south
+    elseif dir == "south"  then
         return turtle.relcoord(-r, y, -f)
-    elseif dir == "east" then -- east
+    elseif dir == "east" then
         return turtle.relcoord(f, y, -r)
-    elseif dir== "west" then -- west
+    elseif dir== "west" then
         return turtle.relcoord(-f, y, r)
     end
+
     return turtle.relcoord(0, 0, 0)
 end
 
