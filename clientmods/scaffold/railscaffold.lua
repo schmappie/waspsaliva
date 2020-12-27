@@ -19,7 +19,7 @@ local tunnelmaterial = {
     'mcl_core:granite'
 }
 
-local setdir=false;
+
 minetest.register_cheat("RailT",'Scaffold','scaffold_railtunnel')
 local function checknode(pos)
     local node = minetest.get_node_or_nil(pos)
@@ -28,6 +28,12 @@ local function checknode(pos)
 end
 
 scaffold.register_template_scaffold("RailScaffold", "scaffold_rails", function(below)
+    if not scaffold.wason.scaffold_rails then
+        minetest.settings:set_bool('continuous_forward',true)
+        --minetest.settings:set_bool('scaffold_locky',true)
+        minetest.settings:set_bool('scaffold_lockyaw',true)
+        minetest.settings:set_bool('scaffold_ltbm',true)
+    end
     local lp = vector.round(minetest.localplayer:get_pos())
 
     local fpos1=turtle.dircoord(1,2,0)
@@ -72,4 +78,9 @@ scaffold.register_template_scaffold("RailScaffold", "scaffold_rails", function(b
         scaffold.place_if_needed(tunnelmaterial, turtle.dircoord(0,2,-1))
         scaffold.place_if_needed(tunnelmaterial, turtle.dircoord(0,1,-1))
     end
-end)
+end,false,function()
+    minetest.settings:set_bool('continuous_forward',false)
+    minetest.settings:set_bool('scaffold_locky',false)
+    minetest.settings:set_bool('scaffold_lockyaw',false)
+    minetest.settings:set_bool('scaffold_ltbm',false)
+  end)
