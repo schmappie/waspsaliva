@@ -8,14 +8,16 @@ scaffold.lockdir = false
 scaffold.locky = false
 local storage=minetest.get_mod_storage()
 
-local wason = {}
+scaffold.wason = {}
 
 
 
 
 local function get_locks()
-    scaffold.lockdir = storage:get_string('lockdir')
-    scaffold.locky = storage:get_string('locky')
+    local ly=storage:get_string('lockdir')
+    local ld= storage:get_string('locky')
+    if ld then scaffold.lockdir = tonumber(ld) end
+    if ly then scaffold.locky = tonumber(ly) end
     if scaffold.lockdir or scaffold.locky then return true end
     return false
 end
@@ -29,8 +31,8 @@ local function del_locks()
 end
 
 if get_locks() then
-    if scaffold.lockdir then wason.scaffold_lockyaw = true end
-    if scaffold.locky then wason.scaffold_locky = true end
+    if scaffold.lockdir then scaffold.wason.scaffold_lockyaw = true end
+    if scaffold.locky then scaffold.wason.scaffold_locky = true end
 end
 
 function scaffold.register_scaffold(func)
@@ -43,23 +45,25 @@ function scaffold.step_scaffolds()
     end
 end
 
-function scaffold.template(setting, func, offset)
+function scaffold.template(setting, func, offset, funcstop )
     offset = offset or {x = 0, y = -1, z = 0}
+    funcstop = funcstop or function() end
 
     return function()
         if minetest.settings:get_bool(setting) then
             local lp = minetest.localplayer:get_pos()
             local tgt = vector.round(vector.add(lp, offset))
             func(tgt)
-            if not wason[setting] then wason[setting] = true end
-        elseif wason[setting] then
-            wason[setting] = false
+            if not scaffold.wason[setting] then scaffold.wason[setting] = true end
+        elseif scaffold.wason[setting] then
+            scaffold.wason[setting] = false
+            funcstop()
         end
     end
 end
 
-function scaffold.register_template_scaffold(name, setting, func, offset)
-    scaffold.register_scaffold(scaffold.template(setting, func, offset))
+function scaffold.register_template_scaffold(name, setting, func, offset, funcstop)
+    scaffold.register_scaffold(scaffold.template(setting, func, offset, funcstop))
     if minetest.register_cheat then
         minetest.register_cheat(name, category, setting)
     end
@@ -104,6 +108,7 @@ end
 -- swaps to any of the items and places if need be
 -- returns true if placed and in inventory or already there, false otherwise
 function scaffold.place_if_needed(items, pos, place)
+    if minetest.settings:get_bool('scaffold.locky') and math.round(pos.y) ~= math.round(scaffold.locky) then return end
     place = place or minetest.place_node
 
     local node = minetest.get_node_or_nil(pos)
@@ -126,6 +131,7 @@ function scaffold.place_if_needed(items, pos, place)
 end
 
 function scaffold.place_if_able(pos)
+    if minetest.settings:get_bool('scaffold.locky') and math.round(pos.y) ~= math.round(scaffold.locky) then return end
     if scaffold.can_place_wielded_at(pos) then
         minetest.place_node(pos)
     end
@@ -151,17 +157,25 @@ dofile(mpath .. "/railscaffold.lua")
 
 
 scaffold.register_template_scaffold("LockYaw", "scaffold_lockyaw", function(pos)
-    if not wason.scaffold_lockyaw then scaffold.lockdir=turtle.getdir() end
+    if not scaffold.wason.scaffold_lockyaw then
+        scaffold.lockdir=turtle.getdir()
+        set_locks()
+    end
     if scaffold.lockdir  then turtle.setdir(scaffold.lockdir) end
-end)
+end, false, function() storage:set_string('lockdir','') end)
+
 
 scaffold.register_template_scaffold("LockY", "scaffold_locky", function(pos)
     local lp=minetest.localplayer:get_pos()
-    if not wason.scaffold_locky then scaffold.locky = lp.y end
-    if scaffold.locky and lp.y ~= scaffold.locky  then
-        minetest.localplayer:set_pos(vector.add(lp,{x=0,y=scaffold.locky,z=0}))
+    if not scaffold.wason.scaffold_locky then
+        scaffold.locky = lp.y
+        set_locks()
     end
-end)
+    if scaffold.locky and lp.y ~= scaffold.locky  then
+        --minetest.localplayer:set_pos({x=lp.x,y=scaffold.locky,z=lp.z})
+    end
+    end,false, function() storage:set_string('locky','') end)
+
 scaffold.register_template_scaffold("CheckScaffold", "scaffold_check", function(pos)
     scaffold.place_if_able(pos)
 end)
