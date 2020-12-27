@@ -4,6 +4,34 @@ local category = "Scaffold"
 
 scaffold = {}
 scaffold.registered_scaffolds = {}
+scaffold.lockdir = false
+scaffold.locky = false
+local storage=minetest.get_mod_storage()
+
+local wason = {}
+
+
+
+
+local function get_locks()
+    scaffold.lockdir = storage:get_string('lockdir')
+    scaffold.locky = storage:get_string('locky')
+    if scaffold.lockdir or scaffold.locky then return true end
+    return false
+end
+local function set_locks()
+    storage:set_string('lockdir', scaffold.lockdir)
+    storage:set_string('locky', scaffold.locky)
+end
+local function del_locks()
+    storage:set_string('lockdir','')
+    storage:set_string('locky','')
+end
+
+if get_locks() then
+    if scaffold.lockdir then wason.scaffold_lockyaw = true end
+    if scaffold.locky then wason.scaffold_locky = true end
+end
 
 function scaffold.register_scaffold(func)
     table.insert(scaffold.registered_scaffolds, func)
@@ -23,6 +51,9 @@ function scaffold.template(setting, func, offset)
             local lp = minetest.localplayer:get_pos()
             local tgt = vector.round(vector.add(lp, offset))
             func(tgt)
+            if not wason[setting] then wason[setting] = true end
+        elseif wason[setting] then
+            wason[setting] = false
         end
     end
 end
@@ -61,6 +92,7 @@ function scaffold.find_any_swap(items)
 end
 
 function scaffold.in_list(val, list)
+    if type(list) ~= "table" then return false end
     for i, v in ipairs(list) do
         if v == val then
             return true
@@ -118,6 +150,18 @@ dofile(mpath .. "/autofarm.lua")
 dofile(mpath .. "/railscaffold.lua")
 
 
+scaffold.register_template_scaffold("LockYaw", "scaffold_lockyaw", function(pos)
+    if not wason.scaffold_lockyaw then scaffold.lockdir=turtle.getdir() end
+    if scaffold.lockdir  then turtle.setdir(scaffold.lockdir) end
+end)
+
+scaffold.register_template_scaffold("LockY", "scaffold_locky", function(pos)
+    local lp=minetest.localplayer:get_pos()
+    if not wason.scaffold_locky then scaffold.locky = lp.y end
+    if scaffold.locky and lp.y ~= scaffold.locky  then
+        minetest.localplayer:set_pos(vector.add(lp,{x=0,y=scaffold.locky,z=0}))
+    end
+end)
 scaffold.register_template_scaffold("CheckScaffold", "scaffold_check", function(pos)
     scaffold.place_if_able(pos)
 end)
@@ -169,7 +213,7 @@ if turtle then
             end
        end
        if pl then
-            local lpos=turtle.dircoord(0,2,0)
+            local lpos=turtle.dircoord(0,3,0)
             local nd=minetest.get_node_or_nil(lpos)
             if nd and nd.name ~= 'mcl_ocean:sea_lantern' then
                 scaffold.dig(lpos)
@@ -200,6 +244,7 @@ end
 
 if nlist then
     scaffold.register_template_scaffold("RandomScaff", "scaffold_rnd", function(below)
+        if true then return false end
         local n = minetest.get_node_or_nil(below)
         -- n == nil is ignore
         if n and not scaffold.in_list(n.name, nlist.get('randomscaffold')) then
