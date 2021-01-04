@@ -27,7 +27,7 @@ local function checknode(pos)
     return false
 end
 
-scaffold.register_template_scaffold("RailScaffold", "scaffold_rails", function(below)
+scaffold.register_template_scaffold("RailBot", "scaffold_rails", function(below)
     if not scaffold.wason.scaffold_rails then
         minetest.settings:set_bool('continuous_forward',true)
         --minetest.settings:set_bool('scaffold_locky',true)
@@ -40,13 +40,12 @@ scaffold.register_template_scaffold("RailScaffold", "scaffold_rails", function(b
     local fpos2=turtle.dircoord(1,1,0)
     local fpos3=turtle.dircoord(1,0,0)
 
-    local fpos4=turtle.dircoord(2,1,0)
-    local fpos5=turtle.dircoord(2,0,0)
-    local fpos6=turtle.dircoord(2,-1,0)
+    local fpos4=turtle.dircoord(0,0,0)
 
     if checknode(fpos1) then scaffold.dig(fpos1) end
     if checknode(fpos3) then scaffold.dig(fpos3) end
     if checknode(fpos2) then scaffold.dig(fpos2) end
+    if checknode(fpos4) then scaffold.dig(fpos4) end
 
     local lp=minetest.localplayer:get_pos()
     local pos1=vector.add(lp,{x=-2,y=0,z=-2})
@@ -58,6 +57,18 @@ scaffold.register_template_scaffold("RailScaffold", "scaffold_rails", function(b
     for kk,vv in pairs(bn) do
         minetest.switch_to_item("mcl_nether:netherrack")
         minetest.place_node(vv)
+    end
+    local bln=minetest.get_node_or_nil(below)
+    local lpn=minetest.get_node_or_nil(lp)
+
+    if bln and lpn and lpn.name == "mcl_minecarts:golden_rail_on" then
+        --bln.name == "mesecons_torch:redstoneblock" and
+        --minetest.settings:set_bool('continuous_forward',true)
+    else
+        if lpn.name ~= "air" and not lp.name:find('rail') then
+            scaffold.dig(lp)
+        end
+        minetest.settings:set_bool('continuous_forward',false)
     end
 
     minetest.after("0.1",function()
