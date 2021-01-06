@@ -23,7 +23,6 @@ local mobs_friends = {
 'mobs_mc_villager_smith.png',
 'mobs_mc_iron_golem.png',
 'mobs_mc_iron_horse_armor.png',
-'mobs_mc_magmacube.png',
 'mobs_mc_mooshroom.png',
 'mobs_mc_mule.png',
 'mobs_mc_pig.png',
@@ -55,6 +54,7 @@ local mobs_friends = {
 'mobs_mc_horse_white.png',
 'mobs_mc_snowman',
 'mobs_mc_chicken.png',
+'mobs_mc_enderman.png',
 'mobs_mc_cow.png'
 }
 
@@ -65,8 +65,8 @@ local mobs_bad = {
 'mobs_mc_creeper.png',
 'mobs_mc_dragon.png',
 'mobs_mc_endergolem.png',
+'mobs_mc_magmacube.png',
 'mobs_mc_enderman_eyes.png',
-'mobs_mc_enderman.png',
 'mobs_mc_endermite.png',
 'mobs_mc_ghast.png',
 'mobs_mc_gold_horse_armor.png',
@@ -118,7 +118,7 @@ local mobs_bad = {
 }
 
 --minetest.register_list_command("friend", "Configure Friend List (friends dont get attacked by Killaura or Forcefield)", "friendlist")
-
+local nexthit=0
 minetest.register_globalstep(function(dtime)
 	local player = minetest.localplayer
 	if not player then return end
@@ -126,6 +126,8 @@ minetest.register_globalstep(function(dtime)
 	local pointed = minetest.get_pointed_thing()
 	local item = player:get_wielded_item():get_name()
 	if minetest.settings:get_bool("killaura") or minetest.settings:get_bool("forcefield") and control.dig then
+		if nexthit > os.clock() then return end
+		nexthit=os.clock() + 0.01
 		for _, obj in pairs(minetest.get_objects_inside_radius(player:get_pos(), 5)) do
 			local do_attack = false
 			local txt=obj:get_item_textures()
