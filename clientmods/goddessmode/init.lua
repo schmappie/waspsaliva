@@ -39,8 +39,11 @@ end
 
 local function checkprojectile()
     for k, v in ipairs(minetest.localplayer.get_nearby_objects(karange)) do
-		if ( v:get_item_textures():sub(-9) == "arrow_box") or ( v:get_item_textures():sub(-7) == "_splash")  then
+		if ( v:get_item_textures():sub(-9) == "arrow_box") or ( v:get_item_textures():sub(-7) == "_splash") or v:get_item_textures():sub(-17) == "shulkerbullet.png"  then
+			local lp=minetest.localplayer:get_pos()
 			local vel=v:get_velocity()
+			local dst=vector.distance(lp,v:get_pos())
+			if dst > 2 then return false end
 			if (vel.x == 0 and vel.y == 0 and vel.z ==0 ) then return false end
 			return true
         end
