@@ -4,6 +4,8 @@
 
 
 local karange=14
+local tping=false
+local dodged=false
 
 local function checkair(pos)
 	local n=minetest.get_node_or_nil(pos)
@@ -43,7 +45,7 @@ local function checkprojectile()
 			local lp=minetest.localplayer:get_pos()
 			local vel=v:get_velocity()
 			local dst=vector.distance(lp,v:get_pos())
-			if dst > 2 then return false end
+			if dst > 4 then return false end
 			if (vel.x == 0 and vel.y == 0 and vel.z ==0 ) then return false end
 			return true
         end
@@ -54,20 +56,7 @@ end
 
 local function amautotool(pos)
 	local node=minetest.get_node_or_nil(pos)
-	if node == nil then return end
-	local player = minetest.localplayer
-	local inventory = minetest.get_inventory("current_player")
-	local node_groups = minetest.get_node_def(node.name).groups
-	local new_index = player:get_wield_index()
-	local is_better, best_time = false, math.huge
-	is_better, best_time = autotool.check_tool(player:get_wielded_item(), node_groups, best_time)
-	for index, stack in pairs(inventory.main) do
-		is_better, best_time = autotool.check_tool(stack, node_groups, best_time)
-		if is_better then
-			new_index = index - 1
-		end
-	end
-	player:set_wield_index(new_index)
+	minetest.select_best_tool(node.name)
 end
 
 local function get_2dpos_from_yaw(r,yaw)
@@ -93,12 +82,15 @@ local function dhfree()
 		minetest.dig_node(n)
 		minetest.dig_node(vector.add(n,{x=0,y=-1,z=0}))
 		nd=minetest.get_node_or_nil(n)
-		end
+	     end
+		tping=false
 end
 local lastwrp=0
 local function mwarp(pos)
-	if os.time() < lastwrp+1 then return end
-	lastwrp=os.time();
+	if tping then return end
+	--if os.time() < lastwrp+1 then return end
+	--lastwrp=os.time();
+	tping=true
 	minetest.after("0.1",function() dhfree() end)
 	minetest.localplayer:set_pos(pos)
 end
@@ -120,6 +112,14 @@ end
 local function evade(ppos)
 	mwarp(get_target(ppos))
 end
+local function dodge()
+	if dodged then return end
+	dodged=true
+	local t=turtle.dircoord(math.random(0,2)-1,0,math.random(0,2)-1)
+	local opos=minetest.localplayer:get_pos()
+	mwarp(t)
+	minetest.after("0.5",function() mwarp(opos) dodged=false end )
+end
 
 local function rro() -- reverse restraining order
 
@@ -127,7 +127,6 @@ local function rro() -- reverse restraining order
 	local name=v:get_name()
         if (v:is_player() and  name ~= minetest.localplayer:get_name()) then
 	    if fren.is_friend(name) then
-		minetest.settings:set_bool("killaura",false)
 		return end
             local pos = v:get_pos()
             pos.y = pos.y - 1
@@ -146,9 +145,9 @@ end
 minetest.register_globalstep(function()
     if minetest.settings:get_bool("goddess") then
 	local ppos=minetest.localplayer:get_pos()
-        rro()
-        if(checkprojectile()) then evade(ppos)  end
-        if(checktrap()) then evade(ppos)  end
+        --rro()
+        if(checkprojectile()) then dodge(ppos)  end
+        --if(checktrap()) then evade(ppos)  end
         if(not checkhead()) then dhfree()  end
     end
 end)
