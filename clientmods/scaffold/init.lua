@@ -10,6 +10,10 @@ local storage=minetest.get_mod_storage()
 
 scaffold.wason = {}
 
+local nextact = {}
+
+local towerbot_height = 75
+
 
 
 
@@ -50,7 +54,9 @@ function scaffold.template(setting, func, offset, funcstop )
     funcstop = funcstop or function() end
 
     return function()
-        if minetest.settings:get_bool(setting) then
+        if minetest.localplayer and minetest.settings:get_bool(setting) then
+            if nextact[setting] and nextact[setting] > os.clock() then return end
+            nextact[setting] = os.clock() + 0.1
             local lp = minetest.localplayer:get_pos()
             local tgt = vector.round(vector.add(lp, offset))
             func(tgt)
@@ -107,7 +113,14 @@ end
 
 -- swaps to any of the items and places if need be
 -- returns true if placed and in inventory or already there, false otherwise
+
+local lastact=0
+local lastplc=0
+local lastdig=0
+local actint=1
 function scaffold.place_if_needed(items, pos, place)
+    --if lastplc + actint > os.time() then return end
+    lastplc=os.time()
     if minetest.settings:get_bool('scaffold.locky') and math.round(pos.y) ~= math.round(scaffold.locky) then return end
     place = place or minetest.place_node
 
@@ -131,6 +144,8 @@ function scaffold.place_if_needed(items, pos, place)
 end
 
 function scaffold.place_if_able(pos)
+    --if lastplc + actint > os.time() then return end
+    lastplc=os.time()
     if minetest.settings:get_bool('scaffold.locky') and math.round(pos.y) ~= math.round(scaffold.locky) then return end
     if scaffold.can_place_wielded_at(pos) then
         minetest.place_node(pos)
@@ -138,6 +153,8 @@ function scaffold.place_if_able(pos)
 end
 
 function scaffold.dig(pos)
+    --if lastdig + actint > os.time() then return end
+    lastdig=os.time()
     local nd=minetest.get_node_or_nil(pos)
     if not nd then return false end
     local n = minetest.get_node_def(nd.name)
@@ -211,6 +228,13 @@ if turtle then
        scaffold.dig(turtle.dircoord(1,1,0))
        scaffold.dig(turtle.dircoord(1,0,0))
     end)
+    scaffold.register_template_scaffold("TallTBM", "scaffold_ttbm", function(pos)
+       scaffold.dig(turtle.dircoord(1,4,0))
+       scaffold.dig(turtle.dircoord(1,3,0))
+       scaffold.dig(turtle.dircoord(1,2,0))
+       scaffold.dig(turtle.dircoord(1,1,0))
+       scaffold.dig(turtle.dircoord(1,0,0))
+    end)
 
     scaffold.register_template_scaffold("LanternTBM", "scaffold_ltbm", function(pos)
        --scaffold.dig(turtle.dircoord(1,1,0)) -- let lTBM just be additionally place lanterns mode - useful for rail too.
@@ -239,6 +263,14 @@ if turtle then
         scaffold.place_if_able(pos)
         scaffold.place_if_able(turtle.dircoord(0, -1, 1))
         scaffold.place_if_able(turtle.dircoord(0, -1, -1))
+    end)
+    scaffold.register_template_scaffold("HindScaffold", "scaffold_behind", function(pos)
+        --scaffold.place_if_able(pos)
+        scaffold.place_if_able(turtle.dircoord(-1, 0, 0))
+        scaffold.place_if_able(turtle.dircoord(-1, 1, 0))
+        scaffold.place_if_able(turtle.dircoord(-1, 2, 0))
+        scaffold.place_if_able(turtle.dircoord(-1, 3, 0))
+        scaffold.place_if_able(turtle.dircoord(-1, 4, 0))
     end)
 
     scaffold.register_template_scaffold("headTriScaff", "scaffold_three_wide_head", function(pos)
