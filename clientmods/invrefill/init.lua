@@ -62,7 +62,6 @@ end
 
 local function queue_refill(pos, name)
     if shulk_place(pos, name) then
-        minetest.display_chat_message(invposformat(pos))
         minetest.after(1, do_refill, pos)
         minetest.after(2, minetest.dig_node, pos)
     end
