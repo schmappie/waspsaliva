@@ -120,12 +120,13 @@ local lastdig=0
 local actint=1
 function scaffold.place_if_needed(items, pos, place)
     --if lastplc + actint > os.time() then return end
+    if not pos then return end
     lastplc=os.time()
     if minetest.settings:get_bool('scaffold.locky') and math.round(pos.y) ~= math.round(scaffold.locky) then return end
     place = place or minetest.place_node
 
     local node = minetest.get_node_or_nil(pos)
-
+    if not node then return end
     -- already there
     if node and scaffold.in_list(node.name, items) then
         return true
@@ -229,12 +230,85 @@ if turtle then
        scaffold.dig(turtle.dircoord(1,0,0))
     end)
     scaffold.register_template_scaffold("TallTBM", "scaffold_ttbm", function(pos)
-       scaffold.dig(turtle.dircoord(1,4,0))
-       scaffold.dig(turtle.dircoord(1,3,0))
-       scaffold.dig(turtle.dircoord(1,2,0))
-       scaffold.dig(turtle.dircoord(1,1,0))
-       scaffold.dig(turtle.dircoord(1,0,0))
+        pos = {
+
+        turtle.dircoord(1,4,2),
+       turtle.dircoord(1,3,2),
+       turtle.dircoord(1,2,2),
+       turtle.dircoord(1,1,2),
+       turtle.dircoord(1,0,2),
+
+        turtle.dircoord(1,4,-2),
+       turtle.dircoord(1,3,-2),
+       turtle.dircoord(1,2,-2),
+       turtle.dircoord(1,1,-2),
+       turtle.dircoord(1,0,-2),
+
+
+        turtle.dircoord(1,4,1),
+       turtle.dircoord(1,3,1),
+       turtle.dircoord(1,2,1),
+       turtle.dircoord(1,1,1),
+       turtle.dircoord(1,0,1),
+
+        turtle.dircoord(1,4,-1),
+       turtle.dircoord(1,3,-1),
+       turtle.dircoord(1,2,-1),
+       turtle.dircoord(1,1,-1),
+       turtle.dircoord(1,0,-1),
+
+        turtle.dircoord(1,4,0),
+       turtle.dircoord(1,3,0),
+       turtle.dircoord(1,2,0),
+       turtle.dircoord(1,1,0),
+       turtle.dircoord(1,0,0)
+        }
+        for k,v in pairs(pos) do
+            scaffold.dig(v)
+        end
+        minetest.settings:set_bool('continuous_forward',true)
+        for k,v in pairs(pos) do
+            local n=minetest.get_node_or_nil(v)
+            if n and n.name ~= "air" then
+                minetest.settings:set_bool('continuous_forward',false)
+            end
+            if n and n.name == 'mcl_core:cobble' then
+                minetest.settings:set_bool('scaffold_ttbm',false)
+                minetest.settings:set_bool('scaffold_lockyaw',false)
+            end
+        end
     end)
+
+local function invparse(location)
+    if type(location) == "string" then
+        if string.match(location, "^[-]?[0-9]+,[-]?[0-9]+,[-]?[0-9]+$") then
+            return "nodemeta:" .. location
+        else
+            return location
+        end
+    elseif type(location) == "table" then
+        return "nodemeta:" .. fmt(map_pos(location))
+    end
+end
+
+local function getcobble()
+	local sl=turtle.dircoord(0,0,3)
+    local main = minetest.get_inventory("current_player").main
+    minetest.switch_to_item('cobble')
+    minetest.place_node(sl)
+    local shlk=invparse(sl)
+
+    if main[1]:get_name() ~= "mcl_chests:chest" then
+        for i = 1,27 do
+            if main[i]:get_name() == "mcl_chests:chest" then
+                local mv = InventoryAction("move")
+                mv:from("current_player", "main", i)
+                mv:to("current_player", "main", 1)
+                mv:apply()
+            end
+        end
+    end
+end
 
     scaffold.register_template_scaffold("LanternTBM", "scaffold_ltbm", function(pos)
        --scaffold.dig(turtle.dircoord(1,1,0)) -- let lTBM just be additionally place lanterns mode - useful for rail too.
@@ -264,14 +338,97 @@ if turtle then
         scaffold.place_if_able(turtle.dircoord(0, -1, 1))
         scaffold.place_if_able(turtle.dircoord(0, -1, -1))
     end)
-    scaffold.register_template_scaffold("HindScaffold", "scaffold_behind", function(pos)
-        --scaffold.place_if_able(pos)
-        scaffold.place_if_able(turtle.dircoord(-1, 0, 0))
-        scaffold.place_if_able(turtle.dircoord(-1, 1, 0))
-        scaffold.place_if_able(turtle.dircoord(-1, 2, 0))
-        scaffold.place_if_able(turtle.dircoord(-1, 3, 0))
-        scaffold.place_if_able(turtle.dircoord(-1, 4, 0))
-    end)
+    scaffold.register_template_scaffold("WallBot", "scaffold_behind", function(pos)
+     minetest.settings:set_bool('scaffold_lockyaw',true)
+     minetest.settings:set('movement_speed_walk',1)
+        pos = {
+
+        turtle.dircoord(-2,4,2),
+       turtle.dircoord(-2,3,2),
+       turtle.dircoord(-2,2,2),
+       turtle.dircoord(-2,1,2),
+       turtle.dircoord(-2,0,2),
+
+        turtle.dircoord(-2,4,-2),
+       turtle.dircoord(-2,3,-2),
+       turtle.dircoord(-2,2,-2),
+       turtle.dircoord(-2,1,-2),
+       turtle.dircoord(-2,0,-2),
+
+
+        turtle.dircoord(-2,4,1),
+       turtle.dircoord(-2,3,1),
+       turtle.dircoord(-2,2,1),
+       turtle.dircoord(-2,1,1),
+       turtle.dircoord(-2,0,1),
+
+        turtle.dircoord(-2,4,-1),
+       turtle.dircoord(-2,3,-1),
+       turtle.dircoord(-2,2,-1),
+       turtle.dircoord(-2,1,-1),
+       turtle.dircoord(-2,0,-1),
+
+        turtle.dircoord(-2,4,0),
+       turtle.dircoord(-2,3,0),
+       turtle.dircoord(-2,2,0),
+       turtle.dircoord(-2,1,0),
+       turtle.dircoord(-2,0,0),
+               turtle.dircoord(-2,4,2),
+       turtle.dircoord(-2,3,2),
+       turtle.dircoord(-2,2,2),
+       turtle.dircoord(-2,1,2),
+       turtle.dircoord(-2,0,2),
+
+        turtle.dircoord(-3,4,-2),
+       turtle.dircoord(-3,3,-2),
+       turtle.dircoord(-3,2,-2),
+       turtle.dircoord(-3,1,-2),
+       turtle.dircoord(-3,0,-2),
+
+
+        turtle.dircoord(-3,4,1),
+       turtle.dircoord(-3,3,1),
+       turtle.dircoord(-3,2,1),
+       turtle.dircoord(-3,1,1),
+       turtle.dircoord(-3,0,1),
+
+        turtle.dircoord(-3,4,-1),
+       turtle.dircoord(-3,3,-1),
+       turtle.dircoord(-3,2,-1),
+       turtle.dircoord(-3,1,-1),
+       turtle.dircoord(-3,0,-1),
+
+        turtle.dircoord(-3,4,0),
+       turtle.dircoord(-3,3,0),
+       turtle.dircoord(-3,2,0),
+       turtle.dircoord(-3,1,0),
+       turtle.dircoord(-3,0,0)
+        }
+
+        local ngo=false
+
+        for k,v in pairs(pos) do
+            local n=minetest.get_node_or_nil(v)
+            if n and n.name ~= "mcl_core:cobble" then
+                scaffold.dig(v)
+                ngo=false
+            else ngo=true
+            end
+            if n == nil then ngo=false end
+        end
+
+        for k,v in pairs(pos) do
+            scaffold.place_if_needed({'mcl_core:cobble'},v)
+        end
+
+        minetest.settings:set_bool('continuous_forward',ngo)
+    end,false,function()
+    minetest.settings:set_bool('continuous_forward',false)
+    minetest.settings:set_bool('scaffold_locky',false)
+    minetest.settings:set_bool('scaffold_lockyaw',false)
+    minetest.settings:set_bool('scaffold_ltbm',false)
+    minetest.settings:set('movement_speed_walk',4)
+  end)
 
     scaffold.register_template_scaffold("headTriScaff", "scaffold_three_wide_head", function(pos)
         scaffold.place_if_able(turtle.dircoord(0, 3, 0))
