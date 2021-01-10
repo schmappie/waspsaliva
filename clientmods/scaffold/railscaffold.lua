@@ -34,20 +34,20 @@ scaffold.register_template_scaffold("RailBot", "scaffold_rails", function(below)
         minetest.settings:set_bool('scaffold_lockyaw',true)
         minetest.settings:set_bool('scaffold_ltbm',true)
     end
-    local lp = vector.round(minetest.localplayer:get_pos())
+    local lp = turtle.dircoord(0,1,0)
 
     local fpos1=turtle.dircoord(1,2,0)
     local fpos2=turtle.dircoord(1,1,0)
     local fpos3=turtle.dircoord(1,0,0)
 
-    local fpos4=turtle.dircoord(0,0,0)
+    local fpos4=turtle.dircoord(2,1,0)
+    local fpos5=turtle.dircoord(2,0,0)
+    local fpos6=turtle.dircoord(2,-1,0)
 
     if checknode(fpos1) then scaffold.dig(fpos1) end
     if checknode(fpos3) then scaffold.dig(fpos3) end
     if checknode(fpos2) then scaffold.dig(fpos2) end
-    if checknode(fpos4) then scaffold.dig(fpos4) end
 
-    local lp=minetest.localplayer:get_pos()
     local pos1=vector.add(lp,{x=-2,y=0,z=-2})
     local pos2=vector.add(lp,{x=2,y=4,z=2})
     local liquids={'mcl_core:lava_source','mcl_core:water_source','mcl_core:lava_flowing','mcl_core:water_flowing'}
@@ -63,21 +63,21 @@ scaffold.register_template_scaffold("RailBot", "scaffold_rails", function(below)
 
     if bln and lpn and lpn.name == "mcl_minecarts:golden_rail_on" then
         --bln.name == "mesecons_torch:redstoneblock" and
-        --minetest.settings:set_bool('continuous_forward',true)
+        minetest.settings:set_bool('continuous_forward',true)
     else
-        if lpn.name ~= "air" and not lp.name:find('rail') then
-            scaffold.dig(lp)
-        end
+        --if lpn and lpn.name then minetest.display_chat_message(lpn.name) end
         minetest.settings:set_bool('continuous_forward',false)
     end
 
     minetest.after("0.1",function()
         local frpos=turtle.dircoord(1,1,0)
         local fgpos=turtle.dircoord(1,0,0)
+        local rpos=turtle.dircoord(0,1,0)
+        local gpos=turtle.dircoord(0,0,0)
         local it = core.find_item("mesecons_torch:redstoneblock")
         if not it then minetest.settings:set_bool('continuous_forward',false) end
-        scaffold.place_if_needed(ground, below)
-        scaffold.place_if_needed(rails, lp)
+        scaffold.place_if_needed(ground, gpos)
+        scaffold.place_if_needed(rails, rpos)
         scaffold.place_if_needed(ground, fgpos)
         scaffold.place_if_needed(rails, frpos)
 
