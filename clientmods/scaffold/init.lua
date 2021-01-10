@@ -335,9 +335,10 @@ end
     end)
     scaffold.register_template_scaffold("TriScaffold", "scaffold_three_wide", function(pos)
         scaffold.place_if_able(pos)
-        scaffold.place_if_able(turtle.dircoord(0, -1, 1))
-        scaffold.place_if_able(turtle.dircoord(0, -1, -1))
+        scaffold.place_if_able(turtle.dircoord(0, 0, 1))
+        scaffold.place_if_able(turtle.dircoord(0, 0, -1))
     end)
+
     scaffold.register_template_scaffold("WallBot", "scaffold_behind", function(pos)
      minetest.settings:set_bool('scaffold_lockyaw',true)
      minetest.settings:set('movement_speed_walk',1)
@@ -438,10 +439,10 @@ end
 
     scaffold.register_template_scaffold("QuintScaffold", "scaffold_five_wide", function(pos)
         scaffold.place_if_able(pos)
-        scaffold.place_if_able(turtle.dircoord(0, -1, 1))
-        scaffold.place_if_able(turtle.dircoord(0, -1, -1))
-        scaffold.place_if_able(turtle.dircoord(0, -1, 2))
-        scaffold.place_if_able(turtle.dircoord(0, -1, -2))
+        scaffold.place_if_able(turtle.dircoord(0, 0, 1))
+        scaffold.place_if_able(turtle.dircoord(0, 0, -1))
+        scaffold.place_if_able(turtle.dircoord(0, 0, 2))
+        scaffold.place_if_able(turtle.dircoord(0, 0, -2))
     end)
 end
 
