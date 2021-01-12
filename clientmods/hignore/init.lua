@@ -82,8 +82,8 @@ local function display(message)
         message = minetest.strip_colors(message)
     end
 
-    local dm = message:match(".*rom (.*): .*")
-    local pub = message:match("<(.*)>.*")
+    local dm = message:match(".*rom (.-): .*")
+    local pub = message:match("<(.-)>.*")
     local is_dm = false
 
     local player = dm or pub
@@ -111,7 +111,7 @@ local function display(message)
 
     -- strip title
     if not is_dm and (hignore.strip[player] or minetest.settings:get_bool("hignore_strip_all")) then
-        message = message:match(".- | (.*)")
+        message = message:match(".- | (.*)") or message
         if hignore.highlight[player] == nil then
             minetest.display_chat_message(message)
             return true
