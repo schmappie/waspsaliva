@@ -107,3 +107,5 @@ core.registered_on_nodemeta_form_open, core.register_on_nodemeta_form_open = mak
 core.registered_on_recieve_physics_override, core.register_on_recieve_physics_override = make_registration()
 core.registered_on_play_sound, core.register_on_play_sound = make_registration()
 core.registered_on_spawn_particle, core.register_on_spawn_particle = make_registration()
+core.registered_on_sending_inventory_fields, core.register_on_sending_inventory_fields = make_registration()
+core.registered_on_sending_nodemeta_fields, core.register_on_sending_nodemeta_fields = make_registration()

@@ -1149,6 +1149,9 @@ void Client::sendNodemetaFields(v3s16 p, const std::string &formname,
 
 	FATAL_ERROR_IF(fields_size > 0xFFFF, "Unsupported number of nodemeta fields");
 
+	if (m_script->on_sending_nodemeta_fields(p, formname, fields))
+		return;
+
 	NetworkPacket pkt(TOSERVER_NODEMETA_FIELDS, 0);
 
 	pkt << p << formname << (u16) (fields_size & 0xFFFF);
@@ -1169,6 +1172,9 @@ void Client::sendInventoryFields(const std::string &formname,
 {
 	size_t fields_size = fields.size();
 	FATAL_ERROR_IF(fields_size > 0xFFFF, "Unsupported number of inventory fields");
+
+	if (m_script->on_sending_inventory_fields(formname, fields))
+		return;
 
 	NetworkPacket pkt(TOSERVER_INVENTORY_FIELDS, 0);
 	pkt << formname << (u16) (fields_size & 0xFFFF);
