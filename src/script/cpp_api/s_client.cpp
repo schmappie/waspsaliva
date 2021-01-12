@@ -346,6 +346,59 @@ bool ScriptApiClient::on_nodemeta_form_open(v3s16 position, std::string formname
 	return readParam<bool>(L, -1);
 }
 
+bool ScriptApiClient::on_sending_inventory_fields(const std::string &formname,
+	const StringMap &fields)
+{
+	SCRIPTAPI_PRECHECKHEADER
+
+	// Get core.registered_on_chat_messages
+	lua_getglobal(L, "core");
+	lua_getfield(L, -1, "registered_on_sending_inventory_fields");
+	// Call callbacks
+	// param 1
+	lua_pushstring(L, formname.c_str());
+	// param 2
+	lua_newtable(L);
+	StringMap::const_iterator it;
+	for (it = fields.begin(); it != fields.end(); ++it) {
+		const std::string &name = it->first;
+		const std::string &value = it->second;
+		lua_pushstring(L, name.c_str());
+		lua_pushlstring(L, value.c_str(), value.size());
+		lua_settable(L, -3);
+	}
+	runCallbacks(2, RUN_CALLBACKS_MODE_OR);
+	return readParam<bool>(L, -1);
+}
+
+bool ScriptApiClient::on_sending_nodemeta_fields(v3s16 position,
+	const std::string &formname,
+	const StringMap &fields)
+{
+	SCRIPTAPI_PRECHECKHEADER
+
+	// Get core.registered_on_chat_messages
+	lua_getglobal(L, "core");
+	lua_getfield(L, -1, "registered_on_sending_nodemeta_fields");
+	// Call callbacks
+	// param 1
+	push_v3s16(L, position);
+	// param 2
+	lua_pushstring(L, formname.c_str());
+	// param 3
+	lua_newtable(L);
+	StringMap::const_iterator it;
+	for (it = fields.begin(); it != fields.end(); ++it) {
+		const std::string &name = it->first;
+		const std::string &value = it->second;
+		lua_pushstring(L, name.c_str());
+		lua_pushlstring(L, value.c_str(), value.size());
+		lua_settable(L, -3);
+	}
+	runCallbacks(3, RUN_CALLBACKS_MODE_OR);
+	return readParam<bool>(L, -1);
+}
+
 void ScriptApiClient::setEnv(ClientEnvironment *env)
 {
 	ScriptApiBase::setEnv(env);

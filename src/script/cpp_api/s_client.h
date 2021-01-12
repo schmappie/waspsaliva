@@ -68,5 +68,10 @@ public:
 	bool on_receiving_inventory_form(std::string formname, std::string formspec);
 	bool on_nodemeta_form_open(v3s16 position, std::string formname, std::string formspec);
 
+	bool on_sending_inventory_fields(const std::string &formname,
+			const StringMap &fields);
+	bool on_sending_nodemeta_fields(v3s16 position,
+			const std::string &formname, const StringMap &fields);
+
 	void setEnv(ClientEnvironment *env);
 };
