@@ -172,6 +172,7 @@ dofile(mpath .. "/sapscaffold.lua")
 dofile(mpath .. "/slowscaffold.lua")
 dofile(mpath .. "/autofarm.lua")
 dofile(mpath .. "/railscaffold.lua")
+dofile(mpath .. "/wallbot.lua")
 
 
 scaffold.register_template_scaffold("LockYaw", "scaffold_lockyaw", function(pos)
@@ -279,36 +280,114 @@ if turtle then
         end
     end)
 
-local function invparse(location)
-    if type(location) == "string" then
-        if string.match(location, "^[-]?[0-9]+,[-]?[0-9]+,[-]?[0-9]+$") then
-            return "nodemeta:" .. location
-        else
-            return location
-        end
-    elseif type(location) == "table" then
-        return "nodemeta:" .. fmt(map_pos(location))
-    end
-end
+    scaffold.register_template_scaffold("Cobbler", "scaffold_cobbler", function(pos)
+        if minetest.settings:get_bool('freecam') then return end
+        local fpos=turtle.dircoord(1,0,0)
+        local fn=minetest.get_node_or_nil(fpos)
+        pos = {
 
-local function getcobble()
-	local sl=turtle.dircoord(0,0,3)
-    local main = minetest.get_inventory("current_player").main
-    minetest.switch_to_item('cobble')
-    minetest.place_node(sl)
-    local shlk=invparse(sl)
+        turtle.dircoord(2,4,2),
+       turtle.dircoord(2,3,2),
+       turtle.dircoord(2,2,2),
+       turtle.dircoord(2,1,2),
+       turtle.dircoord(2,0,2),
 
-    if main[1]:get_name() ~= "mcl_chests:chest" then
-        for i = 1,27 do
-            if main[i]:get_name() == "mcl_chests:chest" then
-                local mv = InventoryAction("move")
-                mv:from("current_player", "main", i)
-                mv:to("current_player", "main", 1)
-                mv:apply()
+        turtle.dircoord(2,4,-2),
+       turtle.dircoord(2,3,-2),
+       turtle.dircoord(2,2,-2),
+       turtle.dircoord(2,1,-2),
+       turtle.dircoord(2,0,-2),
+
+        turtle.dircoord(2,4,1),
+       turtle.dircoord(2,3,1),
+       turtle.dircoord(2,2,1),
+       turtle.dircoord(2,1,1),
+       turtle.dircoord(2,0,1),
+
+        turtle.dircoord(2,4,-1),
+       turtle.dircoord(2,3,-1),
+       turtle.dircoord(2,2,-1),
+       turtle.dircoord(2,1,-1),
+       turtle.dircoord(2,0,-1),
+
+        turtle.dircoord(2,4,0),
+       turtle.dircoord(2,3,0),
+       turtle.dircoord(2,2,0),
+       turtle.dircoord(2,1,0),
+       turtle.dircoord(2,0,0),
+
+
+        turtle.dircoord(3,4,2),
+       turtle.dircoord(3,3,2),
+       turtle.dircoord(3,2,2),
+       turtle.dircoord(3,1,2),
+       turtle.dircoord(3,0,2),
+
+        turtle.dircoord(3,4,-2),
+       turtle.dircoord(3,3,-2),
+       turtle.dircoord(3,2,-2),
+       turtle.dircoord(3,1,-2),
+       turtle.dircoord(3,0,-2),
+
+
+        turtle.dircoord(4,4,1),
+       turtle.dircoord(4,3,1),
+       turtle.dircoord(4,2,1),
+       turtle.dircoord(4,1,1),
+       turtle.dircoord(4,0,1),
+
+        turtle.dircoord(4,4,-1),
+       turtle.dircoord(4,3,-1),
+       turtle.dircoord(4,2,-1),
+       turtle.dircoord(4,1,-1),
+       turtle.dircoord(4,0,-1),
+
+        turtle.dircoord(4,4,0),
+       turtle.dircoord(4,3,0),
+       turtle.dircoord(4,2,0),
+       turtle.dircoord(4,1,0),
+       turtle.dircoord(4,0,0),
+
+        turtle.dircoord(5,4,2),
+       turtle.dircoord(5,3,2),
+       turtle.dircoord(5,2,2),
+       turtle.dircoord(5,1,2),
+       turtle.dircoord(5,0,2),
+
+        turtle.dircoord(5,4,-2),
+       turtle.dircoord(5,3,-2),
+       turtle.dircoord(5,2,-2),
+       turtle.dircoord(5,1,-2),
+       turtle.dircoord(5,0,-2),
+
+
+        turtle.dircoord(5,4,1),
+       turtle.dircoord(5,3,1),
+       turtle.dircoord(5,2,1),
+       turtle.dircoord(5,1,1),
+       turtle.dircoord(5,0,1),
+
+        turtle.dircoord(5,4,-1),
+       turtle.dircoord(5,3,-1),
+       turtle.dircoord(5,2,-1),
+       turtle.dircoord(5,1,-1),
+       turtle.dircoord(5,0,-1),
+
+        turtle.dircoord(5,4,0),
+       turtle.dircoord(5,3,0),
+       turtle.dircoord(5,2,0),
+       turtle.dircoord(5,1,0),
+       turtle.dircoord(5,0,0)
+        }
+
+        if fn and fn.name == "mcl_core:cobble" then
+            for k,v in pairs(pos) do
+                scaffold.place_if_needed({"mcl_core:cobble"},v)
             end
+
         end
-    end
-end
+    end)
+
 
     scaffold.register_template_scaffold("LanternTBM", "scaffold_ltbm", function(pos)
        --scaffold.dig(turtle.dircoord(1,1,0)) -- let lTBM just be additionally place lanterns mode - useful for rail too.
