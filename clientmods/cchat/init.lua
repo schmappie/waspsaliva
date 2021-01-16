@@ -83,7 +83,7 @@ local function loglastlogs()
     end
 end
 
-minetest.after("5.0",function() loglastlogs() end)
+--minetest.after("5.0",function() loglastlogs() end)
 
 if minetest.register_on_connect then
     minetest.register_on_connect(set_my_name)
