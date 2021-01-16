@@ -82,4 +82,9 @@ private:
 	v2u32 m_fontsize;
 
 	float m_rainbow_offset = 0.0;
+
+	void drawRect(video::IVideoDriver *driver, std::string name,
+				int x, int y,
+				int width, int height,
+				bool active, bool selected);
 };
