@@ -8,7 +8,7 @@ local function nameformat(description)
     return description
 end
 
-local function find_named(list, name, test)
+function refill.find_named(list, name, test)
     for i, v in ipairs(list) do
         if (v:get_name():find("shulker_box")
             and nameformat(v:get_description()) == name
@@ -18,7 +18,7 @@ local function find_named(list, name, test)
     end
 end
 
-local function hasitems(stack)
+function refill.shulker_has_items(stack)
     local list = minetest.deserialize(stack:get_metadata())
 
     for i, v in ipairs(list) do
@@ -30,24 +30,35 @@ local function hasitems(stack)
     return false
 end
 
-local function shulk_switch(name)
+function refill.shulk_switch(name)
     local plinv = minetest.get_inventory("current_player")
 
-    local pos = find_named(plinv.main, name, hasitems)
+    local pos = refill.find_named(plinv.main, name, refill.shulker_has_items)
     if pos then
+        minetest.log("main " .. tostring(pos))
         minetest.localplayer:set_wield_index(pos)
         return true
     end
 
-    local epos = find_named(plinv.enderchest, name, hasitems)
+    local epos = refill.find_named(plinv.enderchest, name, refill.shulker_has_items)
     if epos then
-        local q = quint.invaction_new()
-        quint.invaction_dump(q,
-            {location = "current_player", inventory = "enderchest"},
-            {location = "current_player", inventory = "main"},
-            {min = epos, max = epos})
-        quint.invaction_apply(q)
-        return true
+        minetest.log("enderchest " .. tostring(epos))
+        local tpos
+        for i, v in ipairs(plinv.main) do
+            if v:is_empty() then
+                tpos = i
+                break
+            end
+        end
+
+        if tpos then
+            local mv = InventoryAction("move")
+            mv:from("current_player", "enderchest", epos)
+            mv:to("current_player", "main", tpos)
+            mv:apply()
+            minetest.localplayer:set_wield_index(tpos)
+            return true
+        end
     end
 end
 
@@ -65,10 +76,10 @@ local function do_refill(pos)
 end
 
 function refill.refill_at(pos, name)
-    if shulk_swap(pos, name) then
-        minetest.after(0.5, minetest.place_node, pos)
-        minetest.after(1, do_refill, pos)
-        minetest.after(2, minetest.dig_node, pos)
+    if refill.shulk_switch(name) then
+        minetest.after(1, minetest.place_node, pos)
+        minetest.after(2, do_refill, pos)
+        minetest.after(3, minetest.dig_node, pos)
     end
 end
 
