@@ -1,14 +1,35 @@
-local wall_pos1={x=-1254,y=-4,z=791} --not the exact ones rn
+local wall_pos1={x=-1254,y=-4,z=791}
 local wall_pos2={x=-1454,y=80,z=983}
 local iwall_pos1={x=-1264,y=-4,z=801}
 local iwall_pos2={x=-1444,y=80,z=973}
 
+local bpos = {
+    {x=-1265,y=40,z=802},
+    {x=-1265,y=40,z=972},
+    {x=-1443,y=40,z=972},
+    {x=-1443,y=40,z=802}
+}
+
+local wbtarget = bpos[1]
 
 
 local function between(x, y, z) -- x is between y and z (inclusive)
     return y <= x and x <= z
 end
 
+local function mkposvec(vec)
+    vec.x=vec.x + 30927
+    vec.y=vec.y + 30927
+    vec.z=vec.z + 30927
+    return vec
+end
+
+local function normvec(vec)
+    vec.x=vec.x - 30927
+    vec.y=vec.y - 30927
+    vec.z=vec.z - 30927
+    return vec
+end
 
 local function in_cube(tpos,wpos1,wpos2)
     local xmax=wpos2.x
@@ -59,4 +80,53 @@ scaffold.register_template_scaffold("WallTool", "scaffold_walltool", function(po
             end
         end
     end end
+end)
+local posi=1
+
+local function flythere()
+    minetest.settings:set_bool('noclip',true)
+    minetest.settings:set_bool('scaffold_walltool',true)
+    minetest.settings:set_bool("pitch_move",true)
+    minetest.settings:set_bool("free_move",true)
+    minetest.settings:set_bool("continuous_forward",true)
+    autofly.aim(wbtarget)
+    core.set_keypress("special1", true)
+end
+
+local function stopflight()
+    minetest.settings:set_bool("continuous_forward",false)
+    minetest.settings:set_bool('scaffold_walltool',false)
+    minetest.settings:set_bool("noclip",false)
+    minetest.settings:set_bool("pitch_move",false)
+    core.set_keypress("special1", false)
+end
+
+local function findholes()
+    local lp=minetest.localplayer:get_pos()
+    local p1=vector.add(lp,{x=15,y=60,z=15})
+    local p2=vector.add(lp,{x=-15,y=-60,z=-15})
+    local nn=nlist.get_mclnodes()
+    table.insert(nn,'air')
+    local nds,cnt=minetest.find_nodes_in_area(p1,p2,nn,true)
+        for k,v in pairs(nds) do for kk,vv in pairs(v) do
+        if vv and in_wall(vv) then
+            wbtarget=vv
+        end
+    end end
+end
+math.randomseed(os.time())
+scaffold.register_template_scaffold("WallABot", "scaffold_wallabot", function(pos)
+    local lp=minetest.localplayer:get_pos()
+    if vector.distance(lp,bpos[posi]) < 3 then
+        posi=posi+1
+        if posi > 4 then posi=1 end
+        wbtarget=bpos[posi]
+        wbtarget.y=math.random(15,65)
+    end
+    local tn=minetest.get_node_or_nil(wbtarget)
+    if tn and tn.name == 'mcl_core:cobble' then wbtarget=bpos[i] end
+    flythere()
+    findholes()
+end,false,function()
+    stopflight()
 end)
