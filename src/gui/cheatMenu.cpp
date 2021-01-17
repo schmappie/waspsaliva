@@ -157,7 +157,7 @@ void CheatMenu::draw(video::IVideoDriver *driver, bool show_debug)
 				(height - (m_selected_category * (m_entry_height + m_gap)))
 				/ (m_entry_height + m_gap);
 
-			if (cheat_n <= target_normal) {
+			if (cheat_n < target_normal) {
 				int cheat_count = 0;
 				for (auto cheat = (*category)->m_cheats.begin();
 						cheat != (*category)->m_cheats.end(); cheat++) {
