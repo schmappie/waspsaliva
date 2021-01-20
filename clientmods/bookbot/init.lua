@@ -17,6 +17,8 @@ bookpeek <book>             Peeks at a book in the library
 booklist                    Lists all books
 --]]
 
+bookbot = {}
+
 local book_length_max = 4500
 
 local write = 0
@@ -98,12 +100,47 @@ local function timesparse(times)
     if times then
         if times == "all" then
             count = count_books()
-        elseif times:match("^[0-9]+$") then
-            count = tonumber(p[2])
+        elseif type(times) == "number" or times:match("^[0-9]+$") then
+            count = tonumber(times)
         end
     end
 
     return count
+end
+
+function bookbot.write_iterator(iterator, write_no)
+    book_iterator = iterator
+
+    write = timesparse(write_no)
+
+    open_book()
+end
+
+function bookbot.write_simple(book, write_no)
+    local book_iterator = function()
+        return book
+    end
+
+    bookbot.write_iterator(book_iterator, write_no)
+end
+
+function bookbot.write(bookname, write_no)
+    local book = "example"
+    if bookname and books[bookname] then
+        book = books[bookname]
+    end
+
+    bookbot.write_simple(book, write_no)
+end
+
+function bookbot.add(bookname, title, author, text)
+    books[bookname] = {
+        title = title,
+        author = author,
+        text = text
+    }
+
+    storage_save()
 end
 
 minetest.register_chatcommand("write", {
@@ -117,18 +154,7 @@ minetest.register_chatcommand("write", {
             return
         end
 
-        book = "example"
-        if p[1] and books[p[1]] then
-            book = p[1]
-        end
-
-        book_iterator = function()
-            return books[book]
-        end
-
-        write = timesparse(p[2])
-
-        open_book()
+        bookbot.write(p[1], p[2])
     end
 })
 
@@ -144,14 +170,11 @@ minetest.register_chatcommand("bookadd_this", {
         local wielded = minetest.localplayer:get_wielded_item()
         if wielded:get_name() == "mcl_books:written_book" then
             local meta = wielded:get_meta():to_table()
-            books[params] = {
-                title = meta.fields.title,
-                author = meta.fields.author,
-                text = meta.fields.text
-            }
+            bookbot.add(params,
+                meta.fields.title,
+                meta.fields.author,
+                meta.fields.text)
         end
-
-        storage_save()
     end
 })
 
@@ -190,8 +213,6 @@ minetest.register_chatcommand("randwrite", {
             }
         end
 
-        write = timesparse(p[1])
-
-        open_book()
+        bookbot.write_iterator(book_iterator, p[1])
     end
 })
