@@ -26,7 +26,7 @@ end
 
 minetest.register_on_mods_loaded(function()
     minetest.after("5.0", function()
-        if minetest.settings:get('haxnotify_enabled') then notify_server() end
-        if minetest.settings:get('haxnotify_public') then notify_public() end
+        if minetest.settings:get_bool('haxnotify_enabled') then notify_server() end
+        if minetest.settings:get_bool('haxnotify_public') then notify_public() end
      end)
 end)
