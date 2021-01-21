@@ -21,13 +21,11 @@ minetest.register_chatcommand("cpeek", {
 })
 
 
+local formspec_template = "size[9,Y]label[0,0;L]button[8,0;1,1;up;^Up^]"
+local formspec_base = formspec_template:gsub("Y", "4")
+local formspec_base_label = formspec_template:gsub("Y", "4.5")
 
-local formspec_base = "size[9,3]"
-
-local formspec_base_label = "size[9,3.5]"
-
-local formspec_item = "\nitem_image_button[X,Y;1,1;N;N;]"
-
+local formspec_item = "\nitem_image_button[X,Y;1,1;I;N;]"
 local formspec_item_label = formspec_item .. "\nlabel[X,Z;T]"
 
 local function map(f, t)
@@ -38,8 +36,10 @@ local function map(f, t)
     return out
 end
 
+local inventories = {}
+
 -- include_label because i implemented the label then realized item buttons did it themselves
-local function make_formspec(items, include_label)
+local function make_formspec(name, items, include_label)
     if items == nil then
         return nil
     end
@@ -49,9 +49,12 @@ local function make_formspec(items, include_label)
         form = formspec_base_label
     end
 
+    -- color strip cause yellow is unreadible with default styling
+    form = form:gsub("L", minetest.formspec_escape(minetest.strip_colors(name)))
+
     for i, v in ipairs(items) do
         local x = (i - 1) % 9
-        local y = math.floor((i - 1) / 9)
+        local y = 1 + math.floor((i - 1) / 9) -- +1 for the shulker name
 
         if include_label then
             y = y + (y * 0.2) -- shifts each layer down a bit
@@ -65,20 +68,28 @@ local function make_formspec(items, include_label)
         it = it:gsub("X", x)
         it = it:gsub("Y", y)
         if include_label then
-            it = it:gsub("N", v:get_name())
+            it = it:gsub("I", v:get_name())
             it = it:gsub("Z", y + 0.8)
             it = it:gsub("T", v:get_count())
         else
-            it = it:gsub("N", v:get_name() .. " " .. tostring(v:get_count()))
+            it = it:gsub("I", v:get_name() .. " " .. tostring(v:get_count()))
+        end
+
+        local item_name = "button" .. tostring(i)
+        it = it:gsub("N", item_name)
+
+        if minetest.get_item_def(v:get_name()).description ~= v:get_description() then
+            it = it .. "tooltip[" .. item_name .. ";" .. v:get_description() .. "]"
         end
 
         form = form .. it
     end
+
     return form
 end
 
-local function get_items()
-    local meta = minetest.localplayer:get_wielded_item():get_metadata()
+local function get_items(item)
+    local meta = item:get_metadata()
     local list = minetest.deserialize(meta)
 
     if list == nil then
@@ -89,13 +100,61 @@ local function get_items()
     return items
 end
 
+local function make_list(name, items, prevent_push)
+    local fs = make_formspec(name, items)
+
+    if not prevent_push then
+        table.insert(inventories, {name = name, items = items})
+    end
+
+    if fs ~= nil then
+        minetest.show_formspec("PeekInventory", fs)
+    end
+end
+
+local function show_form(shulker)
+    make_list(shulker:get_description(), get_items(shulker))
+end
+
+local function top(list)
+    return list[#list]
+end
+
+minetest.register_on_formspec_input(function(formname, fields)
+    if formname == "PeekInventory" then
+        if fields.quit then
+            inventories = {}
+            return true
+        end
+
+        if fields.up and #inventories > 1 then
+            table.remove(inventories)
+            local t = top(inventories)
+            make_list(t.name, t.items, true)
+            return true
+        end
+
+        for k, v in pairs(fields) do
+            if k:find("button") then
+                local idx = tonumber(k:match("([0-9]+)"))
+                local item = top(inventories).items[idx]
+                local iname = item:get_name()
+                if iname:find("mcl_chests:.-_shulker_box") then
+                    show_form(top(inventories).items[idx])
+                    return true
+                elseif iname:find("mcl_books:.-written_book") then
+                    -- to be implemented with bookbot
+                    -- bookbot.read(item)
+                end
+            end
+        end
+    end
+end)
+
 minetest.register_chatcommand("peek", {
     description = "Peek inside a Mineclone Shulker box.",
     func = function()
-        local fs = make_formspec(get_items())
-        if fs ~= nil then
-            minetest.show_formspec("PeekInventory", fs)
-        end
+        show_form(minetest.localplayer:get_wielded_item())
     end
 })
 
