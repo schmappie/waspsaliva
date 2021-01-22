@@ -33,6 +33,20 @@ local books = {
 local book
 local book_iterator
 
+local read_form = [[
+size[9,8]
+label[0,0;N]
+label[0,1;A]
+textlist[0,2;9,5;;T]
+]]
+
+local edit_form = [[
+size[9,8]
+field[0,0;9,1;title;;N]
+field[0,1;9,1;author;;A]
+textarea[0,2;9,5;text;;T]
+]]
+
 local storage = minetest.get_mod_storage()
 
 local function storage_save()
