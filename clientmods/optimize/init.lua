@@ -4,6 +4,7 @@
 
 -- texture is a prefix
 local function remove_drops(texture)
+    if not minetest.localplayer then return end
     local obj = minetest.localplayer.get_nearby_objects(10000)
 
     for i, v in ipairs(obj) do
