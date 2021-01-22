@@ -522,12 +522,12 @@ end
 
 if nlist then
     scaffold.register_template_scaffold("RandomScaff", "scaffold_rnd", function(below)
-        if true then return false end
         local n = minetest.get_node_or_nil(below)
-        -- n == nil is ignore
-        if n and not scaffold.in_list(n.name, nlist.get('randomscaffold')) then
+        local nl=nlist.get('randomscaffold')
+        table.shuffle(nl)
+        if n and not scaffold.in_list(n.name, nl) then
             scaffold.dig(below)
-            scaffold.place_if_needed(table.shuffle(nlist.get('randomscaffold')), below)
+            scaffold.place_if_needed(nl, below)
         end
     end)
 end
