@@ -1,1 +1,3 @@
-autoeat (Automatically eat when damage was taken) bool false
+autoeat (AutoEat) bool false
+autoeat_cooldown (AutoEat cooldown) float 0.5
+autoeat_hunger (AutoEat hunger) float 9.0
