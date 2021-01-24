@@ -1,46 +1,74 @@
 autoeat = {}
-autoeat.last = 0
-local last_step_eating = false
-autoeat.interval = 1
+autoeat.lock = false
+
+local autodupe = rawget(_G, "autodupe")
+local hud_id = nil
+
+local function get_float(name, default)
+	return tonumber(minetest.settings:get("autoeat_" .. name) or "") or default
+end
+
+local etime = 0
 
 function autoeat.eat()
-	local player = minetest.localplayer
-	local owx=player:get_wield_index()
-	autoeat.eating = true
-	player:set_wield_index(9)
-	minetest.place_node(player:get_pos())
-	minetest.after("0.2",function()
-		player:set_wield_index(owx)
-	end)
+	local food_index
+	local food_count = 0
+	for index, stack in pairs(minetest.get_inventory("current_player").main) do
+		local stackname = stack:get_name()
+		if stackname ~= "" then
+			local def = minetest.get_item_def(stackname)
+			if def and def.groups.food then
+				food_count = food_count + 1
+				if food_index then
+					break
+				end
+				food_index = index
+			end
+		end
+	end
+	if food_index then
+		if food_count == 1 and autodupe then
+			autodupe.needed(food_index)
+			autoeat.lock = true
+		else
+			local player = minetest.localplayer
+			local old_index = player:get_wield_index()
+			player:set_wield_index(food_index)
+			minetest.interact("activate", {type = "nothing"})
+			player:set_wield_index(old_index)
+			autoeat.lock = false
+		end
+	end
 end
 
-function autoeat.conditional()
-		if os.time() < autoeat.last + ( autoeat.interval * 60 ) then return	end
-		autoeat.last = os.time()
+function autoeat.get_hunger()
+	if hud_id then
+		return minetest.localplayer:hud_get(hud_id).number
+	else
+		return 20
+	end
+end
+
+minetest.register_globalstep(function(dtime)
+	if not minetest.localplayer then return end
+	etime = etime + dtime
+	if autoeat.lock or minetest.settings:get_bool("autoeat") and etime >= get_float("cooldown", 0.5) and autoeat.get_hunger() < get_float("hunger", 9) then
+		etime = 0
 		autoeat.eat()
-end
-
-minetest.register_on_damage_taken(function()
-	if not minetest.settings:get_bool("autoeat") then return end
-	autoeat.eat()
+	end
 end)
 
-minetest.register_globalstep(function()
-	if last_step_eating then
-		autoeat.eating, last_step_eating = false, false
-	elseif autoeat.eating then
-		last_step_eating = true
+minetest.after(3, function()
+	local player = minetest.localplayer
+	local def
+	local i = -1
+	repeat
+		i = i + 1
+		def = player:hud_get(i)
+	until not def or def.text == "hbhunger_icon.png"
+	if def then
+		hud_id = i
 	end
-
-	if not minetest.settings:get_bool("autoeat_timed") then return end
-	if ( autofly.speed ~= 0 and minetest.settings:get_bool("autosprint") )
-	or (minetest.settings:get_bool("autofsprint") and minetest.settings:get_bool("continuous_forward")  )
-	or (minetest.settings:get_bool("killaura")) then
-		autoeat.conditional()
-	end
-
-
 end)
 
 minetest.register_cheat("AutoEat", "Player", "autoeat")
-minetest.register_cheat("AutoEatTimed", "Player", "autoeat_timed")
