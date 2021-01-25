@@ -3,12 +3,13 @@
 incremental_tp = {}
 
 incremental_tp.fudge = 0.8 -- cause the tp time isn't synced with the server
+incremental_tp.tpactive=false
 
 -- for Clamity
 incremental_tp.max_instantaneous_tp = {
-    x = 10,
-    y = 60,
-    z = 10
+    x = 9,
+    y = 55,
+    z = 9
 }
 
 local function sign(n)
@@ -30,13 +31,15 @@ local function max_dist_per(vec, time)
     return nvec
 end
 
-local function tpstep(target, time, second, variance)
+local function tpstep(target, time, second, variance,sfunc)
     local pos = minetest.localplayer:get_pos()
     local vec = vector.subtract(target, pos)
 
     if math.abs(vec.x) + math.abs(vec.y) + math.abs(vec.z) < 1 then
         minetest.localplayer:set_pos(target)
+        incremental_tp.tpactive=false
         minetest.display_chat_message("Arrived at " .. minetest.pos_to_string(target))
+        if sfunc then sfunc(target) end
         return
     end
 
@@ -54,11 +57,18 @@ local function tpstep(target, time, second, variance)
 
     minetest.localplayer:set_pos(vector.add(pos, nvec))
 
-    minetest.after(intime, tpstep, target, time, second - intime, variance)
+    minetest.after(intime, function()
+        tpstep(target, time, second - intime, variance,sfunc)
+    end)
 end
 
 function incremental_tp.tp(target, time, variance)
+    incremental_tp.tpactive=true
     tpstep(target, time, 1, variance)
+end
+
+function incremental_tp.tpafter(target,time,variance,sfunc)
+    tpstep(target,time,1,variance,sfunc)
 end
 
 minetest.register_chatcommand("itp", {
