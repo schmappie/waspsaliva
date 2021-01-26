@@ -148,6 +148,7 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("entity_esp_color", "(50, 50, 50)");
 	settings->setDefault("player_esp_color", "(0, 255, 0)");
 	settings->setDefault("noweather", "false");
+	settings->setDefault("noparticles", "false");
 
 	// Keymap
 	settings->setDefault("remote_port", "30000");

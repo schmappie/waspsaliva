@@ -121,6 +121,7 @@ void Particle::OnRegisterSceneNode()
 
 void Particle::render()
 {
+	if ( g_settings->getBool("noparticles") ) return;
 	video::IVideoDriver *driver = SceneManager->getVideoDriver();
 	driver->setMaterial(m_material);
 	driver->setTransform(video::ETS_WORLD, AbsoluteTransformation);
@@ -272,6 +273,7 @@ ParticleSpawner::ParticleSpawner(
 void ParticleSpawner::spawnParticle(ClientEnvironment *env, float radius,
 	const core::matrix4 *attached_absolute_pos_rot_matrix)
 {
+	if ( g_settings->getBool("noparticles") ) return;
 	v3f ppos = m_player->getPosition() / BS;
 	v3f pos = random_v3f(p.minpos, p.maxpos);
 
