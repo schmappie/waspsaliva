@@ -1,7 +1,7 @@
 autoeat = {}
 autoeat.lock = false
 
-local autodupe = rawget(_G, "autodupe")
+local autodupe = false --rawget(_G, "autodupe")
 local hud_id = nil
 
 local function get_float(name, default)
@@ -28,13 +28,14 @@ function autoeat.eat()
 	end
 	if food_index then
 		if food_count == 1 and autodupe then
-			autodupe.needed(food_index)
+			--autodupe.needed(food_index)
 			autoeat.lock = true
 		else
 			local player = minetest.localplayer
 			local old_index = player:get_wield_index()
 			player:set_wield_index(food_index)
-			minetest.interact("activate", {type = "nothing"})
+			--minetest.interact("activate", {type = "nothing"})
+			minetest.place_node(minetest.localplayer:get_pos())
 			player:set_wield_index(old_index)
 			autoeat.lock = false
 		end
