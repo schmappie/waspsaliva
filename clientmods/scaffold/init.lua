@@ -6,6 +6,10 @@ scaffold = {}
 scaffold.registered_scaffolds = {}
 scaffold.lockdir = false
 scaffold.locky = false
+scaffold.constrain1 = false
+scaffold.constrain2 = false
+local hwps={}
+
 local storage=minetest.get_mod_storage()
 
 scaffold.wason = {}
@@ -13,9 +17,34 @@ scaffold.wason = {}
 local nextact = {}
 
 local towerbot_height = 75
+local function between(x, y, z) return y <= x and x <= z end -- x is between y and z (inclusive)
 
+function scaffold.in_cube(tpos,wpos1,wpos2)
+    local xmax=wpos2.x
+    local xmin=wpos1.x
 
+    local ymax=wpos2.y
+    local ymin=wpos1.y
 
+    local zmax=wpos2.z
+    local zmin=wpos1.z
+    if wpos1.x > wpos2.x then
+        xmax=wpos1.x
+        xmin=wpos2.x
+    end
+    if wpos1.y > wpos2.y then
+        ymax=wpos1.y
+        ymin=wpos2.y
+    end
+    if wpos1.z > wpos2.z then
+        zmax=wpos1.z
+        zmin=wpos2.z
+    end
+    if between(tpos.x,xmin,xmax) and between(tpos.y,ymin,ymax) and between(tpos.z,zmin,zmax) then
+        return true
+    end
+    return false
+end
 
 local function get_locks()
     local ly=storage:get_string('lockdir')
@@ -49,6 +78,50 @@ function scaffold.step_scaffolds()
     end
 end
 
+local function set_hwp(name,pos)
+    table.insert(hwps,minetest.localplayer:hud_add({
+            hud_elem_type = 'waypoint',
+            name          = name,
+            text          = 'm',
+            number        = 0x00ff00,
+            world_pos     = pos
+        })
+    )
+end
+
+function scaffold.set_pos1()
+    scaffold.constrain1=vector.round(minetest.localplayer:get_pos())
+    local pstr=minetest.pos_to_string(scaffold.constrain1)
+    set_hwp('scaffold_pos1 '..pstr,scaffold.constrain1)
+    minetest.display_chat_message("scaffold pos1 set to "..pstr)
+end
+function scaffold.set_pos2()
+    scaffold.constrain2=vector.round(minetest.localplayer:get_pos())
+    local pstr=minetest.pos_to_string(scaffold.constrain2)
+    set_hwp('scaffold_pos2 '..pstr,scaffold.constrain2)
+    minetest.display_chat_message("scaffold pos2 set to "..pstr)
+end
+
+function scaffold.reset()
+    scaffold.constrain1=false
+    scaffold.constrain2=false
+    for k,v in pairs(hwps) do
+        minetest.localplayer:hud_remove(v)
+        table.remove(hwps,k)
+    end
+end
+
+local function inside_constraints(pos)
+    if (scaffold.constrain1 and scaffold.constrain2 and scaffold.in_cube(pos,scaffold.constrain1,scaffold.constrain2)) then return true
+    elseif not scaffold.constrain1 then return true
+    end
+    return false
+end
+
+minetest.register_chatcommand("sc_pos1", { func = scaffold.set_pos1 })
+minetest.register_chatcommand("sc_pos2", { func = scaffold.set_pos2 })
+minetest.register_chatcommand("sc_reset", { func = scaffold.reset })
+
 function scaffold.template(setting, func, offset, funcstop )
     offset = offset or {x = 0, y = -1, z = 0}
     funcstop = funcstop or function() end
@@ -59,8 +132,9 @@ function scaffold.template(setting, func, offset, funcstop )
             nextact[setting] = os.clock() + 0.1
             local lp = minetest.localplayer:get_pos()
             local tgt = vector.round(vector.add(lp, offset))
-            func(tgt)
             if not scaffold.wason[setting] then scaffold.wason[setting] = true end
+            if scaffold.constrain1 and not inside_constraints(tgt) then return end
+            func(tgt)
         elseif scaffold.wason[setting] then
             scaffold.wason[setting] = false
             funcstop()
@@ -117,8 +191,9 @@ end
 local lastact=0
 local lastplc=0
 local lastdig=0
-local actint=1
+local actint=10
 function scaffold.place_if_needed(items, pos, place)
+    if not inside_constraints(pos) then return end
     --if lastplc + actint > os.time() then return end
     if not pos then return end
     lastplc=os.time()
@@ -146,6 +221,7 @@ end
 
 function scaffold.place_if_able(pos)
     --if lastplc + actint > os.time() then return end
+    if not inside_constraints(pos) then return end
     lastplc=os.time()
     if minetest.settings:get_bool('scaffold.locky') and math.round(pos.y) ~= math.round(scaffold.locky) then return end
     if scaffold.can_place_wielded_at(pos) then
@@ -154,13 +230,15 @@ function scaffold.place_if_able(pos)
 end
 
 function scaffold.dig(pos)
-    --if lastdig + actint > os.time() then return end
-    lastdig=os.time()
+    if not inside_constraints(pos) then return end
+    if lastdig + actint > os.clock() then return end
+    lastdig=os.clock()
     local nd=minetest.get_node_or_nil(pos)
     if not nd then return false end
     local n = minetest.get_node_def(nd.name)
     if n and n.diggable then
         minetest.select_best_tool(nd.name)
+        if emicor then emicor.supertool() end
         return minetest.dig_node(pos)
     end
     return false
@@ -173,7 +251,13 @@ dofile(mpath .. "/slowscaffold.lua")
 dofile(mpath .. "/autofarm.lua")
 dofile(mpath .. "/railscaffold.lua")
 dofile(mpath .. "/wallbot.lua")
+dofile(mpath .. "/squarry.lua")
 
+
+
+scaffold.register_template_scaffold("Constrain", "scaffold_constrain", function(pos)
+
+end,false,function() scaffold.reset() end)
 
 scaffold.register_template_scaffold("LockYaw", "scaffold_lockyaw", function(pos)
     if not scaffold.wason.scaffold_lockyaw then
