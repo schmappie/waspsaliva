@@ -1181,7 +1181,7 @@ function autofly.aim(tpos)
 end
 
 function autofly.autotp(tpname)
-   if minetest.localplayer == nil then return end
+   if minetest.localplayer == nil then autofly.autotp(tpname) end
     local tpos=nil
     if tpname == nil then
         tpos = autofly.get_waypoint('AUTOTP')
@@ -1193,26 +1193,29 @@ function autofly.autotp(tpname)
     if tpos == nil then return end
     local lp=minetest.localplayer
     local dst=vector.distance(lp:get_pos(),tpos)
-    if (dst < 500) then
+    if (dst < 300) then
         minetest.sound_play({name = "default_alert", gain = 3.0})
         autofly.delete_waypoint('AUTOTP')
-        return
+        return true
     end
     autofly.set_waypoint(tpos,'AUTOTP')
+    local boat_found=false
     for k, v in ipairs(lp.get_nearby_objects(4)) do
         local txt = v:get_item_textures()
 		if ( txt:find('mcl_boats_texture')) then
+            boat_found=true
             autofly.aim(vector.add(v:get_pos(),{x=0,y=-1.5,z=0}))
             minetest.after("0.2",function()
                 minetest.interact("place") end)
-            minetest.after("2.5",function()
+            minetest.after("1.5",function()
                  autofly.warpae('AUTOTP')
               end)
-			return
+            return true
         end
     end
-    minetest.sound_play({name = "default_alert", gain = 3.0})
-    autofly.delete_waypoint('AUTOTP')
+    if not boat_found then minetest.after("5.0",function() autofly.autotp(tpname) end) return end
+    --minetest.sound_play({name = "default_alert", gain = 3.0})
+    --autofly.delete_waypoint('AUTOTP')
 end
 
 function autofly.axissnap()
@@ -1384,7 +1387,7 @@ minetest.register_chatcommand('autotp', {
 register_chatcommand_alias('autotp', 'atp')
 
 
-minetest.after("3.0",function()
+minetest.after("5.0",function()
     if autofly.get_waypoint('AUTOTP') ~= nil then autofly.autotp(nil) end
 end)
 
