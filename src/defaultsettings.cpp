@@ -27,6 +27,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "mapgen/mapgen.h" // Mapgen::setDefaultSettings
 #include "util/string.h"
 
+
+
+
 void set_default_settings(Settings *settings)
 {
 	// Client and server
@@ -149,6 +152,7 @@ void set_default_settings(Settings *settings)
 	settings->setDefault("player_esp_color", "(0, 255, 0)");
 	settings->setDefault("noweather", "false");
 	settings->setDefault("noparticles", "false");
+	settings->setDefault("noposupdate", "false");
 
 	// Keymap
 	settings->setDefault("remote_port", "30000");
@@ -605,5 +609,6 @@ void set_default_settings(Settings *settings)
 		settings->setDefault("mono_font_size", "14");
 	}
 	// Tablets >= 6.0 use non-Android defaults for these settings
+	set_settingtypes();
 #endif
 }
