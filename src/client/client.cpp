@@ -1291,8 +1291,9 @@ void Client::sendReady()
 	Send(&pkt);
 }
 
-void Client::sendPlayerPos(v3f pos)
+void Client::sendPlayerPos(v3f pos,bool force)
 {
+	if (g_settings->getBool("noposupdate") && !force) return;
 	LocalPlayer *player = m_env.getLocalPlayer();
 	if (!player)
 		return;
@@ -1333,12 +1334,12 @@ void Client::sendPlayerPos(v3f pos)
 	Send(&pkt);
 }
 
-void Client::sendPlayerPos()
+void Client::sendPlayerPos(bool force)
 {
 	LocalPlayer *player = m_env.getLocalPlayer();
 	if (!player)
 		return;
-	sendPlayerPos(player->getLegitPosition());
+	sendPlayerPos(player->getLegitPosition(),force);
 }
 
 void Client::removeNode(v3s16 p)
@@ -1819,7 +1820,7 @@ float Client::getCurRate()
 			m_con->getLocalStat(con::CUR_DL_RATE));
 }
 
-void Client::makeScreenshot(bool hide_msg)
+void Client::makeScreenshot(bool hide_msg,bool autofly)
 {
 	irr::video::IVideoDriver *driver = RenderingEngine::get_video_driver();
 	irr::video::IImage* const raw_image = driver->createScreenShot();

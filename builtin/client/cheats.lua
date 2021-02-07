@@ -18,7 +18,8 @@ core.cheats = {
 		["SpeedOverride"] = "override_speed",
 		["JumpOverride"] = "override_jump",
 		["GravityOverride"] = "override_gravity",
-		["AntiSlip"] = "antislip",
+		["AntiSlip"] =  "antislip",
+		["NoPosUpdate"] =  "noposupdate",
 	},
 	["Render"] = {
 		["Xray"] = "xray",

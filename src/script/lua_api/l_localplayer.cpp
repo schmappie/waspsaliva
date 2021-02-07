@@ -308,7 +308,7 @@ int LuaLocalPlayer::l_set_pos(lua_State *L)
 
 	v3f pos = checkFloatPos(L, 2);
 	player->setPosition(pos);
-	getClient(L)->sendPlayerPos();
+	getClient(L)->sendPlayerPos(true);
 	return 0;
 }
 
