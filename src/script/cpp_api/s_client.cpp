@@ -221,6 +221,22 @@ bool ScriptApiClient::on_item_use(const ItemStack &item, const PointedThing &poi
 	return readParam<bool>(L, -1);
 }
 
+bool ScriptApiClient::on_item_activate(const ItemStack &item, const PointedThing &pointed)
+{
+	SCRIPTAPI_PRECHECKHEADER
+
+	// Get core.registered_on_item_use
+	lua_getglobal(L, "core");
+	lua_getfield(L, -1, "registered_on_item_activate");
+
+	// Push data
+	LuaItemStack::create(L, item);
+	push_pointed_thing(L, pointed, true);
+
+	// Call functions
+	runCallbacks(2, RUN_CALLBACKS_MODE_OR);
+	return readParam<bool>(L, -1);
+}
 bool ScriptApiClient::on_recieve_physics_override(float speed, float jump, float gravity, bool sneak, bool sneak_glitch, bool new_move)
 {
 	SCRIPTAPI_PRECHECKHEADER
@@ -258,7 +274,7 @@ bool ScriptApiClient::on_spawn_particle(struct ParticleParameters param)
 	SCRIPTAPI_PRECHECKHEADER
 
 	// Get core.registered_on_play_sound
-	
+
 	lua_getglobal(L, "core");
 	lua_getfield(L, -1, "registered_on_spawn_particle");
 
@@ -283,8 +299,8 @@ bool ScriptApiClient::on_spawn_particle(struct ParticleParameters param)
 		pushnode(L, param.node, getGameDef()->ndef());
 		lua_setfield(L, -2, "node");
 	}
-	setintfield(L, -1, "node_tile", param.node_tile);	
-	
+	setintfield(L, -1, "node_tile", param.node_tile);
+
 	// Call functions
 	runCallbacks(1, RUN_CALLBACKS_MODE_OR);
 	return readParam<bool>(L, -1);

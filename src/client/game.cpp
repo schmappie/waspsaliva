@@ -2414,7 +2414,8 @@ void Game::processPlayerInteraction(f32 dtime, bool show_hud, bool show_debug)
 		// Run callback even though item is not usable
 		if (wasKeyPressed(KeyType::DIG) && client->modsLoaded())
 			client->getScript()->on_item_use(selected_item, pointed);
-	} else if (wasKeyPressed(KeyType::PLACE)) {
+	} else if (wasKeyPressed(KeyType::PLACE) && (!client->modsLoaded() ||
+				!client->getScript()->on_item_activate(selected_item, pointed))) {
 		handlePointingAtNothing(selected_item);
 	}
 
