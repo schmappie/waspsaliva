@@ -18,17 +18,23 @@ local tspeed = 20 -- speed in blocks per second
 local speed=0;
 local ltime=0
 function autofly.display_formspec()
-    local formspec = 'size[5.25,8]' ..
+    local formspec = 'size[5.25,9]' ..
                      'label[0,0;Waypoint list]' ..
-                     'button_exit[0,7.5;1,0.5;goto;GO]' ..
-                     'button_exit[0.8,7.5;1,0.5;display;SHO]' ..
-                     'button[1.5125,7.5;0.9,0.5;warp;wrp]' ..
-                     'button[2.125,7.5;1.2,0.5;autotp;w+e]' ..
+
+                     'button_exit[0,7.5;1,0.5;display;Show]' ..
                      'button[2.625,7.5;1.3,0.5;rename;Rename]' ..
                      'button[3.9375,7.5;1.3,0.5;delete;Delete]' ..
-                     'textlist[0,0.75;5,6;marker;'
+                     'button_exit[0,8.5;1,0.5;goto;Fly]' ..
+                     'button_exit[0.8.0,8.5;1,0.5;itp;warp]' ..
+                     'button_exit[1.6,8.5;1,0.5;autotp;w+e]' ..
+                     'button_exit[2.4,8.5;1,0.5;itp;itp]' ..
+                     'button_exit[3.2,8.5;1,0.5;jitp;jitp]'
 
     -- Iterate over all the waypoints
+    if emicor then
+        formspec=formspec..'button_exit[4.0,8.5;1,0.5;stp;stp]'
+    end
+    formspec=formspec..'textlist[0,0.75;5,6;marker;'
     local selected = 1
     formspec_list = {}
 
@@ -92,7 +98,7 @@ minetest.register_on_formspec_input(function(formname, fields)
             end
         elseif fields.goto then
             if not autofly.goto_waypoint(name) then
-                minetest.display_chat_message('Error displaying waypoint!')
+                minetest.display_chat_message('Error flying to waypoint!')
             end
         elseif fields.warp then
         if not autofly.warp(name) then
@@ -101,6 +107,18 @@ minetest.register_on_formspec_input(function(formname, fields)
         elseif fields.autotp then
             if not autofly.autotp(name) then
                 minetest.display_chat_message('warpandexit error')
+            end
+        elseif fields.stp then
+            if (emicor and emicor.stp(autofly.get_waypoint(name))) then
+                minetest.display_chat_message('stp error')
+            end
+        elseif fields.itp then
+            if incremental_tp then
+                incremetal_tp.tp(autofly.get_waypoint(name))
+            end
+        elseif fields.jitp then
+            if incremental_tp then
+                incremetal_tp.tp(autofly.get_waypoint(name),0.5,0.4)
             end
         elseif fields.rename then
             minetest.show_formspec('autofly-csm', 'size[6,3]' ..
