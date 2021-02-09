@@ -22,17 +22,12 @@ function autofly.register_transport(name,func)
     table.insert(autofly.registered_transports,{name=name,func=func})
 end
 function autofly.display_formspec()
-    local formspec = 'size[5.25,9]' ..
+    local formspec = 'size[6.25,9]' ..
                      'label[0,0;Waypoint list]' ..
 
                      'button_exit[0,7.5;1,0.5;display;Show]' ..
-                     'button[2.625,7.5;1.3,0.5;rename;Rename]' ..
-                     'button[3.9375,7.5;1.3,0.5;delete;Delete]'
---                     'button_exit[0,8.5;1,0.5;goto;Fly]' ..
---                     'button_exit[0.8.0,8.5;1,0.5;itp;warp]' ..
---                     'button_exit[1.6,8.5;1,0.5;autotp;w+e]' ..
---                     'button_exit[2.4,8.5;1,0.5;itp;itp]' ..
---                     'button_exit[3.2,8.5;1,0.5;jitp;jitp]'
+                     'button[3.625,7.5;1.3,0.5;rename;Rename]' ..
+                     'button[4.9375,7.5;1.3,0.5;delete;Delete]'
 
     -- Iterate over all the waypoints
     local sp=0
@@ -43,7 +38,7 @@ function autofly.display_formspec()
 --    if emicor then
 --        formspec=formspec..'button_exit[4.0,8.5;1,0.5;stp;stp]'
  --   end
-    formspec=formspec..'textlist[0,0.75;5,6;marker;'
+    formspec=formspec..'textlist[0,0.75;6,6;marker;'
     local selected = 1
     formspec_list = {}
 
@@ -77,7 +72,7 @@ function autofly.display_formspec()
     else
         -- Draw over the buttons
         formspec = formspec .. 'button_exit[0,7.5;5.25,0.5;quit;Close dialog]' ..
-            'label[0,6.75;No waypoints. Add one with ".add_mrkr".]'
+            'label[0,6.75;No waypoints. Add one with ".wa".]'
     end
 
     -- Display the formspec
