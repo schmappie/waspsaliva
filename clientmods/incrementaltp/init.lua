@@ -34,12 +34,17 @@ end
 local function tpstep(target, time, second, variance,sfunc)
     local pos = minetest.localplayer:get_pos()
     local vec = vector.subtract(target, pos)
+    minetest.settings:set_bool("free_move",true)
 
     if math.abs(vec.x) + math.abs(vec.y) + math.abs(vec.z) < 1 then
         minetest.localplayer:set_pos(target)
         incremental_tp.tpactive=false
         minetest.display_chat_message("Arrived at " .. minetest.pos_to_string(target))
-        if sfunc then sfunc(target) end
+        if sfunc then
+            minetest.after(time, function()
+                sfunc(target)
+            end)
+        end
         return
     end
 
@@ -68,8 +73,13 @@ function incremental_tp.tp(target, time, variance)
 end
 
 function incremental_tp.tpafter(target,time,variance,sfunc)
+    incremental_tp.tpactive=true
     tpstep(target,time,1,variance,sfunc)
 end
+
+if autofly then autofly.register_transport('itp',function(pos,name) incremental_tp.tp(pos,1) end) end
+
+if autofly then autofly.register_transport('jitp',function(pos,name) incremental_tp.tp(pos,0.5,0.4) end) end
 
 minetest.register_chatcommand("itp", {
     description = "Teleport to destination with fixed increments.",

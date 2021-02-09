@@ -186,10 +186,16 @@ function autofly.set_hud_info(text)
     return true
 end
 
+function autofly.display(pos)
+    autofly.set_hud_wp(autofly.last_coords, autofly.last_name)
+    return true
+end
 
 
 function autofly.display_waypoint(name)
-    local pos=autofly.get_waypoint(name)
+    local pos=name
+    if type(name) ~= 'table' then pos=autofly.get_waypoint(name) end
+
     autofly.last_name = name
     autofly.last_coords = pos
     autofly.set_hud_info(name)
@@ -1204,6 +1210,7 @@ function autofly.autotp(tpname)
         local txt = v:get_item_textures()
 		if ( txt:find('mcl_boats_texture')) then
             boat_found=true
+            minetest.display_chat_message("boat found. entering and tping to "..minetest.pos_to_string(autofly.get_waypoint('AUTOTP')))
             autofly.aim(vector.add(v:get_pos(),{x=0,y=-1.5,z=0}))
             minetest.after("0.2",function()
                 minetest.interact("place") end)
@@ -1213,10 +1220,16 @@ function autofly.autotp(tpname)
             return true
         end
     end
-    if not boat_found then minetest.after("5.0",function() autofly.autotp(tpname) end) return end
+    if not boat_found then
+        minetest.display_chat_message("no boat found. trying again in 5.")
+        minetest.after("5.0",function() autofly.autotp(tpname) end)
+    return end
     --minetest.sound_play({name = "default_alert", gain = 3.0})
     --autofly.delete_waypoint('AUTOTP')
 end
+autofly.register_transport('Fly',function(pos,name) autofly.goto_waypoint(name) end)
+autofly.register_transport('Warp',function(pos,name) autofly.warp(name) end)
+autofly.register_transport('w+e',function(pos,name) autofly.warpae(name) end)
 
 function autofly.axissnap()
     if not minetest.settings:get_bool('afly_snap') then return end
@@ -1246,9 +1259,23 @@ minetest.register_on_death(function()
     end
 end)
 
+local function get_dimension(pos)
+    if pos.y > -65 then return "overworld"
+    elseif pos.y > -8000 then return "void"
+    elseif pos.y > -27000 then return "end"
+    elseif pos.y >29000 then return "void"
+    elseif pos.y >31000 then return "nether"
+    else return "void"
+    end
+end
+
 function autofly.warp(name)
-    local pos=vector.add(autofly.get_waypoint(name),{x=0,y=150,z=0})
+    local pos=autofly.get_waypoint(name)
     if pos then
+        if pos.y > -64 then
+            pos=vector.add(pos,{x=0,y=150,z=0})
+        end
+        if get_dimension(pos) == "void" then return false end
         minetest.localplayer:set_pos(pos)
         return true
     end

@@ -14,26 +14,35 @@ local stprefix="autofly-".. info['address']  .. '-'
 
 autofly = {}
 wps={}
+autofly.registered_transports={}
 local tspeed = 20 -- speed in blocks per second
 local speed=0;
 local ltime=0
+function autofly.register_transport(name,func)
+    table.insert(autofly.registered_transports,{name=name,func=func})
+end
 function autofly.display_formspec()
     local formspec = 'size[5.25,9]' ..
                      'label[0,0;Waypoint list]' ..
 
                      'button_exit[0,7.5;1,0.5;display;Show]' ..
                      'button[2.625,7.5;1.3,0.5;rename;Rename]' ..
-                     'button[3.9375,7.5;1.3,0.5;delete;Delete]' ..
-                     'button_exit[0,8.5;1,0.5;goto;Fly]' ..
-                     'button_exit[0.8.0,8.5;1,0.5;itp;warp]' ..
-                     'button_exit[1.6,8.5;1,0.5;autotp;w+e]' ..
-                     'button_exit[2.4,8.5;1,0.5;itp;itp]' ..
-                     'button_exit[3.2,8.5;1,0.5;jitp;jitp]'
+                     'button[3.9375,7.5;1.3,0.5;delete;Delete]'
+--                     'button_exit[0,8.5;1,0.5;goto;Fly]' ..
+--                     'button_exit[0.8.0,8.5;1,0.5;itp;warp]' ..
+--                     'button_exit[1.6,8.5;1,0.5;autotp;w+e]' ..
+--                     'button_exit[2.4,8.5;1,0.5;itp;itp]' ..
+--                     'button_exit[3.2,8.5;1,0.5;jitp;jitp]'
 
     -- Iterate over all the waypoints
-    if emicor then
-        formspec=formspec..'button_exit[4.0,8.5;1,0.5;stp;stp]'
+    local sp=0
+    for k,v in pairs(autofly.registered_transports) do
+        formspec=formspec..'button_exit['..sp..',8.5;1,0.5;'..v.name..';'..v.name..']'
+        sp=sp+0.8
     end
+--    if emicor then
+--        formspec=formspec..'button_exit[4.0,8.5;1,0.5;stp;stp]'
+ --   end
     formspec=formspec..'textlist[0,0.75;5,6;marker;'
     local selected = 1
     formspec_list = {}
@@ -92,6 +101,13 @@ minetest.register_on_formspec_input(function(formname, fields)
     end
 
     if name then
+        for k,v in pairs(autofly.registered_transports) do
+            if fields[v.name] then
+                if not v.func(autofly.get_waypoint(name),name) then
+                    minetest.display_chat_message('Error with '..v.name)
+                end
+            end
+        end
         if fields.display then
             if not autofly.display_waypoint(name) then
                 minetest.display_chat_message('Error displaying waypoint!')
@@ -107,10 +123,6 @@ minetest.register_on_formspec_input(function(formname, fields)
         elseif fields.autotp then
             if not autofly.autotp(name) then
                 minetest.display_chat_message('warpandexit error')
-            end
-        elseif fields.stp then
-            if (emicor and emicor.stp(autofly.get_waypoint(name))) then
-                minetest.display_chat_message('stp error')
             end
         elseif fields.itp then
             if incremental_tp then
