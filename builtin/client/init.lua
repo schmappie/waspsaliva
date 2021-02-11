@@ -10,4 +10,4 @@ dofile(commonpath .. "vector.lua")
 dofile(clientpath .. "util.lua")
 dofile(clientpath .. "chatcommands.lua")
 dofile(clientpath .. "cheats.lua")
-
+dofile(clientpath .. "wasplib.lua")
