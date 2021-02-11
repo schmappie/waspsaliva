@@ -28,16 +28,12 @@ function autofly.display_formspec()
                      'button_exit[0,7.5;1,0.5;display;Show]' ..
                      'button[3.625,7.5;1.3,0.5;rename;Rename]' ..
                      'button[4.9375,7.5;1.3,0.5;delete;Delete]'
-
-    -- Iterate over all the waypoints
     local sp=0
     for k,v in pairs(autofly.registered_transports) do
         formspec=formspec..'button_exit['..sp..',8.5;1,0.5;'..v.name..';'..v.name..']'
         sp=sp+0.8
     end
---    if emicor then
---        formspec=formspec..'button_exit[4.0,8.5;1,0.5;stp;stp]'
- --   end
+
     formspec=formspec..'textlist[0,0.75;6,6;marker;'
     local selected = 1
     formspec_list = {}
@@ -59,8 +55,8 @@ function autofly.display_formspec()
         formspec = formspec .. '##' .. minetest.formspec_escape(name)
     end
 
-    -- Close the text list and display the selected waypoint position
     formspec = formspec .. ';' .. tostring(selected) .. ']'
+
     if selected_name then
         local pos = autofly.get_waypoint(selected_name)
         if pos then
