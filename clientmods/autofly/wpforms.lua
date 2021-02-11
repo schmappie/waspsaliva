@@ -121,11 +121,11 @@ minetest.register_on_formspec_input(function(formname, fields)
             end
         elseif fields.itp then
             if incremental_tp then
-                incremetal_tp.tp(autofly.get_waypoint(name))
+                incremental_tp.tp(autofly.get_waypoint(name),1)
             end
         elseif fields.jitp then
             if incremental_tp then
-                incremetal_tp.tp(autofly.get_waypoint(name),0.5,0.4)
+                incremental_tp.tp(autofly.get_waypoint(name),0.5,0.4)
             end
         elseif fields.rename then
             minetest.show_formspec('autofly-csm', 'size[6,3]' ..
