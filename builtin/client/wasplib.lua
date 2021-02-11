@@ -142,3 +142,185 @@ end
 ws.on_connect(function()
     ws.lp=minetest.localplayer
 end)
+
+local function find_named(inv, name)
+	if not inv then return -1 end
+    for i, v in ipairs(inv) do
+        --minetest.display_chat_message(name)
+        if v:get_name():find(name) then
+            return i
+        end
+    end
+end
+function ws.switch_inv_or_echest(name,max_count)
+	if not minetest.localplayer then return false end
+    local plinv = minetest.get_inventory("current_player")
+
+    local pos = find_named(plinv.main, name)
+    if pos then
+        minetest.localplayer:set_wield_index(pos)
+        return true
+    end
+
+    local epos = find_named(plinv.enderchest, name)
+    if epos then
+        local tpos
+        for i, v in ipairs(plinv.main) do
+            if v:is_empty() then
+                tpos = i
+                break
+            end
+        end
+
+        if tpos then
+            local mv = InventoryAction("move")
+            mv:from("current_player", "enderchest", epos)
+            mv:to("current_player", "main", tpos)
+            if max_count then
+                mv:set_count(max_count)
+            end
+            mv:apply()
+            minetest.localplayer:set_wield_index(tpos)
+            return true
+        end
+    end
+    return false
+end
+-- TOOLS
+
+local function check_tool(stack, node_groups, old_best_time)
+	local toolcaps = stack:get_tool_capabilities()
+	if not toolcaps then return end
+	local best_time = old_best_time
+	for group, groupdef in pairs(toolcaps.groupcaps) do
+		local level = node_groups[group]
+		if level then
+			local this_time = groupdef.times[level]
+			if this_time and this_time < best_time then
+				best_time = this_time
+			end
+		end
+	end
+	return best_time < old_best_time, best_time
+end
+
+local function find_best_tool(nodename, switch)
+	local player = minetest.localplayer
+	local inventory = minetest.get_inventory("current_player")
+	local node_groups = minetest.get_node_def(nodename).groups
+	local new_index = player:get_wield_index()
+	local is_better, best_time = false, math.huge
+
+	is_better, best_time = check_tool(player:get_wielded_item(), node_groups, best_time)
+	if inventory.hand then
+	    is_better, best_time = check_tool(inventory.hand[1], node_groups, best_time)
+    end
+
+	for index, stack in ipairs(inventory.main) do
+		is_better, best_time = check_tool(stack, node_groups, best_time)
+		if is_better then
+			new_index = index
+		end
+	end
+
+	return new_index
+end
+
+function ws.select_best_tool(pos)
+    local nodename=minetest.get_node_or_nil(pos).name or 'air'
+	minetest.localplayer:set_wield_index(find_best_tool(nodename))
+end
+
+--- COORDS
+function ws.coord(x, y, z)
+    return vector.new(x,y,z)
+end
+function ws.ordercoord(c)
+    if c.x == nil then
+        return {x = c[1], y = c[2], z = c[3]}
+    else
+        return c
+    end
+end
+
+-- x or {x,y,z} or {x=x,y=y,z=z}
+function ws.optcoord(x, y, z)
+    if y and z then
+        return ws.coord(x, y, z)
+    else
+        return ws.ordercoord(x)
+    end
+end
+function ws.cadd(c1, c2)
+    return ws.coord(c1.x + c2.x, c1.y + c2.y, c1.z + c2.z)
+end
+
+function ws.relcoord(x, y, z)
+    local pos = minetest.localplayer:get_pos()
+    return ws.cadd(pos, ws.optcoord(x, y, z))
+end
+
+local function between(x, y, z) -- x is between y and z (inclusive)
+    return y <= x and x <= z
+end
+
+function ws.getdir() --
+    local rot = minetest.localplayer:get_yaw() % 360
+    if between(rot, 315, 360) or between(rot, 0, 45) then
+        return "north"
+    elseif between(rot, 135, 225) then
+        return "south"
+    elseif between(rot, 225, 315) then
+        return "east"
+    elseif between(rot, 45, 135) then
+        return "west"
+    end
+end
+function ws.setdir(dir) --
+    if dir == "north" then
+        minetest.localplayer:set_yaw(0)
+    elseif dir == "south" then
+        minetest.localplayer:set_yaw(180)
+    elseif dir == "east" then
+        minetest.localplayer:set_yaw(270)
+    elseif dir == "west" then
+        minetest.localplayer:set_yaw(90)
+    end
+end
+
+function ws.dircoord(f, y, r)
+    local dir=ws.getdir()
+    local coord = ws.optcoord(f, y, r)
+    local f = coord.x
+    local y = coord.y
+    local r = coord.z
+    local lp=minetest.localplayer:get_pos()
+    if dir == "north" then
+        return ws.relcoord(r, y, f)
+    elseif dir == "south"  then
+        return ws.relcoord(-r, y, -f)
+    elseif dir == "east" then
+        return ws.relcoord(f, y, -r)
+    elseif dir== "west" then
+        return ws.relcoord(-f, y, r)
+    end
+    return ws.relcoord(0, 0, 0)
+end
+
+function ws.place(pos,node)
+    if node then ws.switch_inv_or_echest(node,1) end
+    ws.c.place_node(pos)
+end
+
+function ws.dig(pos)
+    local nd=minetest.get_node_or_nil(pos)
+    if nd and minetest.get_node_def(nd.name).diggable then
+        ws.select_best_tool(pos)
+        minetest.dig_node(pos)
+    end
+
+end
+
+ws.rg('DigHead','Player','dighead',function()
+    ws.dig(ws.dircoord(0,1,0))
+end)
