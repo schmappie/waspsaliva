@@ -104,6 +104,36 @@ function ws.clear_wps()
     end
 end
 
+function ws.register_chatcommand_alias(old, ...)
+      local def = assert(minetest.registered_chatcommands[old])
+      def.name = nil
+     for i = 1, select('#', ...) do
+         minetest.register_chatcommand(select(i, ...), table.copy(def))
+     end
+end
+
+  function ws.round2(num, numDecimalPlaces)
+    return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
+  end
+
+ function ws.pos_to_string(pos)
+     if type(pos) == 'table' then
+         pos = minetest.pos_to_string(vector.round(pos))
+     end
+     if type(pos) == 'string' then
+         return pos
+     end
+ end
+
+ function ws.string_to_pos(pos)
+     if type(pos) == 'string' then
+         pos = minetest.string_to_pos(pos)
+     end
+     if type(pos) == 'table' then
+         return vector.round(pos)
+     end
+end
+
 function ws.on_connect(func)
 	if not minetest.localplayer then minetest.after(0,function() ws.on_connect(func) end) return end
 	if func then func() end

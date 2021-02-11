@@ -71,7 +71,6 @@ local hud_info
 -- /COMMON
 local pos_to_string = ws.pos_to_string
 local string_to_pos = ws.string_to_pos
-local round2 = ws.round2
 
 
 function autofly.get2ddst(pos1,pos2)
@@ -97,7 +96,7 @@ minetest.register_globalstep(function()
         if pos then
             local dst = vector.distance(pos,minetest.localplayer:get_pos())
             local etatime=-1
-            if not (speed == 0) then etatime = round2(dst / speed / 60,2) end
+            if not (speed == 0) then etatime = ws.round2(dst / speed / 60,2) end
             autofly.etatime=etatime
             autofly.set_hud_info(autofly.last_name .. "\n" .. pos_to_string(pos) .. "\n" .. "ETA" .. etatime .. " mins")
             local hdst=autofly.get2ddst(pos,minetest.localplayer:get_pos())
@@ -115,7 +114,7 @@ minetest.register_globalstep(function()
     ltime=os.time()
     if lpos then
         local dst=vector.distance(minetest.localplayer:get_pos(),lpos)
-        speed=round2(dst,1)
+        speed=ws.round2(dst,1)
         autofly.speed=speed
     end
     lpos=minetest.localplayer:get_pos()
@@ -191,10 +190,10 @@ function autofly.set_hud_info(text)
     local lp=minetest.localplayer
     local vspeed=lp:get_velocity()
     local ttext=text.."\nSpeed: "..speed.."n/s\n"
-    ..round2(vspeed.x,2) ..','
-    ..round2(vspeed.y,2) ..','
-    ..round2(vspeed.z,2) .."\n"
-    .."Yaw:"..round2(lp:get_yaw(),2).."° Pitch:" ..round2(lp:get_pitch(),2).."° "
+    ..ws.round2(vspeed.x,2) ..','
+    ..ws.round2(vspeed.y,2) ..','
+    ..ws.round2(vspeed.z,2) .."\n"
+    .."Yaw:"..ws.round2(lp:get_yaw(),2).."° Pitch:" ..ws.round2(lp:get_pitch(),2).."° "
     if turtle then ttext=ttext..turtle.getdir() end
     if minetest.settings:get_bool('afly_shownames') then
         ttext=ttext.."\n"..autofly.get_local_name()
@@ -363,8 +362,8 @@ function autofly.aim(tpos)
     else
         yyaw = math.atan2(-dir.x, dir.z)
     end
-    yyaw = round2(math.deg(yyaw),2)
-    pitch = round2(math.deg(math.asin(-dir.y) * 1),2);
+    yyaw = ws.round2(math.deg(yyaw),2)
+    pitch = ws.round2(math.deg(math.asin(-dir.y) * 1),2);
     minetest.localplayer:set_yaw(yyaw)
     minetest.localplayer:set_pitch(pitch)
 
@@ -541,7 +540,6 @@ local function randfly()
     end
 end
 
-local register_chatcommand_alias = ws.register_chatcommand_alias
 
 
 minetest.register_chatcommand('waypoints', {
@@ -550,7 +548,7 @@ minetest.register_chatcommand('waypoints', {
     func = function(param) autofly.display_formspec() end
 })
 
-register_chatcommand_alias('waypoints','wp', 'wps', 'waypoint')
+ws.register_chatcommand_alias('waypoints','wp', 'wps', 'waypoint')
 
 -- Add a waypoint
 minetest.register_chatcommand('add_waypoint', {
@@ -578,7 +576,7 @@ minetest.register_chatcommand('add_waypoint', {
         return autofly.set_waypoint(pos, name), 'Done!'
     end
 })
-register_chatcommand_alias('add_waypoint','wa', 'add_wp')
+ws.register_chatcommand_alias('add_waypoint','wa', 'add_wp')
 
 
 minetest.register_chatcommand('add_waypoint_here', {
@@ -590,7 +588,7 @@ minetest.register_chatcommand('add_waypoint_here', {
         return autofly.set_waypoint(pos, name), 'Done!'
     end
 })
-register_chatcommand_alias('add_waypoint_here', 'wah', 'add_wph')
+ws.register_chatcommand_alias('add_waypoint_here', 'wah', 'add_wph')
 
 minetest.register_chatcommand('clear_waypoint', {
     params = '',
@@ -614,7 +612,7 @@ minetest.register_chatcommand('clear_waypoint', {
 
     end,
 })
-register_chatcommand_alias('clear_waypoint', 'cwp','cls')
+ws.register_chatcommand_alias('clear_waypoint', 'cwp','cls')
 
 minetest.register_chatcommand('autotp', {
     params      = 'position',
@@ -623,7 +621,7 @@ minetest.register_chatcommand('autotp', {
       autofly.autotp(minetest.string_to_pos(param))
     end
 })
-register_chatcommand_alias('autotp', 'atp')
+ws.register_chatcommand_alias('autotp', 'atp')
 
 minetest.register_chatcommand('wpdisplay', {
     params      = 'position name',
@@ -632,7 +630,7 @@ minetest.register_chatcommand('wpdisplay', {
       autofly.display(pos,name)
     end
 })
-register_chatcommand_alias('wpdisplay', 'wpd')
+ws.register_chatcommand_alias('wpdisplay', 'wpd')
 
 
 
