@@ -69,26 +69,10 @@ dofile(modpath .. "/pathfly.lua")
 local hud_wp
 local hud_info
 -- /COMMON
-local function pos_to_string(pos)
-    if type(pos) == 'table' then
-        pos = minetest.pos_to_string(vector.round(pos))
-    end
-    if type(pos) == 'string' then
-        return pos
-    end
-end
+local pos_to_string = ws.pos_to_string
+local string_to_pos = ws.string_to_pos
+local round2 = ws.round2
 
-local function string_to_pos(pos)
-    if type(pos) == 'string' then
-        pos = minetest.string_to_pos(pos)
-    end
-    if type(pos) == 'table' then
-        return vector.round(pos)
-    end
-end
-function round2(num, numDecimalPlaces)
-  return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
-end
 
 function autofly.get2ddst(pos1,pos2)
     return vector.distance({x=pos1.x,y=0,z=pos1.z},{x=pos2.x,y=0,z=pos2.z})
@@ -125,7 +109,6 @@ minetest.register_globalstep(function()
 
     if not minetest.settings:get_bool("freecam") and autofly.flying and (minetest.settings:get_bool('afly_autoaim')) then
         autofly.aim(autofly.last_coords)
-        --core.set_keypress("special1", true)
     end
 
     if ( os.time() < ltime + 1 ) then return end
@@ -200,29 +183,18 @@ function autofly.get_local_name()
     if not rt then rt=autofly.get_quad() end
     return rt
 end
-local function dir_to_yaw(dir)
-	return -math.atan2(dir.x, dir.z)
-end
-
-local function yaw_to_dir(yaw)
-	return {x = -math.sin(yaw), y = 0, z = math.cos(yaw)}
-end
 
 
 function autofly.set_hud_info(text)
     if not minetest.localplayer then return end
     if type(text) ~= "string" then return end
     local lp=minetest.localplayer
-    local vspeed=minetest.localplayer:get_velocity()
-    local dir=yaw_to_dir(lp:get_yaw())
-    --local dir=vector.direction(lp:get_pos(),fpos)
     local vspeed=lp:get_velocity()
-
     local ttext=text.."\nSpeed: "..speed.."n/s\n"
     ..round2(vspeed.x,2) ..','
     ..round2(vspeed.y,2) ..','
     ..round2(vspeed.z,2) .."\n"
-    .."Yaw:"..round2(minetest.localplayer:get_yaw(),2).."° Pitch:" ..round2(minetest.localplayer:get_pitch(),2).."° "
+    .."Yaw:"..round2(lp:get_yaw(),2).."° Pitch:" ..round2(lp:get_pitch(),2).."° "
     if turtle then ttext=ttext..turtle.getdir() end
     if minetest.settings:get_bool('afly_shownames') then
         ttext=ttext.."\n"..autofly.get_local_name()
@@ -441,8 +413,8 @@ end
 
 
 autofly.register_transport('Fly',function(pos,name) autofly.goto_waypoint(name) end)
-autofly.register_transport('Warp',function(pos,name) autofly.warp(name) end)
-autofly.register_transport('w+e',function(pos,name) autofly.warpae(name) end)
+autofly.register_transport('wrp',function(pos,name) autofly.warp(name) end)
+autofly.register_transport('atp',function(pos,name) autofly.autotp(name) end)
 
 function autofly.axissnap()
     if not minetest.settings:get_bool('afly_snap') then return end
@@ -539,13 +511,38 @@ function autofly.rename_waypoint(oldname, newname)
     return true
 end
 
-local function register_chatcommand_alias(old, ...)
-    local def = assert(minetest.registered_chatcommands[old])
-    def.name = nil
-    for i = 1, select('#', ...) do
-        minetest.register_chatcommand(select(i, ...), table.copy(def))
+minetest.after("5.0",function()
+    if autofly.get_waypoint('AUTOTP') ~= nil then autofly.autotp(nil) end
+end)
+
+
+math.randomseed(os.time())
+
+local randflying = false
+
+minetest.register_globalstep(function()
+    if randflying and not autofly.flying then
+        local x = math.random(-31000, 31000)
+        local y = math.random(2000, 31000)
+        local z = math.random(-31000, 31000)
+
+        autofly.goto({x = x, y = y, z = z})
+    end
+end)
+
+local function randfly()
+    if not randflying then
+        randflying = true
+        local lp = minetest.localplayer:get_pos()
+        autofly.goto(turtle.coord(lp.x, 6000, lp.z))
+    else
+        randflying = false
+        autofly.arrived()
     end
 end
+
+local register_chatcommand_alias = ws.register_chatcommand_alias
+
 
 minetest.register_chatcommand('waypoints', {
     params      = '',
@@ -637,35 +634,7 @@ minetest.register_chatcommand('wpdisplay', {
 })
 register_chatcommand_alias('wpdisplay', 'wpd')
 
-minetest.after("5.0",function()
-    if autofly.get_waypoint('AUTOTP') ~= nil then autofly.autotp(nil) end
-end)
 
-
-math.randomseed(os.time())
-
-local randflying = false
-
-minetest.register_globalstep(function()
-    if randflying and not autofly.flying then
-        local x = math.random(-31000, 31000)
-        local y = math.random(2000, 31000)
-        local z = math.random(-31000, 31000)
-
-        autofly.goto({x = x, y = y, z = z})
-    end
-end)
-
-local function randfly()
-    if not randflying then
-        randflying = true
-        local lp = minetest.localplayer:get_pos()
-        autofly.goto(turtle.coord(lp.x, 6000, lp.z))
-    else
-        randflying = false
-        autofly.arrived()
-    end
-end
 
 minetest.register_chatcommand("randfly", {
     description = "Randomly fly up high (toggle).",
