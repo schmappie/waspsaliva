@@ -108,7 +108,7 @@ minetest.register_chatcommand("sc_reset", { func = scaffold.reset })
 
 function scaffold.can_place_at(pos)
     local node = minetest.get_node_or_nil(pos)
-    return (node and (node.name == "air" or minetest.get_node_def(node.name).buildable_to))
+    return (node and (node.name == "air" or node.name=="mcl_core:water_source" or node.name=="mcl_core:water_flowing" or node.name=="mcl_core:lava_source" or node.name=="mcl_core:lava_flowing" or minetest.get_node_def(node.name).buildable_to))
 end
 
 -- should check if wield is placeable
@@ -152,7 +152,7 @@ function scaffold.place_if_needed(items, pos, place)
     --if lastplc + actint > os.time() then return end
     if not pos then return end
     lastplc=os.time()
-    if minetest.settings:get_bool('scaffold.locky') and math.round(pos.y) ~= math.round(scaffold.locky) then return end
+
     place = place or minetest.place_node
 
     local node = minetest.get_node_or_nil(pos)
@@ -257,300 +257,79 @@ local function checknode(pos)
     return false
 end
 
-if turtle then
-    scaffold.register_template_scaffold("TBM", "scaffold_tbm", function(pos)
-       scaffold.dig(turtle.dircoord(1,1,0))
-       scaffold.dig(turtle.dircoord(1,0,0))
-    end)
-    scaffold.register_template_scaffold("TallTBM", "scaffold_ttbm", function(pos)
-        pos = {
+scaffold.register_template_scaffold("TBM", "scaffold_tbm", function(pos)
+   scaffold.dig(ws.dircoord(1,1,0))
+   scaffold.dig(ws.dircoord(1,0,0))
+end)
+scaffold.register_template_scaffold("TallTBM", "scaffold_ttbm", function(pos)
+    pos = {
 
-        turtle.dircoord(1,4,2),
-       turtle.dircoord(1,3,2),
-       turtle.dircoord(1,2,2),
-       turtle.dircoord(1,1,2),
-       turtle.dircoord(1,0,2),
+    ws.dircoord(1,4,2),
+   ws.dircoord(1,3,2),
+   ws.dircoord(1,2,2),
+   ws.dircoord(1,1,2),
+   ws.dircoord(1,0,2),
 
-        turtle.dircoord(1,4,-2),
-       turtle.dircoord(1,3,-2),
-       turtle.dircoord(1,2,-2),
-       turtle.dircoord(1,1,-2),
-       turtle.dircoord(1,0,-2),
+    ws.dircoord(1,4,-2),
+   ws.dircoord(1,3,-2),
+   ws.dircoord(1,2,-2),
+   ws.dircoord(1,1,-2),
+   ws.dircoord(1,0,-2),
 
 
-        turtle.dircoord(1,4,1),
-       turtle.dircoord(1,3,1),
-       turtle.dircoord(1,2,1),
-       turtle.dircoord(1,1,1),
-       turtle.dircoord(1,0,1),
+    ws.dircoord(1,4,1),
+   ws.dircoord(1,3,1),
+   ws.dircoord(1,2,1),
+   ws.dircoord(1,1,1),
+   ws.dircoord(1,0,1),
 
-        turtle.dircoord(1,4,-1),
-       turtle.dircoord(1,3,-1),
-       turtle.dircoord(1,2,-1),
-       turtle.dircoord(1,1,-1),
-       turtle.dircoord(1,0,-1),
+    ws.dircoord(1,4,-1),
+   ws.dircoord(1,3,-1),
+   ws.dircoord(1,2,-1),
+   ws.dircoord(1,1,-1),
+   ws.dircoord(1,0,-1),
 
-        turtle.dircoord(1,4,0),
-       turtle.dircoord(1,3,0),
-       turtle.dircoord(1,2,0),
-       turtle.dircoord(1,1,0),
-       turtle.dircoord(1,0,0)
-        }
-        for k,v in pairs(pos) do
-            scaffold.dig(v)
+    ws.dircoord(1,4,0),
+   ws.dircoord(1,3,0),
+   ws.dircoord(1,2,0),
+   ws.dircoord(1,1,0),
+   ws.dircoord(1,0,0)
+    }
+    for k,v in pairs(pos) do
+        scaffold.dig(v)
+    end
+    minetest.settings:set_bool('continuous_forward',true)
+    for k,v in pairs(pos) do
+        local n=minetest.get_node_or_nil(v)
+        if n and n.name ~= "air" then
+            minetest.settings:set_bool('continuous_forward',false)
         end
-        minetest.settings:set_bool('continuous_forward',true)
-        for k,v in pairs(pos) do
-            local n=minetest.get_node_or_nil(v)
-            if n and n.name ~= "air" then
-                minetest.settings:set_bool('continuous_forward',false)
-            end
-        end
-    end)
-
-    scaffold.register_template_scaffold("Cobbler", "scaffold_cobbler", function(pos)
-        if minetest.settings:get_bool('freecam') then return end
-        local fpos=turtle.dircoord(1,0,0)
-        local fn=minetest.get_node_or_nil(fpos)
-        pos = {
-
-        turtle.dircoord(2,4,2),
-       turtle.dircoord(2,3,2),
-       turtle.dircoord(2,2,2),
-       turtle.dircoord(2,1,2),
-       turtle.dircoord(2,0,2),
-
-        turtle.dircoord(2,4,-2),
-       turtle.dircoord(2,3,-2),
-       turtle.dircoord(2,2,-2),
-       turtle.dircoord(2,1,-2),
-       turtle.dircoord(2,0,-2),
-
-        turtle.dircoord(2,4,1),
-       turtle.dircoord(2,3,1),
-       turtle.dircoord(2,2,1),
-       turtle.dircoord(2,1,1),
-       turtle.dircoord(2,0,1),
-
-        turtle.dircoord(2,4,-1),
-       turtle.dircoord(2,3,-1),
-       turtle.dircoord(2,2,-1),
-       turtle.dircoord(2,1,-1),
-       turtle.dircoord(2,0,-1),
-
-        turtle.dircoord(2,4,0),
-       turtle.dircoord(2,3,0),
-       turtle.dircoord(2,2,0),
-       turtle.dircoord(2,1,0),
-       turtle.dircoord(2,0,0),
+    end
+end)
 
 
-        turtle.dircoord(3,4,2),
-       turtle.dircoord(3,3,2),
-       turtle.dircoord(3,2,2),
-       turtle.dircoord(3,1,2),
-       turtle.dircoord(3,0,2),
-
-        turtle.dircoord(3,4,-2),
-       turtle.dircoord(3,3,-2),
-       turtle.dircoord(3,2,-2),
-       turtle.dircoord(3,1,-2),
-       turtle.dircoord(3,0,-2),
 
 
-        turtle.dircoord(4,4,1),
-       turtle.dircoord(4,3,1),
-       turtle.dircoord(4,2,1),
-       turtle.dircoord(4,1,1),
-       turtle.dircoord(4,0,1),
+scaffold.register_template_scaffold("TriScaffold", "scaffold_three_wide", function(pos)
+    scaffold.place_if_able(pos)
+    scaffold.place_if_able(ws.dircoord(0, -1, 1))
+    scaffold.place_if_able(ws.dircoord(0, -1, -1))
+end)
 
-        turtle.dircoord(4,4,-1),
-       turtle.dircoord(4,3,-1),
-       turtle.dircoord(4,2,-1),
-       turtle.dircoord(4,1,-1),
-       turtle.dircoord(4,0,-1),
+scaffold.register_template_scaffold("headTriScaff", "scaffold_three_wide_head", function(pos)
+    scaffold.place_if_able(ws.dircoord(0, 3, 0))
+    scaffold.place_if_able(ws.dircoord(0, 3, 1))
+    scaffold.place_if_able(ws.dircoord(0, 3, -1))
+end)
 
-        turtle.dircoord(4,4,0),
-       turtle.dircoord(4,3,0),
-       turtle.dircoord(4,2,0),
-       turtle.dircoord(4,1,0),
-       turtle.dircoord(4,0,0),
+scaffold.register_template_scaffold("QuintScaffold", "scaffold_five_wide", function(pos)
+    scaffold.place_if_able(pos)
+    scaffold.place_if_able(ws.dircoord(0, -1, 1))
+    scaffold.place_if_able(ws.dircoord(0, -1, -1))
+    scaffold.place_if_able(ws.dircoord(0, -1, 2))
+    scaffold.place_if_able(ws.dircoord(0, -1, -2))
+end)
 
-        turtle.dircoord(5,4,2),
-       turtle.dircoord(5,3,2),
-       turtle.dircoord(5,2,2),
-       turtle.dircoord(5,1,2),
-       turtle.dircoord(5,0,2),
-
-        turtle.dircoord(5,4,-2),
-       turtle.dircoord(5,3,-2),
-       turtle.dircoord(5,2,-2),
-       turtle.dircoord(5,1,-2),
-       turtle.dircoord(5,0,-2),
-
-
-        turtle.dircoord(5,4,1),
-       turtle.dircoord(5,3,1),
-       turtle.dircoord(5,2,1),
-       turtle.dircoord(5,1,1),
-       turtle.dircoord(5,0,1),
-
-        turtle.dircoord(5,4,-1),
-       turtle.dircoord(5,3,-1),
-       turtle.dircoord(5,2,-1),
-       turtle.dircoord(5,1,-1),
-       turtle.dircoord(5,0,-1),
-
-        turtle.dircoord(5,4,0),
-       turtle.dircoord(5,3,0),
-       turtle.dircoord(5,2,0),
-       turtle.dircoord(5,1,0),
-       turtle.dircoord(5,0,0)
-        }
-
-        if fn and fn.name == "mcl_core:cobble" then
-            for k,v in pairs(pos) do
-                scaffold.place_if_needed({"mcl_core:cobble"},v)
-            end
-
-        end
-    end)
-
-
-    scaffold.register_template_scaffold("LanternTBM", "scaffold_ltbm", function(pos)
-       --scaffold.dig(turtle.dircoord(1,1,0)) -- let lTBM just be additionally place lanterns mode - useful for rail too.
-       --scaffold.dig(turtle.dircoord(1,0,0))
-       local dir=turtle.getdir()
-       local pl=false
-       if dir == "north" or dir == "south" then
-            if pos.z % 8 == 0 then
-                pl=true
-            end
-       else
-            if pos.x % 8 == 0 then
-                pl=true
-            end
-       end
-       if pl then
-            local lpos=turtle.dircoord(0,3,0)
-            local nd=minetest.get_node_or_nil(lpos)
-            if nd and nd.name ~= 'mcl_ocean:sea_lantern' then
-                scaffold.dig(lpos)
-                minetest.after("0.1",function() scaffold.place_if_needed({'mcl_ocean:sea_lantern'},lpos) end)
-            end
-       end
-    end)
-    scaffold.register_template_scaffold("TriScaffold", "scaffold_three_wide", function(pos)
-        scaffold.place_if_able(pos)
-        scaffold.place_if_able(turtle.dircoord(0, -1, 1))
-        scaffold.place_if_able(turtle.dircoord(0, -1, -1))
-    end)
-    scaffold.register_template_scaffold("WallBot", "scaffold_behind", function(pos)
-     minetest.settings:set_bool('scaffold_lockyaw',true)
-     minetest.settings:set('movement_speed_walk',1)
-        pos = {
-
-        turtle.dircoord(-2,4,2),
-       turtle.dircoord(-2,3,2),
-       turtle.dircoord(-2,2,2),
-       turtle.dircoord(-2,1,2),
-       turtle.dircoord(-2,0,2),
-
-        turtle.dircoord(-2,4,-2),
-       turtle.dircoord(-2,3,-2),
-       turtle.dircoord(-2,2,-2),
-       turtle.dircoord(-2,1,-2),
-       turtle.dircoord(-2,0,-2),
-
-
-        turtle.dircoord(-2,4,1),
-       turtle.dircoord(-2,3,1),
-       turtle.dircoord(-2,2,1),
-       turtle.dircoord(-2,1,1),
-       turtle.dircoord(-2,0,1),
-
-        turtle.dircoord(-2,4,-1),
-       turtle.dircoord(-2,3,-1),
-       turtle.dircoord(-2,2,-1),
-       turtle.dircoord(-2,1,-1),
-       turtle.dircoord(-2,0,-1),
-
-        turtle.dircoord(-2,4,0),
-       turtle.dircoord(-2,3,0),
-       turtle.dircoord(-2,2,0),
-       turtle.dircoord(-2,1,0),
-       turtle.dircoord(-2,0,0),
-               turtle.dircoord(-2,4,2),
-       turtle.dircoord(-2,3,2),
-       turtle.dircoord(-2,2,2),
-       turtle.dircoord(-2,1,2),
-       turtle.dircoord(-2,0,2),
-
-        turtle.dircoord(-3,4,-2),
-       turtle.dircoord(-3,3,-2),
-       turtle.dircoord(-3,2,-2),
-       turtle.dircoord(-3,1,-2),
-       turtle.dircoord(-3,0,-2),
-
-
-        turtle.dircoord(-3,4,1),
-       turtle.dircoord(-3,3,1),
-       turtle.dircoord(-3,2,1),
-       turtle.dircoord(-3,1,1),
-       turtle.dircoord(-3,0,1),
-
-        turtle.dircoord(-3,4,-1),
-       turtle.dircoord(-3,3,-1),
-       turtle.dircoord(-3,2,-1),
-       turtle.dircoord(-3,1,-1),
-       turtle.dircoord(-3,0,-1),
-
-        turtle.dircoord(-3,4,0),
-       turtle.dircoord(-3,3,0),
-       turtle.dircoord(-3,2,0),
-       turtle.dircoord(-3,1,0),
-       turtle.dircoord(-3,0,0)
-        }
-
-        local ngo=false
-
-        for k,v in pairs(pos) do
-            local n=minetest.get_node_or_nil(v)
-            if n and n.name ~= "mcl_core:cobble" then
-                scaffold.dig(v)
-                ngo=false
-            else ngo=true
-            end
-            if n == nil then ngo=false end
-        end
-
-        for k,v in pairs(pos) do
-            scaffold.place_if_needed({'mcl_core:cobble'},v)
-        end
-
-        minetest.settings:set_bool('continuous_forward',ngo)
-    end,false,function()
-    minetest.settings:set_bool('continuous_forward',false)
-    minetest.settings:set_bool('scaffold_locky',false)
-    minetest.settings:set_bool('scaffold_lockyaw',false)
-    minetest.settings:set_bool('scaffold_ltbm',false)
-    minetest.settings:set('movement_speed_walk',4)
-  end)
-
-    scaffold.register_template_scaffold("headTriScaff", "scaffold_three_wide_head", function(pos)
-        scaffold.place_if_able(turtle.dircoord(0, 3, 0))
-        scaffold.place_if_able(turtle.dircoord(0, 3, 1))
-        scaffold.place_if_able(turtle.dircoord(0, 3, -1))
-    end)
-
-    scaffold.register_template_scaffold("QuintScaffold", "scaffold_five_wide", function(pos)
-        scaffold.place_if_able(pos)
-        scaffold.place_if_able(turtle.dircoord(0, -1, 1))
-        scaffold.place_if_able(turtle.dircoord(0, -1, -1))
-        scaffold.place_if_able(turtle.dircoord(0, -1, 2))
-        scaffold.place_if_able(turtle.dircoord(0, -1, -2))
-    end)
-end
 
 if nlist then
     scaffold.register_template_scaffold("RandomScaff", "scaffold_rnd", function(below)

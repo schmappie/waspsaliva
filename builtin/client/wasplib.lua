@@ -21,8 +21,15 @@ end
 function ws.dcm(msg)
     return minetest.display_chat_message(msg)
 end
+function ws.set_bool_bulk(settings,value)
+    if type(settings) ~= 'table' then return false end
+    for k,v in pairs(settings) do
+        minetest.settings:set_bool(v,value)
+    end
+    return true
+end
 
-function ws.globalhacktemplate(setting,func,funcstart,funcstop)
+function ws.globalhacktemplate(setting,func,funcstart,funcstop,daughters)
     funcstart = funcstart or function() end
     funcstop = funcstop or function() end
     return function()
@@ -31,9 +38,12 @@ function ws.globalhacktemplate(setting,func,funcstart,funcstop)
             if nextact[setting] and nextact[setting] > os.clock() then return end
             nextact[setting] = os.clock() + 0.1
             if not ghwason[setting] then
-                funcstart()
-                ws.dcm(setting.. " activated")
-                ghwason[setting] = true
+                if not funcstart() then
+                    ws.set_bool_bulk(daughters,true)
+                    ghwason[setting] = true
+                    ws.dcm(setting.. " activated")
+                else minetest.settings:set_bool(setting,false)
+                end
             else
                 func()
             end
@@ -41,6 +51,7 @@ function ws.globalhacktemplate(setting,func,funcstart,funcstop)
         elseif ghwason[setting] then
             ghwason[setting] = false
             funcstop()
+            ws.set_bool_bulk(daughters,false)
             ws.dcm(setting.. " deactivated")
         end
     end
@@ -50,8 +61,8 @@ function ws.register_globalhack(func)
     table.insert(ws.registered_globalhacks,func)
 end
 
-function ws.register_globalhacktemplate(name,category,setting,func,funcstart,funcstop)
-    ws.register_globalhack(ws.globalhacktemplate(setting,func,funcstart,funcstop))
+function ws.register_globalhacktemplate(name,category,setting,func,funcstart,funcstop,daughters)
+    ws.register_globalhack(ws.globalhacktemplate(setting,func,funcstart,funcstop,daughters))
     minetest.register_cheat(name,category,setting)
 end
 
@@ -321,6 +332,6 @@ function ws.dig(pos)
 
 end
 
-ws.rg('DigHead','Player','dighead',function()
-    ws.dig(ws.dircoord(0,1,0))
-end)
+local snapdir="north"
+ws.rg('DigHead','Player','dighead',function() ws.dig(ws.dircoord(0,1,0)) end)
+ws.rg('SnapYaw','Bots','snapyaw',function() ws.setdir(snapdir) end,function() snapdir=ws.getdir() end)

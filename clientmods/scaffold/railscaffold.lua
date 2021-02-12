@@ -16,66 +16,68 @@ local tunnelmaterial = {
     'mcl_core:dirt',
     'mcl_core:andesite',
     'mcl_core:diorite',
-    'mcl_core:granite'
+    'mcl_core:granite',
+    "mesecons_torch:redstoneblock"
+
 }
 
 
-minetest.register_cheat("RailT",'Scaffold','scaffold_railtunnel')
+
+minetest.register_cheat("RailT",'Bots','scaffold_railtunnel')
 local function checknode(pos)
     local node = minetest.get_node_or_nil(pos)
     if node and node.name ~="mesecons_torch:redstoneblock" and not node.name:find("_rail")  then return true end
     return false
 end
-
-scaffold.register_template_scaffold("RailBot", "scaffold_rails", function(below)
-    if not scaffold.wason.scaffold_rails then
-        minetest.settings:set_bool('continuous_forward',true)
-        --minetest.settings:set_bool('scaffold_locky',true)
-        minetest.settings:set_bool('scaffold_lockyaw',true)
-        minetest.settings:set_bool('scaffold_ltbm',true)
+local function dignodes(poss)
+    for k,v in pairs(poss) do
+        if checknode(v) then ws.dig(v) end
     end
-    local lp = turtle.dircoord(0,1,0)
-
-    local fpos1=turtle.dircoord(1,2,0)
-    local fpos2=turtle.dircoord(1,1,0)
-    local fpos3=turtle.dircoord(1,0,0)
-
-    local fpos4=turtle.dircoord(2,1,0)
-    local fpos5=turtle.dircoord(2,0,0)
-    local fpos6=turtle.dircoord(2,-1,0)
-
-    if checknode(fpos1) then scaffold.dig(fpos1) end
-    if checknode(fpos3) then scaffold.dig(fpos3) end
-    if checknode(fpos2) then scaffold.dig(fpos2) end
-
-    local pos1=vector.add(lp,{x=-2,y=0,z=-2})
-    local pos2=vector.add(lp,{x=2,y=4,z=2})
+end
+local function blockliquids()
+    local lp=ws.lp:get_pos()
     local liquids={'mcl_core:lava_source','mcl_core:water_source','mcl_core:lava_flowing','mcl_core:water_flowing'}
-    local liquids={'mcl_core:lava_source','mcl_core:water_source'}
-
-    local bn,cnt=minetest.find_nodes_in_area(pos1,pos2,liquids,false)
+    local bn=minetest.find_nodes_near(lp, 5, liquids, true)
     for kk,vv in pairs(bn) do
-        minetest.switch_to_item("mcl_nether:netherrack")
-        minetest.place_node(vv)
+        scaffold.place_if_needed(tunnelmaterial,vv)
     end
+end
+
+local function invcheck(item)
+    if mintetest.switch_to_item(item) then return true end
+    refill.refill_at(ws.dircoord(1,1,0),'railkit')
+end
+
+ws.rg("RailBot","Bots", "scaffold_rails", function()
+    local lp = ws.dircoord(0,0,0)
+    local below = ws.dircoord(0,-1,0)
+    blockliquids()
+    local dpos= {
+        ws.dircoord(0,1,0),
+        ws.dircoord(0,0,0),
+        ws.dircoord(0,-1,0),
+        ws.dircoord(1,1,0),
+        ws.dircoord(1,0,0),
+        ws.dircoord(1,-1,0),
+        ws.dircoord(2,1,0),
+        ws.dircoord(2,0,0),
+        ws.dircoord(2,-1,0)
+    }
+    dignodes(dpos)
     local bln=minetest.get_node_or_nil(below)
     local lpn=minetest.get_node_or_nil(lp)
 
     if bln and lpn and lpn.name == "mcl_minecarts:golden_rail_on" then
-        --bln.name == "mesecons_torch:redstoneblock" and
         minetest.settings:set_bool('continuous_forward',true)
     else
-        --if lpn and lpn.name then minetest.display_chat_message(lpn.name) end
         minetest.settings:set_bool('continuous_forward',false)
     end
 
-    minetest.after("0.1",function()
-        local frpos=turtle.dircoord(1,1,0)
-        local fgpos=turtle.dircoord(1,0,0)
-        local rpos=turtle.dircoord(0,1,0)
-        local gpos=turtle.dircoord(0,0,0)
-        local it = core.find_item("mesecons_torch:redstoneblock")
-        if not it then minetest.settings:set_bool('continuous_forward',false) end
+    minetest.after("0",function()
+        local frpos=ws.dircoord(1,0,0)
+        local fgpos=ws.dircoord(1,-1,0)
+        local rpos=ws.dircoord(0,0,0)
+        local gpos=ws.dircoord(0,-1,0)
         scaffold.place_if_needed(ground, gpos)
         scaffold.place_if_needed(rails, rpos)
         scaffold.place_if_needed(ground, fgpos)
@@ -83,15 +85,38 @@ scaffold.register_template_scaffold("RailBot", "scaffold_rails", function(below)
 
     end)
     if minetest.settings:get_bool('scaffold_railtunnel') then
-        scaffold.place_if_needed(tunnelmaterial, turtle.dircoord(0,3,0))
-        scaffold.place_if_needed(tunnelmaterial, turtle.dircoord(0,2,1))
-        scaffold.place_if_needed(tunnelmaterial, turtle.dircoord(0,1,1))
-        scaffold.place_if_needed(tunnelmaterial, turtle.dircoord(0,2,-1))
-        scaffold.place_if_needed(tunnelmaterial, turtle.dircoord(0,1,-1))
+        scaffold.place_if_needed(tunnelmaterial, ws.dircoord(0,2,0))
+        scaffold.place_if_needed(tunnelmaterial, ws.dircoord(0,1,1))
+        scaffold.place_if_needed(tunnelmaterial, ws.dircoord(0,0,1))
+        scaffold.place_if_needed(tunnelmaterial, ws.dircoord(0,1,-1))
+        scaffold.place_if_needed(tunnelmaterial, ws.dircoord(0,0,-1))
     end
-end,false,function()
-    minetest.settings:set_bool('continuous_forward',false)
-    minetest.settings:set_bool('scaffold_locky',false)
-    minetest.settings:set_bool('scaffold_lockyaw',false)
-    minetest.settings:set_bool('scaffold_ltbm',false)
-  end)
+end,
+function()--startfunc
+
+end,function() --stopfunc
+
+end,{'scaffold_ltbm','snapyaw','continuous_forward'})
+
+scaffold.register_template_scaffold("LanternTBM", "scaffold_ltbm", function()
+   local dir=ws.getdir()
+   local lp=vector.round(ws.dircoord(0,0,0))
+   local pl=false
+   if dir == "north" or dir == "south" then
+        if lp.z % 8 < 1 then
+            pl=true
+        end
+   else
+        if lp.x % 8 < 1 then
+            pl=true
+        end
+   end
+   if pl then
+        local lpos=ws.dircoord(0,2,0)
+        local nd=minetest.get_node_or_nil(lpos)
+        if nd and nd.name ~= 'mcl_ocean:sea_lantern' then
+            ws.dig(lpos)
+            minetest.after("0",function() ws.place(lpos,'mcl_ocean:sea_lantern') end)
+        end
+   end
+end)
