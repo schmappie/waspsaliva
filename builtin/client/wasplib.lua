@@ -3,7 +3,6 @@ ws = {}
 ws.registered_globalhacks = {}
 ws.displayed_wps={}
 
-ws.lp = minetest.localplayer
 ws.c = core
 
 local nextact = {}
@@ -91,7 +90,7 @@ end
 
 function ws.do_area(radius,func,plane)
     for k,v in pairs(ws.get_reachable_positions(range)) do
-        if not plane or v.y == ws.lp:get_pos().y -1 then
+        if not plane or v.y == minetest.localplayer:get_pos().y -1 then
             func(v)
         end
     end
@@ -110,7 +109,7 @@ end
 
 function ws.clear_wps()
     for k,v in pairs(ws.displayed_wps) do
-        ws.lp:hud_remove(v)
+        minetest.localplayer:hud_remove(v)
         table.remove(ws.displayed_wps,k)
     end
 end
@@ -149,10 +148,6 @@ function ws.on_connect(func)
 	if not minetest.localplayer then minetest.after(0,function() ws.on_connect(func) end) return end
 	if func then func() end
 end
-
-ws.on_connect(function()
-    ws.lp=minetest.localplayer
-end)
 
 local function find_named(inv, name)
 	if not inv then return -1 end
@@ -238,7 +233,9 @@ local function find_best_tool(nodename, switch)
 end
 
 function ws.select_best_tool(pos)
-    local nodename=minetest.get_node_or_nil(pos).name or 'air'
+    local nd=minetest.get_node_or_nil(pos)
+    local nodename='air'
+    if nd then nodename=nd.name end
 	minetest.localplayer:set_wield_index(find_best_tool(nodename))
 end
 
@@ -318,8 +315,33 @@ function ws.dircoord(f, y, r)
     return ws.relcoord(0, 0, 0)
 end
 
-function ws.place(pos,node)
-    if node then ws.switch_inv_or_echest(node,1) end
+function ws.shuffle(tbl)
+  for i = #tbl, 2, -1 do
+    local j = math.random(i)
+    tbl[i], tbl[j] = tbl[j], tbl[i]
+  end
+  return tbl
+end
+
+function ws.find_item(items,rnd)
+    if type(items) == 'string' then
+        return minetest.find_item(items)
+        --return minetest.localplayer:set_wield_index(minetest.find_item(items))
+    end
+    if type(nodename) ~= 'table' then return end
+    items=ws.shuffle(items)
+    for i, v in ipairs(items) do
+        local n = minetest.find_item(v)
+        if n then
+            return n
+        end
+    end
+    return false
+end
+
+function ws.place(pos,nodename)
+    minetest.localplayer:set_wield_index(ws.find_item(nodename))
+    --ws.switch_inv_or_echest(ws.find_item(nodem),1)
     ws.c.place_node(pos)
 end
 
@@ -329,9 +351,4 @@ function ws.dig(pos)
         ws.select_best_tool(pos)
         minetest.dig_node(pos)
     end
-
 end
-
-local snapdir="north"
-ws.rg('DigHead','Player','dighead',function() ws.dig(ws.dircoord(0,1,0)) end)
-ws.rg('SnapYaw','Bots','snapyaw',function() ws.setdir(snapdir) end,function() snapdir=ws.getdir() end)
