@@ -3,7 +3,7 @@ local cpos={x=0,y=0,z=0}
 local crange=500
 local hud_wp=nil
 local zz={x=0,y=64,z=0}
-local badnodes={'mcl_tnt:tnt','mcl_fire:basic_flame','mcl_fire:eternal_fire','mcl_fire:fire','mcl_fire:fire_charge','mcl_sponges:sponge','mcl_sponges:sponge_wet'}
+local badnodes={'mcl_tnt:tnt','mcl_fire:basic_flame','mcl_fire:eternal_fire','mcl_fire:fire','mcl_fire:fire_charge','mcl_sponges:sponge','mcl_sponges:sponge_wet','mcl_banners:hanging_banner','mcl_banners:standing_banner'}
 local searchheight=64
 
 local function set_kwp(name,pos)
@@ -37,7 +37,7 @@ local function find_bad_things()
     local lp=minetest.localplayer:get_pos()
     local odst=500;
     for k, v in ipairs(obs) do -- look for crystals first
-		if ( v:get_item_textures():find("mcl_end_crystal") ) then
+		if false and ( v:get_item_textures():find("mcl_end_crystal") ) then
                 local npos=v:get_pos()
                 local dst=vector.distance(npos,minetest.localplayer:get_pos())
                 if odst > dst then cpos=npos
@@ -49,7 +49,7 @@ local function find_bad_things()
     end
     odst=500
     for k, v in ipairs(obs) do
-		if ( v:get_item_textures():find("arrow_box") ) then
+		if false and ( v:get_item_textures():find("arrow_box") ) then
                 local npos=v:get_pos()
                 local dst=vector.distance(npos,minetest.localplayer:get_pos())
                 if odst > dst then cpos=npos
@@ -93,8 +93,7 @@ local function stopflight()
 end
 
 
-minetest.register_globalstep(function()
-    if not minetest.settings:get_bool("kamikaze") and not(minetest.localplayer and minetest.localplayer:get_name():find("kamikaze")) then
+--minetest.register_globalstep(function()end)
 
 ws.rg('Kamikaze','Bots','kamikaze', function()
     local lp = minetest.localplayer:get_pos()
@@ -118,6 +117,7 @@ end, function()
     fnd=false
     if hud_wp then
         minetest.localplayer:hud_remove(hud_wp)
+        hud_wp=nil
     end
 end,{"noclip","pitch_move"})
 
@@ -128,4 +128,10 @@ minetest.register_on_death(function()
     minetest.after("5.0",function()
         fnd=false
     end)
+end)
+
+ws.on_connect(function()
+    if minetest.localplayer and minetest.localplayer:get_name():find("kamikaze") then
+        minetest.settings:set_bool("kamikaze",true)
+    end
 end)
