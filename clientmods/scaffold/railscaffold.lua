@@ -39,7 +39,7 @@ local function blockliquids()
     local liquids={'mcl_core:lava_source','mcl_core:water_source','mcl_core:lava_flowing','mcl_core:water_flowing'}
     local bn=minetest.find_nodes_near(lp, 5, liquids, true)
     for kk,vv in pairs(bn) do
-        scaffold.place_if_needed(tunnelmaterial,vv)
+        if vv.y > lp.y - 1 then scaffold.place_if_needed(tunnelmaterial,vv) end
     end
 end
 

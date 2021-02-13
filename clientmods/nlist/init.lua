@@ -1,4 +1,7 @@
 nlist = {}
+ws.on_connect(function()
+    ws.lp=minetest.localplayer
+end)
 local storage=minetest.get_mod_storage()
 local sl="default"
 local mode=1 --1:add, 2:remove

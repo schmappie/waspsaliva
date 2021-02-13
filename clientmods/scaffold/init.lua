@@ -213,7 +213,9 @@ dofile(mpath .. "/railscaffold.lua")
 dofile(mpath .. "/wallbot.lua")
 dofile(mpath .. "/ow2bot.lua")
 --dofile(mpath .. "/squarry.lua")
-
+local snapdir="north"
+ws.rg('DigHead','Player','dighead',function() ws.dig(ws.dircoord(0,1,0)) end)
+ws.rg('SnapYaw','Bots','snapyaw',function() ws.setdir(snapdir) end,function() snapdir=ws.getdir() end)
 
 
 scaffold.register_template_scaffold("Constrain", "scaffold_constrain", function(pos)
