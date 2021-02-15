@@ -28,6 +28,24 @@ function ws.set_bool_bulk(settings,value)
     return true
 end
 
+function ws.shuffle(tbl)
+  for i = #tbl, 2, -1 do
+    local j = math.random(i)
+    tbl[i], tbl[j] = tbl[j], tbl[i]
+  end
+  return tbl
+end
+
+function ws.in_list(val, list)
+    if type(list) ~= "table" then return false end
+    for i, v in ipairs(list) do
+        if v == val then
+            return true
+        end
+    end
+    return false
+end
+
 function ws.globalhacktemplate(setting,func,funcstart,funcstop,daughters)
     funcstart = funcstart or function() end
     funcstop = funcstop or function() end
@@ -78,10 +96,11 @@ minetest.register_globalstep(ws.step_globalhacks)
 function ws.get_reachable_positions(range)
     range=range or 2
     local rt={}
+    local lp=minetest.localplayer:get_pos()
     for x = -range,range,1 do
         for y = -range,range,1 do
             for z = -range,range,1 do
-                table.insert(rt,vector.new(x,y,z))
+                table.insert(rt,vector.add(lp,vector.new(x,y,z)))
             end
         end
     end
@@ -147,6 +166,21 @@ end
 function ws.on_connect(func)
 	if not minetest.localplayer then minetest.after(0,function() ws.on_connect(func) end) return end
 	if func then func() end
+end
+
+function ws.find_item(items,rnd)
+    if type(items) == 'string' then
+        return minetest.find_item(items)
+    end
+    if type(nodename) ~= 'table' then return end
+    if rnd then items=ws.shuffle(items) end
+    for i, v in pairs(items) do
+        local n = minetest.find_item(v)
+        if n then
+            return n
+        end
+    end
+    return false
 end
 
 local function find_named(inv, name)
@@ -315,28 +349,42 @@ function ws.dircoord(f, y, r)
     return ws.relcoord(0, 0, 0)
 end
 
-function ws.shuffle(tbl)
-  for i = #tbl, 2, -1 do
-    local j = math.random(i)
-    tbl[i], tbl[j] = tbl[j], tbl[i]
-  end
-  return tbl
+function ws.aim(tpos)
+    local ppos=minetest.localplayer:get_pos()
+    local dir=vector.direction(ppos,tpos)
+    local yyaw=0;
+    local pitch=0;
+    if dir.x < 0 then
+        yyaw = math.atan2(-dir.x, dir.z) + (math.pi * 2)
+    else
+        yyaw = math.atan2(-dir.x, dir.z)
+    end
+    yyaw = ws.round2(math.deg(yyaw),2)
+    pitch = ws.round2(math.deg(math.asin(-dir.y) * 1),2);
+    minetest.localplayer:set_yaw(yyaw)
+    minetest.localplayer:set_pitch(pitch)
 end
 
-function ws.find_item(items,rnd)
-    if type(items) == 'string' then
-        return minetest.find_item(items)
-        --return minetest.localplayer:set_wield_index(minetest.find_item(items))
+function ws.gaim(tpos,v,g)
+    local v = v or 40
+    local g = g or 9.81
+    local ppos=minetest.localplayer:get_pos()
+    local dir=vector.direction(ppos,tpos)
+    local yyaw=0;
+    local pitch=0;
+    if dir.x < 0 then
+        yyaw = math.atan2(-dir.x, dir.z) + (math.pi * 2)
+    else
+        yyaw = math.atan2(-dir.x, dir.z)
     end
-    if type(nodename) ~= 'table' then return end
-    items=ws.shuffle(items)
-    for i, v in ipairs(items) do
-        local n = minetest.find_item(v)
-        if n then
-            return n
-        end
-    end
-    return false
+    yyaw = ws.round2(math.deg(yyaw),2)
+    local y = dir.y
+	dir.y = 0
+    local x = vector.length(dir)
+    pitch=math.atan(math.pow(v, 2) / (g * x) + math.sqrt(math.pow(v, 4)/(math.pow(g, 2) * math.pow(x, 2)) - 2 * math.pow(v, 2) * y/(g * math.pow(x, 2)) - 1))
+    --pitch = ws.round2(math.deg(math.asin(-dir.y) * 1),2);
+    minetest.localplayer:set_yaw(yyaw)
+    minetest.localplayer:set_pitch(math.deg(pitch))
 end
 
 function ws.place(pos,nodename)
@@ -350,5 +398,11 @@ function ws.dig(pos)
     if nd and minetest.get_node_def(nd.name).diggable then
         ws.select_best_tool(pos)
         minetest.dig_node(pos)
+    end
+end
+
+function ws.dignodes(poss)
+    for k,v in pairs(poss) do
+        ws.dig(v)
     end
 end

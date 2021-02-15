@@ -177,7 +177,6 @@ end
 function scaffold.place_if_able(pos)
     if not pos then return end
     if not inside_constraints(pos) then return end
-    if minetest.settings:get_bool('scaffold.locky') and math.round(pos.y) ~= math.round(scaffold.locky) then return end
     if scaffold.can_place_wielded_at(pos) then
         minetest.place_node(pos)
     end
@@ -218,15 +217,9 @@ ws.rg('DigHead','Player','dighead',function() ws.dig(ws.dircoord(0,1,0)) end)
 ws.rg('SnapYaw','Bots','snapyaw',function() ws.setdir(snapdir) end,function() snapdir=ws.getdir() end)
 
 
-scaffold.register_template_scaffold("Constrain", "scaffold_constrain", function(pos)
+scaffold.register_template_scaffold("Constrain", "scaffold_constrain", function()end,false,function() scaffold.reset() end)
 
-end,false,function() scaffold.reset() end)
-
-scaffold.register_template_scaffold("LockYaw", "scaffold_lockyaw", function(pos)
-    if not scaffold.wason.scaffold_lockyaw then
-       minetest.settings:set_bool('afly_snap',true)
-    end
-end, false, function() minetest.settings:set_bool('afly_snap',false) end)
+ws.rg("LockYaw","Scaffold", "scaffold_lockyaw", function(pos) end, function()  minetest.settings:set_bool('afly_snap',true) end, function() minetest.settings:set_bool('afly_snap',false) end)
 
 
 scaffold.register_template_scaffold("CheckScaffold", "scaffold_check", function(pos)
@@ -245,13 +238,14 @@ scaffold.register_template_scaffold("WaterScaffold", "scaffold_water", function(
         }, pos)
     end
 end)
-scaffold.register_template_scaffold("WaterSpam", "scaffold_spamwater", function(pos)
-    --if (pos.x % 2 + pos.z % 2) == 0 then
-        scaffold.place_if_needed({
-            "mcl_buckets:bucket_water",
-            "mcl_core:water_source"
-        }, pos)
-    --end
+scaffold.register_template_scaffold("WaterSpam", "scaffold_spamwater", function()
+        ws.do_area(3,function(pos)
+            scaffold.place_if_needed({
+                "mcl_buckets:bucket_water",
+                "mcl_core:water_source"
+            }, pos)
+        end,true)
+
 end)
 local function checknode(pos)
     local node = minetest.get_node_or_nil(pos)
@@ -297,13 +291,12 @@ scaffold.register_template_scaffold("TallTBM", "scaffold_ttbm", function(pos)
    ws.dircoord(1,1,0),
    ws.dircoord(1,0,0)
     }
-    for k,v in pairs(pos) do
-        scaffold.dig(v)
-    end
+    ws.dignodes(pos)
+
     minetest.settings:set_bool('continuous_forward',true)
     for k,v in pairs(pos) do
         local n=minetest.get_node_or_nil(v)
-        if n and n.name ~= "air" then
+        if not n or n.name ~= "air" then
             minetest.settings:set_bool('continuous_forward',false)
         end
     end
