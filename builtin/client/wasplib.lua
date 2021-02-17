@@ -299,6 +299,7 @@ end
 
 function ws.relcoord(x, y, z)
     local pos = minetest.localplayer:get_pos()
+    pos.y=math.ceil(pos.y)
     return ws.cadd(pos, ws.optcoord(x, y, z))
 end
 
@@ -388,7 +389,9 @@ function ws.gaim(tpos,v,g)
 end
 
 function ws.place(pos,nodename)
-    minetest.localplayer:set_wield_index(ws.find_item(nodename))
+    local it=ws.find_item(nodename)
+    if not it then return end
+    minetest.localplayer:set_wield_index(it)
     --ws.switch_inv_or_echest(ws.find_item(nodem),1)
     ws.c.place_node(pos)
 end
