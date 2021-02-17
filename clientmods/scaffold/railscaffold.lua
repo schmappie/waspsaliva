@@ -37,9 +37,9 @@ end
 local function blockliquids()
     local lp=ws.lp:get_pos()
     local liquids={'mcl_core:lava_source','mcl_core:water_source','mcl_core:lava_flowing','mcl_core:water_flowing'}
-    local bn=minetest.find_nodes_near(lp, 5, liquids, true)
+    local bn=minetest.find_nodes_near(lp, 1, liquids, true)
     for kk,vv in pairs(bn) do
-        if vv.y > lp.y - 1 then scaffold.place_if_needed(tunnelmaterial,vv) end
+        if vv.y > lp.y then scaffold.place_if_needed(tunnelmaterial,vv) end
     end
 end
 
@@ -67,7 +67,7 @@ ws.rg("RailBot","Bots", "scaffold_rails", function()
     local bln=minetest.get_node_or_nil(below)
     local lpn=minetest.get_node_or_nil(lp)
 
-    if bln and lpn and lpn.name == "mcl_minecarts:golden_rail_on" then
+    if bln and bln.name=="mesecons_torch:redstoneblock" and lpn and lpn.name == "mcl_minecarts:golden_rail_on" then
         minetest.settings:set_bool('continuous_forward',true)
     else
         minetest.settings:set_bool('continuous_forward',false)
@@ -116,7 +116,9 @@ scaffold.register_template_scaffold("LanternTBM", "scaffold_ltbm", function()
         local nd=minetest.get_node_or_nil(lpos)
         if nd and nd.name ~= 'mcl_ocean:sea_lantern' then
             ws.dig(lpos)
-            minetest.after("0",function() ws.place(lpos,'mcl_ocean:sea_lantern') end)
+            minetest.after("0",function()
+                ws.place(lpos,'mcl_ocean:sea_lantern')
+            end)
         end
    end
 end)
