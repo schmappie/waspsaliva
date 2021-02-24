@@ -16,6 +16,14 @@ function ws.s(name,value)
         return ws.c.settings:get(name)
     end
 end
+function ws.sb(name,value)
+    if value == nil then
+        return ws.c.settings:get_bool(name)
+    else
+        ws.c.settings:set_bool(name,value)
+        return ws.c.settings:get_bool(name)
+    end
+end
 
 function ws.dcm(msg)
     return minetest.display_chat_message(msg)
@@ -44,6 +52,14 @@ function ws.in_list(val, list)
         end
     end
     return false
+end
+
+function ws.random_table_element(tbl)
+    local ks = {}
+    for k in pairs(tbl) do
+        table.insert(ks, k)
+    end
+    return tbl[ks[math.random(#ks)]]
 end
 
 function ws.globalhacktemplate(setting,func,funcstart,funcstop,daughters)
@@ -168,7 +184,7 @@ function ws.on_connect(func)
 	if func then func() end
 end
 
-function ws.find_item(items,rnd)
+function ws.find_item_in_table(items,rnd)
     if type(items) == 'string' then
         return minetest.find_item(items)
     end
@@ -388,24 +404,34 @@ function ws.gaim(tpos,v,g)
     minetest.localplayer:set_pitch(math.deg(pitch))
 end
 
-function ws.place(pos,nodename)
-    local it=ws.find_item(nodename)
-    if not it then return end
-    minetest.localplayer:set_wield_index(it)
-    --ws.switch_inv_or_echest(ws.find_item(nodem),1)
-    ws.c.place_node(pos)
+
+
+function ws.place(pos,arg)
+    local nodename=false
+    if type(arg) == 'string' then
+        nodename={arg}
+    elseif type(arg) == 'table' then
+        nodename=arg
+    elseif type(arg) == 'function' then
+        nodename=arg()
+    end
+    if not nodename or (nodename and ws.switch_inv_or_echest(ws.find_item_in_table(nodename),1)) then
+        ws.c.place_node(pos)
+    end
 end
 
-function ws.dig(pos)
+function ws.dig(pos,condition)
+    if condition and not condition(pos) then return false end
     local nd=minetest.get_node_or_nil(pos)
     if nd and minetest.get_node_def(nd.name).diggable then
         ws.select_best_tool(pos)
         minetest.dig_node(pos)
     end
+    return true
 end
 
-function ws.dignodes(poss)
+function ws.dignodes(poss,condition)
     for k,v in pairs(poss) do
-        ws.dig(v)
+        if condition and condition(v) then ws.dig(v) end
     end
 end
