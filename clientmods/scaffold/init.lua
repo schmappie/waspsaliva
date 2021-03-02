@@ -119,11 +119,13 @@ function scaffold.can_place_wielded_at(pos)
     return not wield_empty and scaffold.can_place_at(pos)
 end
 
+
 function scaffold.find_any_swap(items)
+    local ts=8
     for i, v in ipairs(items) do
         local n = minetest.find_item(v)
         if n then
-            minetest.localplayer:set_wield_index(n)
+            ws.switch_to_item(v)
             return true
         end
     end
@@ -194,11 +196,13 @@ end
 function scaffold.dig(pos)
     if not inside_constraints(pos) then return end
     if is_diggable(pos) then
+        local nd=minetest.get_node_or_nil(pos)
         minetest.select_best_tool(nd.name)
         if emicor then emicor.supertool()
         end
+        --minetest.select_best_tool(nd.name)
         minetest.dig_node(pos)
-        minetest.select_best_tool(nd.name)
+
     end
     return false
 end
@@ -219,7 +223,23 @@ ws.rg('SnapYaw','Bots','snapyaw',function() ws.setdir(snapdir) end,function() sn
 
 scaffold.register_template_scaffold("Constrain", "scaffold_constrain", function()end,false,function() scaffold.reset() end)
 
-ws.rg("LockYaw","Scaffold", "scaffold_lockyaw", function(pos) end, function()  minetest.settings:set_bool('afly_snap',true) end, function() minetest.settings:set_bool('afly_snap',false) end)
+ws.rg("LockYaw","Scaffold", "scaffold_lockyaw", function(pos)
+    if minetest.settings:get_bool("freecam") then return end
+    local y=minetest.localplayer:get_yaw()
+    local yy=nil
+    if ( y < 45 or y > 315 ) then
+        yy=0
+    elseif (y < 135) then
+        yy=90
+    elseif (y < 225 ) then
+        yy=180
+    elseif ( y < 315 ) then
+        yy=270
+    end
+    if yy ~= nil then
+        minetest.localplayer:set_yaw(yy)
+    end
+end)
 
 
 scaffold.register_template_scaffold("CheckScaffold", "scaffold_check", function(pos)

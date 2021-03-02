@@ -109,12 +109,15 @@ end
 
 minetest.register_globalstep(ws.step_globalhacks)
 
-function ws.get_reachable_positions(range)
+function ws.get_reachable_positions(range,under)
+    under=under or false
     range=range or 2
     local rt={}
     local lp=minetest.localplayer:get_pos()
+    local ylim=range
+    if under then ylim=-1 end
     for x = -range,range,1 do
-        for y = -range,range,1 do
+        for y = -range,ylim,1 do
             for z = -range,range,1 do
                 table.insert(rt,vector.add(lp,vector.new(x,y,z)))
             end
@@ -199,26 +202,43 @@ function ws.find_item_in_table(items,rnd)
     return false
 end
 
-local function find_named(inv, name)
+function ws.find_named(inv, name)
 	if not inv then return -1 end
+    if not name then return end
     for i, v in ipairs(inv) do
-        --minetest.display_chat_message(name)
         if v:get_name():find(name) then
             return i
         end
     end
 end
+local hotbar_slot=7
+function ws.to_hotbar(it)
+	local mv = InventoryAction("move")
+	mv:from("current_player", "main", it)
+	mv:to("current_player", "main", hotbar_slot)
+	mv:apply()
+end
+
+function ws.switch_to_item(itname)
+    if not minetest.localplayer then return false end
+    local plinv = minetest.get_inventory("current_player")
+    local pos = ws.find_named(plinv.main, itname)
+    if pos then
+        ws.to_hotbar(pos)
+        minetest.localplayer:set_wield_index(hotbar_slot)
+        return true
+    end
+    return false
+end
+
+function core.switch_to_item(item) return ws.switch_to_item(item) end
+
 function ws.switch_inv_or_echest(name,max_count)
 	if not minetest.localplayer then return false end
     local plinv = minetest.get_inventory("current_player")
+    if ws.switch_to_item(name) then return true end
 
-    local pos = find_named(plinv.main, name)
-    if pos then
-        minetest.localplayer:set_wield_index(pos)
-        return true
-    end
-
-    local epos = find_named(plinv.enderchest, name)
+    local epos = ws.find_named(plinv.enderchest, name)
     if epos then
         local tpos
         for i, v in ipairs(plinv.main) do
@@ -227,16 +247,22 @@ function ws.switch_inv_or_echest(name,max_count)
                 break
             end
         end
+        if tpos and not plinv.main[hotbar_slot]:is_empty() then
+            local mov = InventoryAction("move")
+            mov:from("current_player", "enderchest", hotbar_slot)
+            mov:to("current_player", "main", tpos)
+            mov:apply()
+        end
 
         if tpos then
             local mv = InventoryAction("move")
             mv:from("current_player", "enderchest", epos)
-            mv:to("current_player", "main", tpos)
+            mv:to("current_player", "main", hotbar_slot)
             if max_count then
                 mv:set_count(max_count)
             end
             mv:apply()
-            minetest.localplayer:set_wield_index(tpos)
+            minetest.localplayer:set_wield_index(hotbar_slot)
             return true
         end
     end
