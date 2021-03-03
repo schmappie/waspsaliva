@@ -167,6 +167,7 @@ function scaffold.place_if_needed(items, pos, place)
 
         -- need to place
         if swapped and scaffold.can_place_at(pos) then
+            --minetest.after("0.05",place,pos)
             place(pos)
             return true
         -- can't place
