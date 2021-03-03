@@ -211,21 +211,36 @@ function ws.find_named(inv, name)
         end
     end
 end
-local hotbar_slot=7
+local hotbar_slot=8
 function ws.to_hotbar(it)
+    local tpos=nil
+    local plinv = minetest.get_inventory("current_player")
+    for i, v in ipairs(plinv.main) do
+        if i<10 and v:is_empty() then
+            tpos = i
+            break
+        end
+    end
+    if tpos == nil then tpos=hotbar_slot end
 	local mv = InventoryAction("move")
 	mv:from("current_player", "main", it)
-	mv:to("current_player", "main", hotbar_slot)
+	mv:to("current_player", "main", tpos)
 	mv:apply()
+    return tpos
 end
 
 function ws.switch_to_item(itname)
     if not minetest.localplayer then return false end
     local plinv = minetest.get_inventory("current_player")
+    for i, v in ipairs(plinv.main) do
+        if i<10 and v:get_name() == itname then
+            minetest.localplayer:set_wield_index(i)
+            return true
+        end
+    end
     local pos = ws.find_named(plinv.main, itname)
     if pos then
-        ws.to_hotbar(pos)
-        minetest.localplayer:set_wield_index(hotbar_slot)
+        minetest.localplayer:set_wield_index(ws.to_hotbar(pos))
         return true
     end
     return false
@@ -242,27 +257,22 @@ function ws.switch_inv_or_echest(name,max_count)
     if epos then
         local tpos
         for i, v in ipairs(plinv.main) do
-            if v:is_empty() then
+            if i < 9 and v:is_empty() then
                 tpos = i
                 break
             end
         end
-        if tpos and not plinv.main[hotbar_slot]:is_empty() then
-            local mov = InventoryAction("move")
-            mov:from("current_player", "enderchest", hotbar_slot)
-            mov:to("current_player", "main", tpos)
-            mov:apply()
-        end
+        if not tpos then tpos=hotbar_slot end
 
         if tpos then
             local mv = InventoryAction("move")
             mv:from("current_player", "enderchest", epos)
-            mv:to("current_player", "main", hotbar_slot)
+            mv:to("current_player", "main", tpos)
             if max_count then
                 mv:set_count(max_count)
             end
             mv:apply()
-            minetest.localplayer:set_wield_index(hotbar_slot)
+            minetest.localplayer:set_wield_index(tpos)
             return true
         end
     end
