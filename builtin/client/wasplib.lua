@@ -191,7 +191,7 @@ function ws.find_item_in_table(items,rnd)
     if type(items) == 'string' then
         return minetest.find_item(items)
     end
-    if type(nodename) ~= 'table' then return end
+    if type(items) ~= 'table' then return end
     if rnd then items=ws.shuffle(items) end
     for i, v in pairs(items) do
         local n = minetest.find_item(v)
@@ -402,6 +402,16 @@ function ws.dircoord(f, y, r)
     return ws.relcoord(0, 0, 0)
 end
 
+function ws.get_dimension(pos)
+    if pos.y > -65 then return "overworld"
+    elseif pos.y > -8000 then return "void"
+    elseif pos.y > -27000 then return "end"
+    elseif pos.y > -28930 then return "void"
+    elseif pos.y > -31000 then return "nether"
+    else return "void"
+    end
+end
+
 function ws.aim(tpos)
     local ppos=minetest.localplayer:get_pos()
     local dir=vector.direction(ppos,tpos)
@@ -444,6 +454,7 @@ end
 
 function ws.place(pos,arg)
     local nodename=false
+    local nodes_per_tick = tonumber(minetest.settings:get("nodes_per_tick")) or 8
     if type(arg) == 'string' then
         nodename={arg}
     elseif type(arg) == 'table' then
@@ -468,6 +479,6 @@ end
 
 function ws.dignodes(poss,condition)
     for k,v in pairs(poss) do
-        if condition and condition(v) then ws.dig(v) end
+        if not condition or condition(v) then ws.dig(v) end
     end
 end
