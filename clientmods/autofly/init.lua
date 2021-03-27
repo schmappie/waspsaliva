@@ -78,9 +78,47 @@ function autofly.get2ddst(pos1,pos2)
 end
 
 local last_sprint = false
+local hud_ah=nil
+
+
+
+function autofly.update_ah()
+    local pos=vector.new(0,0,0)
+    local ppos=minetest.localplayer:get_pos()
+    local yaw=math.floor(minetest.localplayer:get_yaw())
+
+    local theta =(yaw * math.pi / 180)
+	pos.x= math.floor( 100 * math.cos(theta) )
+	pos.z= math.floor( 100 * math.sin(theta) )
+    pos=vector.add(ppos,pos)
+    pos.y=ppos.y
+    local nname=pos_to_string(pos).."\n"..yaw.."\n"..'__________________________________________________________________________________________________________________________________________________'
+    if hud_ah then
+        minetest.display_chat_message(pos.x..","..pos.z)
+        minetest.localplayer:hud_change(hud_ah, 'world_pos', pos)
+        minetest.localplayer:hud_change(hud_ah, 'name', nname)
+    else
+        hud_ah = minetest.localplayer:hud_add({
+            hud_elem_type = 'waypoint',
+            name          = nname,
+            title       = pos_to_string(pos),
+            text          = '',
+            number        = 0x00ff00,
+            world_pos     = pos,
+            precision     = 0,
+            width         = 1000
+        })
+    end
+end
+minetest.register_globalstep(function()
+
+    if not minetest.localplayer then return end
+  -- autofly.update_ah()
+end)
 
 minetest.register_globalstep(function()
     if not minetest.localplayer then return end
+
     autofly.axissnap()
     if minetest.settings:get_bool("autosprint") or (minetest.settings:get_bool("continuous_forward") and minetest.settings:get_bool("autofsprint")) then
         core.set_keypress("special1", true)
@@ -121,6 +159,10 @@ minetest.register_globalstep(function()
     autofly.cruise()
 end)
 
+function autofly.get_speed()
+    return speed
+end
+
 
 function autofly.set_hud_wp(pos, title)
     if hud_wp then
@@ -153,14 +195,21 @@ function autofly.get_quad()
     local lp=minetest.localplayer:get_pos()
     local quad=""
 
-    if lp.z < 0 then quad="Q: South"
-    else quad="Q: North" end
+    if lp.z < 0 then quad="South"
+    else quad="North" end
 
     if lp.x < 0 then quad=quad.."-west"
     else quad=quad.."-east" end
 
     return quad
 end
+
+function autofly.get_wdir()
+    local qd=autofly.get_quad()
+
+end
+
+
 
 function autofly.get_local_name()
     local ww=autofly.getwps()
@@ -352,21 +401,7 @@ function autofly.cruise()
 end
 
 function autofly.aim(tpos)
-    local ppos=minetest.localplayer:get_pos()
-    --local dir=tpos
-    local dir=vector.direction(ppos,tpos)
-    local yyaw=0;
-    local pitch=0;
-    if dir.x < 0 then
-        yyaw = math.atan2(-dir.x, dir.z) + (math.pi * 2)
-    else
-        yyaw = math.atan2(-dir.x, dir.z)
-    end
-    yyaw = ws.round2(math.deg(yyaw),2)
-    pitch = ws.round2(math.deg(math.asin(-dir.y) * 1),2);
-    minetest.localplayer:set_yaw(yyaw)
-    minetest.localplayer:set_pitch(pitch)
-
+    return ws.aim(tpos)
 end
 
 function autofly.autotp(tpname)

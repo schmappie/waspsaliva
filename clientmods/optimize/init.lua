@@ -10,11 +10,28 @@ local function remove_ents(texture)
     for i, v in ipairs(obj) do
         -- CAOs with water/lava textures are droplets
         --minetest.log("ERROR",v:get_item_textures())
-        if v:get_item_textures():find("^" .. texture) then
+        --ws.dcm(v:get_item_textures())
+        if v:get_item_textures():find(texture) then
             v:set_visible(false)
             v:remove_from_scene(true)
         end
     end
+end
+
+
+
+local function remove_hud()
+	local player = minetest.localplayer
+	local def
+	local i = -1
+	if not player then return end
+	repeat
+		i = i + 1
+		def = player:hud_get(i)
+	until not def or def.text:find("fire") or def.text:find("burning")
+	if def and type(def) == "string" then
+        minetest.localplayer:hud_remove(def)
+	end
 end
 
 
@@ -25,9 +42,16 @@ end)
 local epoch = os.clock()
 
 minetest.register_globalstep(function()
+    if not minetest.localplayer then return end
     if os.clock() > epoch + 1 then
         if minetest.settings:get_bool("optimize_water_drops") then
             remove_ents("default_water_source")
+        end
+        if minetest.settings:get_bool("optimize_burning") then
+            remove_ents("mcl_burning")
+            remove_ents("mcl_fire")
+            remove_ents("_animated")
+            remove_hud()
         end
         epoch = os.clock()
     end
@@ -36,4 +60,4 @@ end)
 
 minetest.register_cheat("NoParticles", "Render", "noparticles")
 minetest.register_cheat("NoDroplets", "Render", "optimize_water_drops")
-minetest.register_cheat("NoHearts", "Render", "optimize_hearts")
+minetest.register_cheat("NoBurning", "Render", "optimize_burning")

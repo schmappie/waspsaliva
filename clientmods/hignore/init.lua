@@ -111,7 +111,7 @@ local function display(message)
 
     -- strip title
     if not is_dm and (hignore.strip[player] or minetest.settings:get_bool("hignore_strip_all")) then
-        message = message:match(".- | (.*)") or message
+        message = message:match(".- (.*)") or message
         if hignore.highlight[player] == nil then
             minetest.display_chat_message(message)
             return true

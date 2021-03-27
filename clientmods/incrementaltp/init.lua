@@ -7,11 +7,11 @@ incremental_tp.tpactive=false
 
 -- for Clamity
 incremental_tp.max_instantaneous_tp = {
-    x = 9,
-    y = 55,
-    z = 9
+    x = 6,
+    y = 50,
+    z = 6
 }
-
+local wason=false
 local function sign(n)
     if n == 0 then
         return 0
@@ -35,8 +35,13 @@ local function tpstep(target, time, second, variance,sfunc)
     local pos = minetest.localplayer:get_pos()
     local vec = vector.subtract(target, pos)
     minetest.settings:set_bool("free_move",true)
-
-    if math.abs(vec.x) + math.abs(vec.y) + math.abs(vec.z) < 1 then
+    if not incremental_tp.tpactive and wason then
+        wason=false
+        return
+    end
+    wason=true
+    incremental_tp.tpactive=true
+    if  math.abs(vec.x) + math.abs(vec.y) + math.abs(vec.z) < 1 then
         minetest.localplayer:set_pos(target)
         incremental_tp.tpactive=false
         minetest.display_chat_message("Arrived at " .. minetest.pos_to_string(target))
@@ -68,12 +73,12 @@ local function tpstep(target, time, second, variance,sfunc)
 end
 
 function incremental_tp.tp(target, time, variance)
-    incremental_tp.tpactive=true
+    if incremental_tp.tpactive then return end
     tpstep(target, time, 1, variance)
 end
 
 function incremental_tp.tpafter(target,time,variance,sfunc)
-    incremental_tp.tpactive=true
+    if incremental_tp.tpactive then return end
     tpstep(target,time,1,variance,sfunc)
 end
 

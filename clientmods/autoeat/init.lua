@@ -58,11 +58,11 @@ minetest.register_globalstep(function(dtime)
 		autoeat.eat()
 	end
 end)
-
-minetest.after(3, function()
+local function get_hud()
 	local player = minetest.localplayer
 	local def
 	local i = -1
+	if not player then minetest.after(5,get_hud) end
 	repeat
 		i = i + 1
 		def = player:hud_get(i)
@@ -70,6 +70,7 @@ minetest.after(3, function()
 	if def then
 		hud_id = i
 	end
-end)
+end
+minetest.after(15,get_hud )
 
 minetest.register_cheat("AutoEat", "Player", "autoeat")

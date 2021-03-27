@@ -151,9 +151,7 @@ local lastdig=0
 local actint=10
 function scaffold.place_if_needed(items, pos, place)
     if not inside_constraints(pos) then return end
-    --if lastplc + actint > os.time() then return end
     if not pos then return end
-    lastplc=os.time()
 
     place = place or minetest.place_node
 
