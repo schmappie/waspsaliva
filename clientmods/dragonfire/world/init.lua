@@ -122,6 +122,16 @@ minetest.register_globalstep(function(dtime)
 				if i > nodes_per_tick then return end
 				minetest.place_node(p)
 			end
+		elseif minetest.settings:get_bool("block_sources") then
+			local positions = minetest.find_nodes_near(pos, 5, {"mcl_core:lava_source","mcl_nether:nether_lava_source","mcl_core:water_source"}, true)
+			for i, p in pairs(positions) do
+				if p.y<2 then
+					if p.x>500 and p.z>500 then return end
+				end
+
+				if i > nodes_per_tick then return end
+				minetest.place_node(p)
+			end
 		elseif minetest.settings:get_bool("autotnt") then
 			local positions = minetest.find_nodes_near_under_air_except(pos, 5, item:get_name(), true)
 			for i, p in pairs(positions) do
@@ -154,6 +164,7 @@ minetest.register_cheat("Scaffold", "World", "scaffold")
 minetest.register_cheat("HighwayZ", "World", "highway_z")
 minetest.register_cheat("BlockWater", "World", "block_water")
 minetest.register_cheat("BlockLava", "World", "block_lava")
+minetest.register_cheat("BlockSrc", "World", "block_sources")
 minetest.register_cheat("PlaceOnTop", "World", "autotnt")
 minetest.register_cheat("Replace", "World", "replace")
 minetest.register_cheat("Nuke", "World", "nuke")
