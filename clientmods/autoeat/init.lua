@@ -62,7 +62,7 @@ local function get_hud()
 	local player = minetest.localplayer
 	local def
 	local i = -1
-	if not player then minetest.after(5,get_hud) end
+	if not player then minetest.after(5,get_hud) return end
 	repeat
 		i = i + 1
 		def = player:hud_get(i)
