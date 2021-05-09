@@ -2,6 +2,15 @@
 
 -- Optimizes stuff.
 
+
+woptimize={}
+
+function woptimize.countents()
+    local obj = minetest.localplayer.get_nearby_objects(10000)
+    ws.dcm("Entity count: "..#obj)
+end
+
+
 -- texture is a prefix
 local function remove_ents(texture)
     if not minetest.localplayer then return end
@@ -11,7 +20,8 @@ local function remove_ents(texture)
         -- CAOs with water/lava textures are droplets
         --minetest.log("ERROR",v:get_item_textures())
         --ws.dcm(v:get_item_textures())
-        if v:get_item_textures():find(texture) then
+	local txt=v:get_item_textures()
+        if type(txt) == "string" and txt:find(texture) then
             v:set_visible(false)
             v:remove_from_scene(true)
         end
@@ -47,12 +57,7 @@ minetest.register_globalstep(function()
         if minetest.settings:get_bool("optimize_water_drops") then
             remove_ents("default_water_source")
         end
-        if minetest.settings:get_bool("optimize_burning") then
-            remove_ents("mcl_burning")
-            remove_ents("mcl_fire")
-            remove_ents("_animated")
-            remove_hud()
-        end
+
         epoch = os.clock()
     end
 end)
@@ -60,4 +65,4 @@ end)
 
 minetest.register_cheat("NoParticles", "Render", "noparticles")
 minetest.register_cheat("NoDroplets", "Render", "optimize_water_drops")
-minetest.register_cheat("NoBurning", "Render", "optimize_burning")
+--minetest.register_cheat("NoBurning", "Render", "optimize_burning")
