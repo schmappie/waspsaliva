@@ -1,3 +1,5 @@
+kamikaze={}
+kamikaze.active=false
 local fnd=false
 local cpos=vector.new(0,0,0)
 local hud_wp=nil
@@ -54,6 +56,7 @@ local function find_ob(txts)
     end
     return rt
 end
+
 local function find_nd(names)
     local lp=minetest.localplayer:get_pos()
     local epos=minetest.find_nodes_near(lp,60,names,true)
@@ -96,6 +99,7 @@ local function flythere()
     if not minetest.localplayer then return end
     if not cpos then return end
     ws.aim(cpos)
+    minetest.settings:set_bool("killaura",false)
     if incremental_tp.tpactive then return end
     local lp=minetest.localplayer:get_pos()
     local dst=vector.distance(lp,cpos)
@@ -105,30 +109,22 @@ local function flythere()
         set_kwp(searchtxt,cpos)
     end
     minetest.settings:set_bool("continuous_forward",true)
-    if dst < 2 then
-         minetest.settings:set_bool("continuous_forward",false)
-    end
-    --incremental_tp.tp(cpos,1)
 end
-local nextthrow=0
-local function throwegg()
-    if nextthrow > os.clock() then return false end
-    nextthrow=os.clock() + 0.5
-    if not ws.switch_inv_or_echest('mcl_throwing:snowball',1) then
-        ws.switch_inv_or_echest('mcl_throwing:egg',1)
-    end
-    ws.aim(cpos)
-    minetest.interact('use')
-end
+
 
 local function stopflight()
     local lp = minetest.localplayer:get_pos()
     local dst=vector.distance(lp,cpos)
     minetest.settings:set_bool("continuous_forward",false)
     if tob and tob:get_item_textures():find(searchtxt) then
-        if tob and searchtxt == 'mcl_end_crystal.png' and dst < 5 then
-            throwegg()
+        if searchtxt == 'mcl_end_crystal.png' then
+            minetest.dig_node(cpos)
+            tob:punch()
+            minetest.interact('start_digging')
             searchtxt=""
+            tob=nil
+        else
+            minetest.settings:set_bool("killaura",true)
         end
     end
     fnd=false
@@ -140,34 +136,39 @@ end
 ws.rg('Kamikaze','Bots','kamikaze', function()
     local lp = minetest.localplayer:get_pos()
     local dst=vector.distance(lp,cpos)
+
     if not find_bad_things() then
-        if vector.distance(lp,zz) < 4 then
+        if vector.distance(lp,zz) < 1 then
             stopflight()
         else
             cpos=zz
+            flythere()
         end
-    elseif dst < 4 then
+    elseif dst < 1 then
         stopflight()
     else
+        flythere()
     end
-    flythere()
-    ws.dignodes(minetest.find_nodes_near(minetest.localplayer:get_pos(),5,badnodes,true))
+
+   -- ws.dignodes(minetest.find_nodes_near(minetest.localplayer:get_pos(),5,badnodes,true))
     if cpos then
-       -- minetest.dig_node(cpos)
-       -- minetest.interact('start_digging')
-        minetest.settings:set_bool("killaura",true)
+        minetest.dig_node(cpos)
+        --minetest.interact('start_digging')
+
     end
 
 end,function()
     core.set_keypress("special1", true)
+    kamikaze.active=true
 end, function()
+    kamikaze.active=false
     core.set_keypress("special1", false)
     fnd=false
     if hud_wp then
         minetest.localplayer:hud_remove(hud_wp)
         hud_wp=nil
     end
-end,{"noclip","pitch_move","dighead"})
+end,{"noclip","pitch_move","dighead","digbadnodes"})
 
 
 
@@ -181,10 +182,11 @@ minetest.register_on_death(function()
 end)
 
 ws.on_connect(function()
-    if minetest.localplayer and minetest.localplayer:get_name():find("kamikaze") then
-        minetest.settings:set_bool("kamikaze",true)
-    else  minetest.settings:set_bool("kamikaze",false)
-    end
+minetest.settings:set_bool("kamikaze",false)
+    --if minetest.localplayer and minetest.localplayer:get_name():find("kamikaze") then
+    --    minetest.settings:set_bool("kamikaze",true)
+    --else  minetest.settings:set_bool("kamikaze",false)
+    --end
 end)
 
 minetest.register_cheat('KamiCrystals','Bots','kamikaze_crystals')
