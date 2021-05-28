@@ -23,14 +23,14 @@ local function remove_ents(texture)
 	local txt=v:get_item_textures()
         if type(txt) == "string" and txt:find(texture) then
             v:set_visible(false)
-            v:remove_from_scene(true)
+            v:remove(true)
         end
     end
 end
 
 
 
-local function remove_hud()
+local function remove_hud(name)
 	local player = minetest.localplayer
 	local def
 	local i = -1
@@ -38,9 +38,9 @@ local function remove_hud()
 	repeat
 		i = i + 1
 		def = player:hud_get(i)
-	until not def or def.text:find("fire") or def.text:find("burning")
-	if def and type(def) == "string" then
-        minetest.localplayer:hud_remove(def)
+	until not def or def.text:find(name)
+	if def then
+	    minetest.localplayer:hud_remove(i)
 	end
 end
 
@@ -57,7 +57,9 @@ minetest.register_globalstep(function()
         if minetest.settings:get_bool("optimize_water_drops") then
             remove_ents("default_water_source")
         end
-
+        if minetest.settings:get_bool("optimize_burning") then
+	    remove_hud('mcl_burning_hud_flame_animated.png')
+        end
         epoch = os.clock()
     end
 end)
@@ -65,4 +67,4 @@ end)
 
 minetest.register_cheat("NoParticles", "Render", "noparticles")
 minetest.register_cheat("NoDroplets", "Render", "optimize_water_drops")
---minetest.register_cheat("NoBurning", "Render", "optimize_burning")
+minetest.register_cheat("NoBurning", "Render", "optimize_burning")
