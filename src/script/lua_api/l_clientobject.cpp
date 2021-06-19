@@ -36,6 +36,8 @@ int ClientObjectRef::l_get_id(lua_State *L)
 {
 	ClientObjectRef *ref = checkobject(L, 1);
 	GenericCAO *gcao = get_generic_cao(ref, L);
+ if(!gcao) return 0;
+	if(!gcao) return 0;
 	lua_pushvalue(L, gcao->getId());
 	return 1;
 }
@@ -43,8 +45,9 @@ int ClientObjectRef::l_get_id(lua_State *L)
 int ClientObjectRef::l_get_pos(lua_State *L)
 {
 	ClientObjectRef *ref = checkobject(L, 1);
-	ClientActiveObject *cao = get_cao(ref);
-	push_v3f(L, cao->getPosition() / BS);
+	ClientActiveObject *gcao = get_cao(ref);
+	if(!gcao) return 0;
+	push_v3f(L, gcao->getPosition() / BS);
 	return 1;
 }
 
@@ -52,6 +55,8 @@ int ClientObjectRef::l_get_velocity(lua_State *L)
 {
 	ClientObjectRef *ref = checkobject(L, 1);
 	GenericCAO *gcao = get_generic_cao(ref, L);
+ if(!gcao) return 0;
+	if(!gcao) return 0;
 	push_v3f(L, gcao->getVelocity() / BS);
 	return 1;
 }
@@ -60,6 +65,8 @@ int ClientObjectRef::l_get_acceleration(lua_State *L)
 {
 	ClientObjectRef *ref = checkobject(L, 1);
 	GenericCAO *gcao = get_generic_cao(ref, L);
+ if(!gcao) return 0;
+	if(!gcao) return 0;
 	push_v3f(L, gcao->getAcceleration() / BS);
 	return 1;
 }
@@ -68,6 +75,7 @@ int ClientObjectRef::l_get_rotation(lua_State *L)
 {
 	ClientObjectRef *ref = checkobject(L, 1);
 	GenericCAO *gcao = get_generic_cao(ref, L);
+ if(!gcao) return 0;
 	push_v3f(L, gcao->getRotation());
 	return 1;
 }
@@ -76,6 +84,7 @@ int ClientObjectRef::l_is_player(lua_State *L)
 {
 	ClientObjectRef *ref = checkobject(L, 1);
 	GenericCAO *gcao = get_generic_cao(ref, L);
+ if(!gcao) return 0;
 	lua_pushboolean(L, gcao->isPlayer());
 	return 1;
 }
@@ -84,6 +93,7 @@ int ClientObjectRef::l_is_local_player(lua_State *L)
 {
 	ClientObjectRef *ref = checkobject(L, 1);
 	GenericCAO *gcao = get_generic_cao(ref, L);
+ if(!gcao) return 0;
 	lua_pushboolean(L, gcao->isLocalPlayer());
 	return 1;
 }
@@ -92,6 +102,7 @@ int ClientObjectRef::l_get_name(lua_State *L)
 {
 	ClientObjectRef *ref = checkobject(L, 1);
 	GenericCAO *gcao = get_generic_cao(ref, L);
+ if(!gcao) return 0;
 	lua_pushstring(L, gcao->getName().c_str());
 	return 1;
 }
@@ -100,6 +111,7 @@ int ClientObjectRef::l_get_parent(lua_State *L)
 {
 	ClientObjectRef *ref = checkobject(L, 1);
 	GenericCAO *gcao = get_generic_cao(ref, L);
+ if(!gcao) return 0;
 	create(L, gcao->getParent());
 	return 1;
 }
@@ -108,6 +120,7 @@ int ClientObjectRef::l_get_nametag(lua_State *L)
 {
 	ClientObjectRef *ref = checkobject(L, 1);
 	GenericCAO *gcao = get_generic_cao(ref, L);
+ if(!gcao) return 0;
 	ObjectProperties *props = gcao->getProperties();
 	lua_pushstring(L, props->nametag.c_str());
 	return 1;
@@ -117,6 +130,7 @@ int ClientObjectRef::l_get_item_textures(lua_State *L)
 {
 	ClientObjectRef *ref = checkobject(L, 1);
 	GenericCAO *gcao = get_generic_cao(ref, L);
+ if(!gcao) return 0;
 	ObjectProperties *props = gcao->getProperties();
 	lua_newtable(L);
 
@@ -130,6 +144,8 @@ int ClientObjectRef::l_set_visible(lua_State *L)
 {
 	ClientObjectRef *ref = checkobject(L, 1);
 	GenericCAO *gcao = get_generic_cao(ref, L);
+ if(!gcao) return 0;
+	if(!gcao) return 0;
 	gcao->setVisible(readParam<bool>(L, -1));
 	return 0;
 }
@@ -138,7 +154,20 @@ int ClientObjectRef::l_remove_from_scene(lua_State *L)
 {
 	ClientObjectRef *ref = checkobject(L, 1);
 	GenericCAO *gcao = get_generic_cao(ref, L);
+	if(!gcao) return 0;
+	if(!gcao) return 0;
 	gcao->removeFromScene(readParam<bool>(L, -1));
+	return 0;
+}
+
+int ClientObjectRef::l_remove(lua_State *L)
+{
+	ClientObjectRef *ref = checkobject(L, 1);
+	ClientActiveObject *cao = get_cao(ref);
+	if (! cao)
+		return 0;
+	getClient(L)->getEnv().removeActiveObject(cao->getId());
+
 	return 0;
 }
 
@@ -146,6 +175,7 @@ int ClientObjectRef::l_get_hp(lua_State *L)
 {
 	ClientObjectRef *ref = checkobject(L, 1);
 	GenericCAO *gcao = get_generic_cao(ref, L);
+    if(!gcao) return 0;
 	lua_pushnumber(L, gcao->getHp());
 	return 1;
 }
@@ -154,6 +184,7 @@ int ClientObjectRef::l_get_max_hp(lua_State *L)
 {
 	ClientObjectRef *ref = checkobject(L, 1);
 	GenericCAO *gcao = get_generic_cao(ref, L);
+ if(!gcao) return 0;
 	ObjectProperties *props = gcao->getProperties();
 	lua_pushnumber(L, props->hp_max);
 	return 1;
@@ -163,6 +194,8 @@ int ClientObjectRef::l_punch(lua_State *L)
 {
 	ClientObjectRef *ref = checkobject(L, 1);
 	GenericCAO *gcao = get_generic_cao(ref, L);
+ if(!gcao) return 0;
+	if(!gcao) return 0;
 	PointedThing pointed(gcao->getId(), v3f(0, 0, 0), v3s16(0, 0, 0), 0);
 	getClient(L)->interact(INTERACT_START_DIGGING, pointed);
 	return 0;
@@ -172,6 +205,7 @@ int ClientObjectRef::l_rightclick(lua_State *L)
 {
 	ClientObjectRef *ref = checkobject(L, 1);
 	GenericCAO *gcao = get_generic_cao(ref, L);
+ if(!gcao) return 0;
 	PointedThing pointed(gcao->getId(), v3f(0, 0, 0), v3s16(0, 0, 0), 0);
 	getClient(L)->interact(INTERACT_PLACE, pointed);
 	return 0;
@@ -244,6 +278,7 @@ luaL_Reg ClientObjectRef::methods[] = {
 	luamethod(ClientObjectRef, get_max_hp),
 	luamethod(ClientObjectRef, set_visible),
 	luamethod(ClientObjectRef, remove_from_scene),
+	luamethod(ClientObjectRef, remove),
 	luamethod(ClientObjectRef, is_local_player),
 	luamethod(ClientObjectRef, get_hp),
 	luamethod(ClientObjectRef, punch),

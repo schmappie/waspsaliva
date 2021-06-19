@@ -72,6 +72,7 @@ private:
 
 	// remove_from_scene(self, permanent)
 	static int l_remove_from_scene(lua_State *L);
+	static int l_remove(lua_State *L);
 
 	// get_hp(self)
 	static int l_get_hp(lua_State *L);
