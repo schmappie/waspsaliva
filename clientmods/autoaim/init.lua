@@ -1,4 +1,5 @@
 local function look_nearest()
+    if not minetest.localplayer then return end 
     for k, v in ipairs(minetest.localplayer.get_nearby_objects(10)) do
         if (v:is_player() and v:get_name() ~= minetest.localplayer:get_name()) then
             local pos = v:get_pos()
