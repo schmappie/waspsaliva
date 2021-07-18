@@ -181,7 +181,7 @@ end
 -- Allow string exporting
 minetest.register_chatcommand('wpexp', {
     params      = '[old]',
-    description = 'Exports an autofly string containing all your markers.',
+    description = 'Exports an autofly string containing all your pois.',
     func = function(param)
         local export
         if param == 'old' then
@@ -201,7 +201,7 @@ minetest.register_chatcommand('wpexp', {
 minetest.register_chatcommand('wpimp', {
     params      = '<autofly string>',
     description = 'Imports an autofly string. This will not overwrite ' ..
-        'existing markers that have the same name.',
+        'existing pois that have the same name.',
     func = function(param)
         if autofly.import(param) then
             return true, 'Waypoints imported!'

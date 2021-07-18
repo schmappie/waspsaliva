@@ -57,6 +57,7 @@ local oldpm=false
 local lpos={x=0,y=0,z=0}
 local info=minetest.get_server_info()
 local stprefix="autofly-".. info['address']  .. '-'
+--local stprefix="autofly-"
 local hud_wps={}
 autofly.flying=false
 autofly.cruiseheight = 30
@@ -137,7 +138,9 @@ minetest.register_globalstep(function()
             if not (speed == 0) then etatime = ws.round2(dst / speed / 60,2) end
             autofly.etatime=etatime
             autofly.set_hud_info(autofly.last_name .. "\n" .. pos_to_string(pos) .. "\n" .. "ETA" .. etatime .. " mins")
+            local pm=minetest.settings:get_bool('pitch_move')
             local hdst=autofly.get2ddst(pos,minetest.localplayer:get_pos())
+            if pm then hdst=vector.distance(pos,ws.dircoord(0,0,0)) end
             if  autofly.flying and hdst < landing_distance then
                 autofly.arrived()
             end
@@ -233,9 +236,26 @@ function autofly.get_local_name()
 end
 
 
+local function countents()
+    local obj = minetest.localplayer.get_nearby_objects(10000)
+    return #obj
+end
+
+
 function autofly.set_hud_info(text)
     if not minetest.localplayer then return end
     if type(text) ~= "string" then return end
+    local dir=ws.getdir()
+    local ddir=""
+    if dir == "north" then
+        ddir="north(+z)"
+    elseif dir == "east" then
+        ddir="east(+x)"
+    elseif dir == "south" then
+        ddir="south(-z)"
+    elseif dir == "west" then
+        ddir="west(-x)"
+    end
     local lp=minetest.localplayer
     local vspeed=lp:get_velocity()
     local ttext=text.."\nSpeed: "..speed.."n/s\n"
@@ -243,9 +263,9 @@ function autofly.set_hud_info(text)
     ..ws.round2(vspeed.y,2) ..','
     ..ws.round2(vspeed.z,2) .."\n"
     .."Yaw:"..ws.round2(lp:get_yaw(),2).."° Pitch:" ..ws.round2(lp:get_pitch(),2).."° "
-    if turtle then ttext=ttext..turtle.getdir() end
+    if turtle then ttext=ttext..ddir end
     if minetest.settings:get_bool('afly_shownames') then
-        ttext=ttext.."\n"..autofly.get_local_name()
+        ttext=ttext.."\n"..autofly.get_local_name() .."\nEntities: " .. countents()
     end
     if hud_info then
         minetest.localplayer:hud_change(hud_info,'text',ttext)
@@ -292,8 +312,6 @@ function autofly.goto_waypoint(name)
 end
 
 function autofly.goto(pos)
-    oldpm=minetest.settings:get_bool("pitch_move")
-    minetest.settings:set_bool("pitch_move",true)
     minetest.settings:set_bool("free_move",true)
     minetest.settings:set_bool("continuous_forward",true)
     if minetest.settings:get_bool("afly_sprint") then
@@ -307,6 +325,16 @@ function autofly.goto(pos)
     autofly.flying=true
     autofly.set_hud_wp(autofly.last_coords, autofly.last_name)
     return true
+end
+
+function autofly.fly3d(pos)
+    minetest.settings:set_bool("pitch_move",true)
+    autofly.goto(pos)
+end
+
+function autofly.fly2d(pos)
+    minetest.settings:set_bool("pitch_move",false)
+    autofly.goto(pos)
 end
 
 function autofly.arrived()
@@ -446,9 +474,10 @@ end
 
 
 
-autofly.register_transport('Fly',function(pos,name) autofly.goto_waypoint(name) end)
+autofly.register_transport('Fly3D',function(pos,name) autofly.fly3d(pos,name) end)
+autofly.register_transport('Fly2D',function(pos,name) autofly.fly2d(pos,name) end)
 autofly.register_transport('wrp',function(pos,name) autofly.warp(name) end)
-autofly.register_transport('atp',function(pos,name) autofly.autotp(name) end)
+--autofly.register_transport('atp',function(pos,name) autofly.autotp(name) end)
 
 function autofly.axissnap()
     if not minetest.settings:get_bool('afly_snap') then return end
@@ -493,9 +522,6 @@ end
 function autofly.warp(name)
     local pos=autofly.get_waypoint(name)
     if pos then
-        if pos.y > -64 then
-            pos=vector.add(pos,{x=0,y=150,z=0})
-        end
         if get_dimension(pos) == "void" then return false end
         minetest.localplayer:set_pos(pos)
         return true
@@ -517,6 +543,22 @@ function autofly.getwps()
         end
     end
     table.sort(wp)
+    return wp
+end
+
+
+
+function autofly.impfromsrv(srv,sel)
+    local srvstr="autofly-".. srv  .. '-'
+    for name, _ in pairs(storage:to_table().fields) do
+        if name:sub(1, string.len(srvstr)) == srvstr then
+            local name=name:sub(string.len(srvstr)+1)
+            if not sel or ( sel and name:sub(1, string.len(sel)) == sel ) then
+                local pos=string_to_pos(storage:get_string(srvstr .. tostring(name)))
+                autofly.set_waypoint(pos,name)
+            end
+        end
+    end
     return wp
 end
 
@@ -543,6 +585,19 @@ function autofly.rename_waypoint(oldname, newname)
         autofly.delete_waypoint(oldname)
     end
     return true
+end
+local function log(level, message)
+    minetest.log(level, ('[%s] %s'):format(mod_name, message))
+end
+function autofly.dumptolog()
+    local wp=autofly.getwps()
+    for name, _ in pairs(wp) do
+        --local lname=name:sub(string.len(stprefix)+1)
+       -- local ppos=string_to_pos(storage:get_string(tostring(name)))
+        if ppos then
+            log('action',name .. ' :: ')
+        end
+    end
 end
 
 minetest.after("5.0",function()
@@ -596,18 +651,12 @@ minetest.register_chatcommand('add_waypoint', {
         end
         local pos = param:sub(1, s - 1)
         local name = param:sub(e + 1)
-
-        -- Validate the position
         if not pos then
             return false, err
         end
-
-        -- Validate the name
         if not name or #name < 1 then
             return false, 'Invalid name!'
         end
-
-        -- Set the waypoint
         return autofly.set_waypoint(pos, name), 'Done!'
     end
 })
