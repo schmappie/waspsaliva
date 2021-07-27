@@ -8,6 +8,8 @@ ws.c = core
 local nextact = {}
 local ghwason={}
 
+local nodes_this_tick=0
+
 function ws.s(name,value)
     if value == nil then
         return ws.c.settings:get(name)
@@ -62,19 +64,30 @@ function ws.random_table_element(tbl)
     return tbl[ks[math.random(#ks)]]
 end
 
-function ws.globalhacktemplate(setting,func,funcstart,funcstop,daughters)
+function ws.center()
+    --local lp=ws.dircoord(0,0,0)
+    --minetest.localplayer:set_pos(lp)
+end
+
+function ws.globalhacktemplate(setting,func,funcstart,funcstop,daughters,delay)
     funcstart = funcstart or function() end
     funcstop = funcstop or function() end
+    delay = delay or 0.5
     return function()
         if not minetest.localplayer then return end
         if minetest.settings:get_bool(setting) then
+            if tps_client and tps_client.ping and tps_client.ping > 1000 then return end
+            nodes_this_tick = 0
             if nextact[setting] and nextact[setting] > os.clock() then return end
-            nextact[setting] = os.clock() + 0.1
+            nextact[setting] = os.clock() + delay
             if not ghwason[setting] then
                 if not funcstart() then
                     ws.set_bool_bulk(daughters,true)
                     ghwason[setting] = true
-                    ws.dcm(setting.. " activated")
+                    --ws.dcm(setting.. " activated")
+                    ws.center()
+                    minetest.settings:set('last-dir',ws.getdir())
+                    minetest.settings:set('last-y',ws.dircoord(0,0,0).y)
                 else minetest.settings:set_bool(setting,false)
                 end
             else
@@ -83,9 +96,9 @@ function ws.globalhacktemplate(setting,func,funcstart,funcstop,daughters)
 
         elseif ghwason[setting] then
             ghwason[setting] = false
-            funcstop()
             ws.set_bool_bulk(daughters,false)
-            ws.dcm(setting.. " deactivated")
+            funcstop()
+            --ws.dcm(setting.. " deactivated")
         end
     end
 end
@@ -101,14 +114,30 @@ end
 
 ws.rg=ws.register_globalhacktemplate
 
-function ws.step_globalhacks()
+function ws.step_globalhacks(dtime)
     for i, v in ipairs(ws.registered_globalhacks) do
-        v()
+        v(dtime)
     end
 end
 
-minetest.register_globalstep(ws.step_globalhacks)
+minetest.register_globalstep(function(dtime) ws.step_globalhacks(dtime) end)
+minetest.settings:set_bool('continuous_forward',false)
+function ws.on_connect(func)
+	if not minetest.localplayer then minetest.after(0,function() ws.on_connect(func) end) return end
+	if func then func() end
+end
 
+ws.on_connect(function()
+    local ldir =minetest.settings:get('last-dir')
+    if ldir then ws.setdir(ldir) end
+end)
+
+
+-- COORD MAGIC
+
+function ws.is_same_pos(pos1,pos2)
+    return vector.distance(vector.round(pos1),vector.round(pos2)) == 0
+end
 function ws.get_reachable_positions(range,under)
     under=under or false
     range=range or 2
@@ -136,17 +165,23 @@ end
 
 
 function ws.display_wp(pos,name)
-    table.insert(ws.displayed_wps,minetest.localplayer:hud_add({
+    local ix = #ws.displayed_wps + 1
+    ws.displayed_wps[ix] = minetest.localplayer:hud_add({
             hud_elem_type = 'waypoint',
             name          = name,
             text          = name,
             number        = 0x00ff00,
             world_pos     = pos
-        }))
+        })
+    return ix
+end
+
+function ws.clear_wp(ix)
+    table.remove(ws.displayed_wps,ix)
 end
 
 function ws.clear_wps()
-    for k,v in pairs(ws.displayed_wps) do
+    for k,v in ipairs(ws.displayed_wps) do
         minetest.localplayer:hud_remove(v)
         table.remove(ws.displayed_wps,k)
     end
@@ -160,33 +195,33 @@ function ws.register_chatcommand_alias(old, ...)
      end
 end
 
-  function ws.round2(num, numDecimalPlaces)
+function ws.round2(num, numDecimalPlaces)
     return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
-  end
+end
 
- function ws.pos_to_string(pos)
+function ws.pos_to_string(pos)
      if type(pos) == 'table' then
          pos = minetest.pos_to_string(vector.round(pos))
      end
      if type(pos) == 'string' then
          return pos
      end
- end
+     return pos
+end
 
- function ws.string_to_pos(pos)
+function ws.string_to_pos(pos)
      if type(pos) == 'string' then
          pos = minetest.string_to_pos(pos)
      end
      if type(pos) == 'table' then
          return vector.round(pos)
      end
+     return pos
 end
 
-function ws.on_connect(func)
-	if not minetest.localplayer then minetest.after(0,function() ws.on_connect(func) end) return end
-	if func then func() end
-end
 
+
+--ITEMS
 function ws.find_item_in_table(items,rnd)
     if type(items) == 'string' then
         return minetest.find_item(items)
@@ -212,13 +247,17 @@ function ws.find_named(inv, name)
     end
 end
 local hotbar_slot=8
-function ws.to_hotbar(it)
+function ws.to_hotbar(it,hslot)
     local tpos=nil
     local plinv = minetest.get_inventory("current_player")
-    for i, v in ipairs(plinv.main) do
-        if i<10 and v:is_empty() then
-            tpos = i
-            break
+    if hslot and hslot < 10 then
+        tpos=hslot
+    else
+        for i, v in ipairs(plinv.main) do
+            if i<10 and v:is_empty() then
+                tpos = i
+                break
+            end
         end
     end
     if tpos == nil then tpos=hotbar_slot end
@@ -229,7 +268,7 @@ function ws.to_hotbar(it)
     return tpos
 end
 
-function ws.switch_to_item(itname)
+function ws.switch_to_item(itname,hslot)
     if not minetest.localplayer then return false end
     local plinv = minetest.get_inventory("current_player")
     for i, v in ipairs(plinv.main) do
@@ -240,7 +279,7 @@ function ws.switch_to_item(itname)
     end
     local pos = ws.find_named(plinv.main, itname)
     if pos then
-        minetest.localplayer:set_wield_index(ws.to_hotbar(pos))
+        minetest.localplayer:set_wield_index(ws.to_hotbar(pos,hslot))
         return true
     end
     return false
@@ -248,7 +287,7 @@ end
 
 function core.switch_to_item(item) return ws.switch_to_item(item) end
 
-function ws.switch_inv_or_echest(name,max_count)
+function ws.switch_inv_or_echest(name,max_count,hslot)
 	if not minetest.localplayer then return false end
     local plinv = minetest.get_inventory("current_player")
     if ws.switch_to_item(name) then return true end
@@ -278,7 +317,39 @@ function ws.switch_inv_or_echest(name,max_count)
     end
     return false
 end
+
+local function posround(n)
+    return math.floor(n + 0.5)
+end
+
+local function fmt(c)
+    return tostring(posround(c.x))..","..tostring(posround(c.y))..","..tostring(posround(c.z))
+end
+
+local function map_pos(value)
+    if value.x then
+        return value
+    else
+        return {x = value[1], y = value[2], z = value[3]}
+    end
+end
+
+function ws.invparse(location)
+    if type(location) == "string" then
+        if string.match(location, "^[-]?[0-9]+,[-]?[0-9]+,[-]?[0-9]+$") then
+            return "nodemeta:" .. location
+        else
+            return location
+        end
+    elseif type(location) == "table" then
+        return "nodemeta:" .. fmt(map_pos(location))
+    end
+end
+
+
+
 -- TOOLS
+
 
 local function check_tool(stack, node_groups, old_best_time)
 	local toolcaps = stack:get_tool_capabilities()
@@ -315,14 +386,21 @@ local function find_best_tool(nodename, switch)
 		end
 	end
 
-	return new_index
+	return new_index,best_time
+end
+
+function ws.get_digtime(nodename)
+    local idx,tm=find_best_tool(nodename)
+    return tm
 end
 
 function ws.select_best_tool(pos)
     local nd=minetest.get_node_or_nil(pos)
     local nodename='air'
     if nd then nodename=nd.name end
-	minetest.localplayer:set_wield_index(find_best_tool(nodename))
+    local t=find_best_tool(nodename)
+    minetest.localplayer:set_wield_index(ws.to_hotbar(t,hotbar_slot))
+	--minetest.localplayer:set_wield_index(find_best_tool(nodename))
 end
 
 --- COORDS
@@ -346,12 +424,14 @@ function ws.optcoord(x, y, z)
     end
 end
 function ws.cadd(c1, c2)
-    return ws.coord(c1.x + c2.x, c1.y + c2.y, c1.z + c2.z)
+    return vector.add(c1,c2)
+    --return ws.coord(c1.x + c2.x, c1.y + c2.y, c1.z + c2.z)
 end
 
-function ws.relcoord(x, y, z)
-    local pos = minetest.localplayer:get_pos()
+function ws.relcoord(x, y, z, rpos)
+    local pos = rpos or minetest.localplayer:get_pos()
     pos.y=math.ceil(pos.y)
+    --math.floor(pos.y) + 0.5
     return ws.cadd(pos, ws.optcoord(x, y, z))
 end
 
@@ -359,8 +439,8 @@ local function between(x, y, z) -- x is between y and z (inclusive)
     return y <= x and x <= z
 end
 
-function ws.getdir() --
-    local rot = minetest.localplayer:get_yaw() % 360
+function ws.getdir(yaw) --
+    local rot = yaw or minetest.localplayer:get_yaw() % 360
     if between(rot, 315, 360) or between(rot, 0, 45) then
         return "north"
     elseif between(rot, 135, 225) then
@@ -370,6 +450,12 @@ function ws.getdir() --
     elseif between(rot, 45, 135) then
         return "west"
     end
+end
+
+function ws.getaxis()
+    local dir=ws.getdir()
+    if dir == "north" or dir == "south" then return "z" end
+    return "x"
 end
 function ws.setdir(dir) --
     if dir == "north" then
@@ -383,23 +469,23 @@ function ws.setdir(dir) --
     end
 end
 
-function ws.dircoord(f, y, r)
-    local dir=ws.getdir()
+function ws.dircoord(f, y, r ,rpos, rdir)
+    local dir= ws.getdir(rdir)
     local coord = ws.optcoord(f, y, r)
     local f = coord.x
     local y = coord.y
     local r = coord.z
-    local lp=minetest.localplayer:get_pos()
+    local lp= rpos or minetest.localplayer:get_pos()
     if dir == "north" then
-        return ws.relcoord(r, y, f)
+        return ws.relcoord(r, y, f,rpos)
     elseif dir == "south"  then
-        return ws.relcoord(-r, y, -f)
+        return ws.relcoord(-r, y, -f,rpos)
     elseif dir == "east" then
-        return ws.relcoord(f, y, -r)
+        return ws.relcoord(f, y, -r,rpos)
     elseif dir== "west" then
-        return ws.relcoord(-f, y, r)
+        return ws.relcoord(-f, y, r,rpos)
     end
-    return ws.relcoord(0, 0, 0)
+    return ws.relcoord(0, 0, 0,rpos)
 end
 
 function ws.get_dimension(pos)
@@ -450,35 +536,229 @@ function ws.gaim(tpos,v,g)
     minetest.localplayer:set_pitch(math.deg(pitch))
 end
 
-
-
-function ws.place(pos,arg)
-    local nodename=false
-    local nodes_per_tick = tonumber(minetest.settings:get("nodes_per_tick")) or 8
+local function tablearg(arg)
+    local tb={}
     if type(arg) == 'string' then
-        nodename={arg}
+        tb={arg}
     elseif type(arg) == 'table' then
-        nodename=arg
+        tb=arg
     elseif type(arg) == 'function' then
-        nodename=arg()
+        tb=arg()
     end
-    if not nodename or (nodename and ws.switch_inv_or_echest(ws.find_item_in_table(nodename),1)) then
-        ws.c.place_node(pos)
+    return tb
+end
+
+function ws.isnode(pos,arg)--arg is either an itemstring, a table of itemstrings or a function returning an itemstring
+    local nodename=tablearg(arg)
+    local nd=minetest.get_node_or_nil(pos)
+    if nd and nodename and ws.in_list(nd.name,nodename) then
+        return true
     end
 end
 
-function ws.dig(pos,condition)
+function ws.can_place_at(pos)
+    local node = minetest.get_node_or_nil(pos)
+    return (node and (node.name == "air" or node.name=="mcl_core:water_source" or node.name=="mcl_core:water_flowing" or node.name=="mcl_core:lava_source" or node.name=="mcl_core:lava_flowing" or minetest.get_node_def(node.name).buildable_to))
+end
+
+-- should check if wield is placeable
+-- minetest.get_node(wielded:get_name()) ~= nil should probably work
+-- otherwise it equips armor and eats food
+function ws.can_place_wielded_at(pos)
+    local wield_empty = minetest.localplayer:get_wielded_item():is_empty()
+    return not wield_empty and ws.can_place_at(pos)
+end
+
+
+function ws.find_any_swap(items,hslot)
+    hslot=hslot or 8
+    for i, v in ipairs(items) do
+        local n = minetest.find_item(v)
+        if n then
+            ws.switch_to_item(v,hslot)
+            return true
+        end
+    end
+    return false
+end
+
+
+-- swaps to any of the items and places if need be
+-- returns true if placed and in inventory or already there, false otherwise
+
+local lastact=0
+local lastplc=0
+local lastdig=0
+local actint=10
+function ws.place(pos,items,hslot, place)
+    --if nodes_this_tick > 8 then return end
+    --nodes_this_tick = nodes_this_tick + 1
+    --if not inside_constraints(pos) then return end
+    if not pos then return end
+    items=tablearg(items)
+
+    place = place or minetest.place_node
+
+    local node = minetest.get_node_or_nil(pos)
+    if not node then return end
+    -- already there
+    if ws.isnode(pos,items) then
+        return true
+    else
+        local swapped = ws.find_any_swap(items,hslot)
+
+        -- need to place
+        if swapped and ws.can_place_at(pos) then
+            --minetest.after("0.05",place,pos)
+            place(pos)
+            return true
+        -- can't place
+        else
+            return false
+        end
+    end
+end
+
+function ws.place_if_able(pos)
+    if not pos then return end
+    if not inside_constraints(pos) then return end
+    if ws.can_place_wielded_at(pos) then
+        minetest.place_node(pos)
+    end
+end
+
+function ws.is_diggable(pos)
+    if not pos then return false end
+    local nd=minetest.get_node_or_nil(pos)
+    if not nd then return false end
+    local n = minetest.get_node_def(nd.name)
+    if n and n.diggable then return true end
+    return false
+end
+
+function ws.dig(pos,condition,autotool)
+    --if not inside_constraints(pos) then return end
+    if autotool == nil then autotool = true end
     if condition and not condition(pos) then return false end
+    if not ws.is_diggable(pos) then return end
     local nd=minetest.get_node_or_nil(pos)
     if nd and minetest.get_node_def(nd.name).diggable then
-        ws.select_best_tool(pos)
+        if autotool then ws.select_best_tool(pos) end
         minetest.dig_node(pos)
     end
     return true
 end
 
-function ws.dignodes(poss,condition)
+function ws.chunk_loaded()
+	local ign=minetest.find_nodes_near(ws.dircoord(0,0,0),10,{'ignore'},true)
+	if #ign == 0 then return true end
+	return false
+end
+
+function ws.get_near(nodes,range)
+    range=range or 5
+    local nds=minetest.find_nodes_near(ws.dircoord(0,0,0),rang,nodes,true)
+    if #nds > 0 then return nds end
+    return false
+end
+
+function ws.is_laggy()
+    if tps_client and tps_client.ping and tps_client.ping > 1000 then return true end
+end
+
+
+function ws.donodes(poss,func,condition)
+    if ws.is_laggy() then return end
+    local dn_i=0
     for k,v in pairs(poss) do
-        if not condition or condition(v) then ws.dig(v) end
+        local nd=minetest.get_node_or_nil(v)
+        if nd and nd.name ~= 'air' then
+            if k > 8 then
+                return
+            end
+            if condition == nil or condition(v) then
+                func(v)
+                dn_i = dn_i + 1
+            end
+        end
     end
+end
+
+function ws.dignodes(poss,condition)
+    local func=function(p) ws.dig(p) end
+    ws.donodes(poss,func,condition)
+end
+
+
+function ws.replace(pos,arg)
+    arg=tablearg(arg)
+    local nd=minetest.get_node_or_nil(pos)
+    if nd and not ws.in_list(nd.name,arg) and nd.name ~= 'air' then
+        local tm=ws.get_digtime(nd.name) or 0
+        ws.dig(pos)
+        minetest.after(tm + 0.1,function()
+            ws.place(pos,arg)
+        end)
+    else
+        ws.place(pos,arg)
+    end
+end
+
+function ws.playeron(p)
+	local pls=minetest.get_player_names()
+	for k,v in pairs(pls) do
+		if v == p then return true end
+	end
+	return false
+end
+
+
+function ws.between(x, y, z) -- x is between y and z (inclusive)
+    return y <= x and x <= z
+end
+
+
+local wall_pos1={x=-1255,y=6,z=792}
+local wall_pos2={x=-1452,y=80,z=981}
+local iwall_pos1={x=-1266,y=6,z=802}
+local iwall_pos2={x=-1442,y=80,z=971}
+
+function ws.in_cube(tpos,wpos1,wpos2)
+    local xmax=wpos2.x
+    local xmin=wpos1.x
+
+    local ymax=wpos2.y
+    local ymin=wpos1.y
+
+    local zmax=wpos2.z
+    local zmin=wpos1.z
+    if wpos1.x > wpos2.x then
+        xmax=wpos1.x
+        xmin=wpos2.x
+    end
+    if wpos1.y > wpos2.y then
+        ymax=wpos1.y
+        ymin=wpos2.y
+    end
+    if wpos1.z > wpos2.z then
+        zmax=wpos1.z
+        zmin=wpos2.z
+    end
+    if ws.between(tpos.x,xmin,xmax) and ws.between(tpos.y,ymin,ymax) and ws.between(tpos.z,zmin,zmax) then
+        return true
+    end
+    return false
+end
+
+function ws.in_wall(pos)
+    if ws.in_cube(pos,wall_pos1,wall_pos2) and not in_cube(pos,iwall_pos1,iwall_pos2) then
+        return true end
+    return false
+end
+
+function ws.inside_wall(pos)
+    local p1=iwall_pos1
+    local p2=iwall_pos2
+    if ws.in_cube(pos,p1,p2) then return true end
+    return false
 end
