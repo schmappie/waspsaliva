@@ -4,7 +4,7 @@
 --west:-x,1.5,-5
 --east:-x,1.5,5
 -- north 5,1.5(3096:2.5,25025:1.5),z
-local storage = minetest.get_mod_storage()
+--#local storage = minetest.get_mod_storage()
 local ground = {
     "mesecons_torch:redstoneblock"
 }
