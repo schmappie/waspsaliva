@@ -9,7 +9,7 @@ local esplimit=30; -- display at most this many waypoints
 local espinterval=4 --number of seconds to wait between scans (a lower number can induce clientside lag)
 local stpos={x=0,y=0,z=0}
 
-nodes=nlist.get("esp")
+local nodes=nlist.get("esp")
 
 local esp_wps={}
 local hud2=nil
@@ -18,6 +18,7 @@ local lastch=0
 local wason=false
 
 minetest.register_globalstep(function()
+    if not nodes then return end
     if not minetest.settings:get_bool("espactive") then
         if #esp_wps > 0 then
             for k,v in pairs(esp_wps) do
