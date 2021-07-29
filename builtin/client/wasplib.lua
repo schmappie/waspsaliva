@@ -762,3 +762,10 @@ function ws.inside_wall(pos)
     if ws.in_cube(pos,p1,p2) then return true end
     return false
 end
+
+
+-- DEBUG
+local function printwieldedmeta()
+    ws.dcm(dump(minetest.localplayer:get_wielded_item():get_meta():to_table()))
+end
+minetest.register_cheat('ItemMeta','Test',printwieldedmeta)
