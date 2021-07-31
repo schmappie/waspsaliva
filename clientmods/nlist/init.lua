@@ -7,6 +7,7 @@ local sl="default"
 local mode=1 --1:add, 2:remove
 local nled_hud
 local edmode_wason=false
+nlist.selected=sl
 minetest.register_globalstep(function()
     if not minetest.settings:get_bool('nlist_edmode') then
         if (edmode_wason) then edmode_wason=false nlist.hide() end
@@ -50,7 +51,9 @@ function nlist.remove(list,node)
 end
 
 function nlist.get(list)
-    return storage:get_string(list):split(',')
+    local arr=storage:get_string(list):split(',')
+    if not arr then arr={} end
+    return arr
 end
 function nlist.clear(list)
     storage:set_string(list,'')
@@ -110,7 +113,7 @@ function set_nled_hud(ttext)
     return true
 end
 
-minetest.register_chatcommand('nls',{func=function(list)    sl=list end})
+minetest.register_chatcommand('nls',{func=function(list) sl=list nlist.selected=list end})
 minetest.register_chatcommand('nlshow',{func=function() nlist.show_list(sl) end})
 minetest.register_chatcommand('nla',{func=function(el) nlist.add(sl,el)  end})
 minetest.register_chatcommand('nlr',{func=function(el) nlist.remove(sl,el) end})
