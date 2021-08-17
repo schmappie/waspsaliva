@@ -1,0 +1,71 @@
+#                                                        -*- shell-script -*-
+# Rocker config for the Wasp Saliva Minetest client
+#
+# See https://github.com/zultron/rocker
+#
+# Install rocker:
+# curl -Lso ~/bin/rocker https://github.com/zultron/rocker/raw/master/rocker
+# chmod +x ~/bin/rocker
+#
+# Build container (in this directory):
+# ~/bin/rocker -b
+#
+# Run container:
+# ~/bin/rocker -t wsc
+
+# Docker image to build/run
+ROCKER_IMAGE_TAG=wsc
+
+# Git repo
+MT_REPO=https://repo.or.cz/waspsaliva.git
+MT_BRANCH=master
+
+# Docker base image for overlay
+ROCKER_BASE_IMAGE=debian:stretch
+
+ROCKER_EXTRA_PACKAGES=(
+    g++ make libc6-dev cmake libpng-dev libjpeg-dev
+    libxxf86vm-dev libgl1-mesa-dev libsqlite3-dev
+    libogg-dev libvorbis-dev libopenal-dev libcurl4-gnutls-dev
+    libfreetype6-dev zlib1g-dev libgmp-dev libjsoncpp-dev
+    libluajit-5.1-dev gettext
+    git
+    # For waspsaliva
+    libbz2-dev
+)
+
+# Docker container name+hostname
+ROCKER_NAME=$ROCKER_IMAGE_TAG
+
+# Load this directory into the Docker build context
+ROCKER_LOAD_CONTEXT=true
+
+# Run this command as entrypoint script
+ROCKER_ENTRYPOINT_COMMAND=${ROCKER_ENTRYPOINT_COMMAND:-minetest}
+
+_snippet() {
+    cat <<-EOF
+	RUN mkdir /tmp/build
+	WORKDIR /tmp/build
+
+	# Build Irrlicht
+	ARG IRRLICHT_VER=1.9.0mt2
+	RUN git clone https://github.com/minetest/irrlicht \\
+	        -b \${IRRLICHT_VER} --depth=1 \\
+	    && cd irrlicht \\
+	    && cmake . \\
+	    && make -j\$(nproc) \\
+	    && make install
+	RUN ldconfig  # Put /usr/local/lib on the map
+
+	# Build Mitenest
+        COPY . minetest
+	RUN cd minetest \\
+	    && cmake . -DRUN_IN_PLACE=FALSE \\
+	        -DIRRLICHT_INCLUDE_DIR=/usr/local/include/irrlichtmt \\
+	        -DIRRLICHT_LIBRARY=/usr/local/lib/libIrrlichtMt.so \\
+	    && make -j\$(nproc) \\
+	    && make install
+	EOF
+}
+ROCKER_DOCKERFILE_SNIPPET="$(_snippet)"
