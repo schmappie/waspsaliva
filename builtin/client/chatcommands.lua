@@ -7,7 +7,7 @@ core.register_on_sending_chat_message(function(message)
 
 	local first_char = message:sub(1,1)
 	if first_char == "/" or first_char == "." then
-		core.display_chat_message(core.gettext("issued command: ") .. message)
+		core.display_chat_message(core.gettext("Issued command: ") .. message)
 	end
 
 	if first_char ~= "." then
@@ -18,7 +18,7 @@ core.register_on_sending_chat_message(function(message)
 	param = param or ""
 
 	if not cmd then
-		core.display_chat_message(core.gettext("-!- Empty command"))
+		core.display_chat_message("-!- " .. core.gettext("Empty command."))
 		return true
 	end
 
@@ -35,7 +35,7 @@ core.register_on_sending_chat_message(function(message)
 			core.display_chat_message(result)
 		end
 	else
-		core.display_chat_message(core.gettext("-!- Invalid command: ") .. cmd)
+		core.display_chat_message("-!- " .. core.gettext("Invalid command: ") .. cmd)
 	end
 
 	return true
@@ -66,23 +66,10 @@ core.register_chatcommand("teleport", {
 	end,
 })
 
-core.register_chatcommand("teleportjump", {
-	params = "<X>,<Y>,<Z>",
-	description = "Teleport to relative coordinates.",
-	func = function(param)
-		local success, pos = core.parse_relative_pos(param)
-		if success then
-			core.localplayer:set_pos(pos)
-			return true, "Teleporting to " .. core.pos_to_string(pos)
-		end
-		return false, pos
-	end,
-})
-
 core.register_chatcommand("wielded", {
 	description = "Print itemstring of wieleded item",
 	func = function()
-		return true, core.localplayer:get_wielded_item():get_name()
+		return true, core.localplayer:get_wielded_item():to_string()
 	end
 })
 
@@ -174,7 +161,7 @@ core.register_chatcommand("setyaw", {
 			core.localplayer:set_yaw(yaw)
 			return true
 		else
-			return false, "Invalid usage (See /help setyaw)"
+			return false, "Invalid usage (See .help setyaw)"
 		end
 	end
 })
@@ -188,7 +175,10 @@ core.register_chatcommand("setpitch", {
 			core.localplayer:set_pitch(pitch)
 			return true
 		else
-			return false, "Invalid usage (See /help setpitch)"
+			return false, "Invalid usage (See .help setpitch)"
 		end
 	end
 })
+
+core.register_list_command("xray", "Configure X-Ray", "xray_nodes")
+core.register_list_command("search", "Configure NodeESP", "node_esp_nodes")

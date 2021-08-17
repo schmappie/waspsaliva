@@ -45,6 +45,7 @@ struct ClientEvent;
 struct MeshMakeData;
 struct ChatMessage;
 class MapBlockMesh;
+class RenderingEngine;
 class IWritableTextureSource;
 class IWritableShaderSource;
 class ISoundManager;
@@ -122,6 +123,7 @@ public:
 			NodeDefManager *nodedef,
 			ISoundManager *sound,
 			MtEventManager *event,
+			RenderingEngine *rendering_engine,
 			bool ipv6,
 			GameUI *game_ui
 	);
@@ -348,6 +350,7 @@ public:
 	float mediaReceiveProgress();
 
 	void afterContentReceived();
+	void showUpdateProgressTexture(void *args, u32 progress, u32 max_progress);
 
 	float getRTT();
 	float getCurRate();
@@ -356,6 +359,7 @@ public:
 	void setCamera(Camera* camera) { m_camera = camera; }
 
 	Camera* getCamera () { return m_camera; }
+	scene::ISceneManager *getSceneManager();
 
 	bool shouldShowMinimap() const;
 
@@ -383,6 +387,7 @@ public:
 	// Insert a media file appropriately into the appropriate manager
 	bool loadMedia(const std::string &data, const std::string &filename,
 		bool from_media_push = false);
+
 	// Send a request for conventional media transfer
 	void request_media(const std::vector<std::string> &file_requests);
 
@@ -420,16 +425,6 @@ public:
 		return false;
 	}
 
-	u32 getCSMNodeRangeLimit() const
-	{
-		return m_csm_restriction_noderange;
-	}
-
-	inline std::unordered_map<u32, u32> &getHUDTranslationMap()
-	{
-		return m_hud_server_to_client;
-	}
-
 	bool joinModChannel(const std::string &channel) override;
 	bool leaveModChannel(const std::string &channel) override;
 	bool sendModChannelMessage(const std::string &channel,
@@ -447,7 +442,6 @@ public:
 
 private:
 	void loadMods();
-	bool checkBuiltinIntegrity();
 
 	// Virtual methods from con::PeerHandler
 	void peerAdded(con::Peer *peer) override;
@@ -489,6 +483,7 @@ private:
 	NodeDefManager *m_nodedef;
 	ISoundManager *m_sound;
 	MtEventManager *m_event;
+	RenderingEngine *m_rendering_engine;
 
 
 	ClientEnvironment m_env;
@@ -570,9 +565,6 @@ private:
 	// Relation of client id to object id
 	std::unordered_map<int, u16> m_sounds_to_objects;
 
-	// Map server hud ids to client hud ids
-	std::unordered_map<u32, u32> m_hud_server_to_client;
-
 	// Privileges
 	std::unordered_set<std::string> m_privileges;
 
@@ -595,7 +587,6 @@ private:
 
 	// Client modding
 	ClientScripting *m_script = nullptr;
-	bool m_modding_enabled;
 	std::unordered_map<std::string, ModMetadata *> m_mod_storages;
 	float m_mod_storage_save_timer = 10.0f;
 	std::vector<ModSpec> m_mods;

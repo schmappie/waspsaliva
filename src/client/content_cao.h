@@ -189,6 +189,8 @@ public:
 
 	const bool isImmortal();
 
+	inline const ObjectProperties &getProperties() const { return m_prop; }
+
 	scene::ISceneNode *getSceneNode() const;
 
 	scene::IAnimatedMeshSceneNode *getAnimatedMeshSceneNode() const;
@@ -218,6 +220,11 @@ public:
 		return m_prop.stepheight;
 	}
 
+	inline bool isLocalPlayer() const
+	{
+		return m_is_local_player;
+	}
+
 	inline std::string getName() const
 	{
 		return m_name;
@@ -226,11 +233,6 @@ public:
 	inline bool isPlayer() const
 	{
 		return m_is_player;
-	}
-
-	inline bool isLocalPlayer() const
-	{
-		return m_is_local_player;
 	}
 
 	inline bool isVisible() const
@@ -260,7 +262,7 @@ public:
 
 	void removeFromScene(bool permanent);
 
-	void addToScene(ITextureSource *tsrc);
+	void addToScene(ITextureSource *tsrc, scene::ISceneManager *smgr);
 
 	inline void expireVisuals()
 	{
@@ -315,5 +317,9 @@ public:
 		return &m_prop;
 	}
 
+	void setProperties(ObjectProperties newprops);
+
 	void updateMeshCulling();
+
+	std::vector<std::string> nametag_images = {};
 };

@@ -141,7 +141,9 @@ public:
 
 	v3f getLegitPosition() const { return m_legit_position; }
 
-	v3f getLegitSpeed() const { return m_legit_speed; }
+	v3f getLegitSpeed() const { return m_freecam ? m_legit_speed : m_speed; }
+
+	v3f getSendSpeed();
 
 	inline void setLegitPosition(const v3f &position)
 	{

@@ -19,6 +19,7 @@ mt_color_grey  = "#AAAAAA"
 mt_color_blue  = "#6389FF"
 mt_color_green = "#72FF63"
 mt_color_dark_green = "#25C191"
+mt_color_orange  = "#FF8800"
 
 local menupath = core.get_mainmenu_path()
 local basepath = core.get_builtin_path()
@@ -33,6 +34,7 @@ dofile(basepath .. "fstk" .. DIR_DELIM .. "ui.lua")
 dofile(menupath .. DIR_DELIM .. "async_event.lua")
 dofile(menupath .. DIR_DELIM .. "common.lua")
 dofile(menupath .. DIR_DELIM .. "pkgmgr.lua")
+dofile(menupath .. DIR_DELIM .. "serverlistmgr.lua")
 dofile(menupath .. DIR_DELIM .. "textures.lua")
 
 dofile(menupath .. DIR_DELIM .. "dlg_config_world.lua")
@@ -47,7 +49,7 @@ local tabs = {}
 
 tabs.settings = dofile(menupath .. DIR_DELIM .. "tab_settings.lua")
 tabs.content  = dofile(menupath .. DIR_DELIM .. "tab_content.lua")
-tabs.credits  = dofile(menupath .. DIR_DELIM .. "tab_credits.lua")
+tabs.about    = dofile(menupath .. DIR_DELIM .. "tab_about.lua")
 tabs.local_game = dofile(menupath .. DIR_DELIM .. "tab_local.lua")
 tabs.play_online = dofile(menupath .. DIR_DELIM .. "tab_online.lua")
 
@@ -96,7 +98,7 @@ local function init_globals()
 
 	tv_main:add(tabs.content)
 	tv_main:add(tabs.settings)
-	tv_main:add(tabs.credits)
+	tv_main:add(tabs.about)
 
 	tv_main:set_global_event_handler(main_event_handler)
 	tv_main:set_fixed_size(false)
@@ -105,6 +107,16 @@ local function init_globals()
 	if last_tab and tv_main.current_tab ~= last_tab then
 		tv_main:set_tab(last_tab)
 	end
+
+	-- In case the folder of the last selected game has been deleted,
+	-- display "Minetest" as a header
+	if tv_main.current_tab == "local" then
+		local game = pkgmgr.find_by_gameid(core.settings:get("menu_last_game"))
+		if game == nil then
+			mm_texture.reset()
+		end
+	end
+
 	ui.set_default("maintab")
 	tv_main:show()
 

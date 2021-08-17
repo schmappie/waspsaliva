@@ -22,7 +22,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "cpp_api/s_internal.h"
 #include "settings.h"
 
-
 ScriptApiCheatsCheat::ScriptApiCheatsCheat(
 		const std::string &name, const std::string &setting) :
 		m_name(name),

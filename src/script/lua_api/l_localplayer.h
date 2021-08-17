@@ -38,6 +38,18 @@ private:
 	// set_velocity(self, vel)
 	static int l_set_velocity(lua_State *L);
 
+	// get_yaw(self)
+	static int l_get_yaw(lua_State *L);
+
+	// set_yaw(self, yaw)
+	static int l_set_yaw(lua_State *L);
+
+	// get_pitch(self)
+	static int l_get_pitch(lua_State *L);
+
+	// set_pitch(self,pitch)
+	static int l_set_pitch(lua_State *L);
+
 	// get_hp(self)
 	static int l_get_hp(lua_State *L);
 
@@ -52,6 +64,9 @@ private:
 
 	// get_wielded_item(self)
 	static int l_get_wielded_item(lua_State *L);
+
+	// get_hotbar_size(self)
+	static int l_get_hotbar_size(lua_State *L);
 
 	static int l_is_attached(lua_State *L);
 	static int l_is_touching_ground(lua_State *L);
@@ -83,18 +98,6 @@ private:
 	// set_pos(self, pos)
 	static int l_set_pos(lua_State *L);
 
-	// get_yaw(self)
-	static int l_get_yaw(lua_State *L);
-
-	// set_yaw(self, yaw)
-	static int l_set_yaw(lua_State *L);
-
-	// get_pitch(self)
-	static int l_get_pitch(lua_State *L);
-
-	// set_pitch(self, pitch)
-	static int l_set_pitch(lua_State *L);
-
 	// get_movement_acceleration(self)
 	static int l_get_movement_acceleration(lua_State *L);
 
@@ -118,11 +121,11 @@ private:
 	// hud_get(self, id)
 	static int l_hud_get(lua_State *L);
 
-	// get_nearby_objects(self, radius)
-	static int l_get_nearby_objects(lua_State *L);
-
 	// get_object(self)
 	static int l_get_object(lua_State *L);
+
+	// get_nearby_objects(self, radius)
+	static int l_get_nearby_objects(lua_State *L);
 
 	// set_override_speed
 	static int l_set_override_speed(lua_State *L);

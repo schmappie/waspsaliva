@@ -123,18 +123,6 @@ private:
 	// drop_selected_item()
 	static int l_drop_selected_item(lua_State *L);
 
-	// take_screenshot()
-	static int l_take_screenshot(lua_State *L);
-
-	// send_inventory_fields(formname, fields)
-	static int l_send_inventory_fields(lua_State *L);
-
-	// send_nodemeta_fields(position, formname, fields)
-	static int l_send_nodemeta_fields(lua_State *L);
-
-	// interact(0-5)
-	static int l_interact(lua_State *L);
-
 	// show_huds
 	static int l_show_huds(lua_State *L);
 
@@ -143,6 +131,18 @@ private:
 
 	// get_objects_inside_radius(pos, radius)
 	static int l_get_objects_inside_radius(lua_State *L);
+
+	// make_screenshot()
+	static int l_make_screenshot(lua_State *L);
+
+	// interact(action, pointed_thing)
+	static int l_interact(lua_State *L);
+
+	// send_inventory_fields(formname, fields)
+	static int l_send_inventory_fields(lua_State *L);
+
+	// send_nodemeta_fields(position, formname, fields)
+	static int l_send_nodemeta_fields(lua_State *L);
 
 public:
 	static void Initialize(lua_State *L, int top);

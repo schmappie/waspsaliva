@@ -13,11 +13,14 @@ public:
 
 	~ClientObjectRef() = default;
 
+	ClientActiveObject *getClientActiveObject();
+
 	static void Register(lua_State *L);
 
 	static void create(lua_State *L, ClientActiveObject *object);
-
 	static void create(lua_State *L, s16 id);
+
+	static void set_null(lua_State *L);
 
 	static ClientObjectRef *checkobject(lua_State *L, int narg);
 
@@ -55,16 +58,25 @@ private:
 	// get_name(self)
 	static int l_get_name(lua_State *L);
 
-	// get_parent(self)
-	static int l_get_parent(lua_State *L);
+	// get_attach(self)
+	static int l_get_attach(lua_State *L);
 
 	// get_nametag(self)
 	static int l_get_nametag(lua_State *L);
 
-	// get_textures(self)
+	// get_item_textures(self)
 	static int l_get_item_textures(lua_State *L);
 
+	// get_properties(self)
+	static int l_get_properties(lua_State *L);
+
+	// set_properties(self, properties)
+	static int l_set_properties(lua_State *L);
+
 	// get_hp(self)
+	static int l_get_hp(lua_State *L);
+
+	// get_max_hp(self)
 	static int l_get_max_hp(lua_State *L);
 
 	// set_visible(self, visible)
@@ -72,14 +84,16 @@ private:
 
 	// remove_from_scene(self, permanent)
 	static int l_remove_from_scene(lua_State *L);
-	static int l_remove(lua_State *L);
-
-	// get_hp(self)
-	static int l_get_hp(lua_State *L);
 
 	// punch(self)
 	static int l_punch(lua_State *L);
 
 	// rightclick(self)
 	static int l_rightclick(lua_State *L);
+
+	// remove(self)
+	static int l_remove(lua_State *L);
+
+	// set_nametag_images(self, images)
+	static int l_set_nametag_images(lua_State *L);
 };

@@ -102,7 +102,8 @@ void GameUI::update(const RunStats &stats, Client *client, MapDrawControl *draw_
 {
 	LocalPlayer *player = client->getEnv().getLocalPlayer();
 	v3f player_position = player->getPosition();
-	v2u32 screensize = RenderingEngine::get_instance()->getWindowSize();
+
+	v2u32 screensize = RenderingEngine::getWindowSize();
 
 	bool show_coords = g_settings->getBool("coords");
 
@@ -243,7 +244,7 @@ void GameUI::setChatText(const EnrichedString &chat_text, u32 recent_chat_count)
 
 	// Update gui element size and position
 
-	const v2u32 &window_size = RenderingEngine::get_instance()->getWindowSize();
+	const v2u32 &window_size = RenderingEngine::getWindowSize();
 
 	s32 chat_y = window_size.Y - 150 - m_guitext_chat->getTextHeight();
 

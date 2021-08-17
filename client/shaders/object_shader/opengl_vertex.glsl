@@ -7,7 +7,11 @@ varying vec3 vNormal;
 varying vec3 vPosition;
 varying vec3 worldPosition;
 varying lowp vec4 varColor;
+#ifdef GL_ES
 varying mediump vec2 varTexCoord;
+#else
+centroid varying vec2 varTexCoord;
+#endif
 
 varying vec3 eyeVec;
 varying float vIDiff;
@@ -45,5 +49,9 @@ void main(void)
 		: directional_ambient(normalize(inVertexNormal));
 #endif
 
+#ifdef GL_ES
+	varColor = inVertexColor.bgra;
+#else
 	varColor = inVertexColor;
+#endif
 }
