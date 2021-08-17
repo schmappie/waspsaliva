@@ -632,7 +632,7 @@ void ServerEnvironment::saveMeta()
 	// Open file and serialize
 	std::ostringstream ss(std::ios_base::binary);
 
-	Settings args;
+	Settings args("EnvArgsEnd");
 	args.setU64("game_time", m_game_time);
 	args.setU64("time_of_day", getTimeOfDay());
 	args.setU64("last_clear_objects_time", m_last_clear_objects_time);
@@ -641,7 +641,6 @@ void ServerEnvironment::saveMeta()
 		m_lbm_mgr.createIntroductionTimesString());
 	args.setU64("day_count", m_day_count);
 	args.writeLines(ss);
-	ss<<"EnvArgsEnd\n";
 
 	if(!fs::safeWriteToFile(path, ss.str()))
 	{
@@ -676,9 +675,9 @@ void ServerEnvironment::loadMeta()
 		throw SerializationError("Couldn't load env meta");
 	}
 
-	Settings args;
+	Settings args("EnvArgsEnd");
 
-	if (!args.parseConfigLines(is, "EnvArgsEnd")) {
+	if (!args.parseConfigLines(is)) {
 		throw SerializationError("ServerEnvironment::loadMeta(): "
 			"EnvArgsEnd not found!");
 	}
@@ -1164,14 +1163,14 @@ void ServerEnvironment::clearObjects(ClearObjectsMode mode)
 
 		// If known by some client, don't delete immediately
 		if (obj->m_known_by_count > 0) {
-			obj->m_pending_removal = true;
+			obj->markForRemoval();
 			return false;
 		}
 
 		// Tell the object about removal
 		obj->removingFromEnvironment();
 		// Deregister in scripting api
-		m_script->removeObjectReference(obj);
+		m_script->removeObjectReference(dynamic_cast<ActiveObject *>(obj));
 
 		// Delete active object
 		if (obj->environmentDeletes())
@@ -1737,7 +1736,7 @@ u16 ServerEnvironment::addActiveObjectRaw(ServerActiveObject *object,
 	}
 
 	// Register reference in scripting api (must be done before post-init)
-	m_script->addObjectReference(object);
+	m_script->addObjectReference(dynamic_cast<ActiveObject *>(object));
 	// Post-initialize object
 	object->addedToEnvironment(dtime_s);
 
@@ -1792,7 +1791,7 @@ void ServerEnvironment::removeRemovedObjects()
 		/*
 			Delete static data from block if removed
 		*/
-		if (obj->m_pending_removal)
+		if (obj->isPendingRemoval())
 			deleteStaticFromBlock(obj, id, MOD_REASON_REMOVE_OBJECTS_REMOVE, false);
 
 		// If still known by clients, don't actually remove. On some future
@@ -1803,7 +1802,7 @@ void ServerEnvironment::removeRemovedObjects()
 		/*
 			Move static data from active to stored if deactivated
 		*/
-		if (!obj->m_pending_removal && obj->m_static_exists) {
+		if (!obj->isPendingRemoval() && obj->m_static_exists) {
 			MapBlock *block = m_map->emergeBlock(obj->m_static_block, false);
 			if (block) {
 				const auto i = block->m_static_objects.m_active.find(id);
@@ -1827,7 +1826,7 @@ void ServerEnvironment::removeRemovedObjects()
 		// Tell the object about removal
 		obj->removingFromEnvironment();
 		// Deregister in scripting api
-		m_script->removeObjectReference(obj);
+		m_script->removeObjectReference(dynamic_cast<ActiveObject *>(obj));
 
 		// Delete
 		if (obj->environmentDeletes())
@@ -1991,6 +1990,7 @@ void ServerEnvironment::deactivateFarObjects(bool _force_delete)
 		if (!force_delete && obj->m_static_exists &&
 		   !m_active_blocks.contains(obj->m_static_block) &&
 		   m_active_blocks.contains(blockpos_o)) {
+
 			// Delete from block where object was located
 			deleteStaticFromBlock(obj, id, MOD_REASON_STATIC_DATA_REMOVED, false);
 
@@ -2068,6 +2068,10 @@ void ServerEnvironment::deactivateFarObjects(bool _force_delete)
 				force_delete = true;
 		}
 
+		// Regardless of what happens to the object at this point, deactivate it first.
+		// This ensures that LuaEntity on_deactivate is always called.
+		obj->markForDeactivation();
+
 		/*
 			If known by some client, set pending deactivation.
 			Otherwise delete it immediately.
@@ -2077,7 +2081,6 @@ void ServerEnvironment::deactivateFarObjects(bool _force_delete)
 						  << "object id=" << id << " is known by clients"
 						  << "; not deleting yet" << std::endl;
 
-			obj->m_pending_deactivation = true;
 			return false;
 		}
 
@@ -2088,7 +2091,7 @@ void ServerEnvironment::deactivateFarObjects(bool _force_delete)
 		// Tell the object about removal
 		obj->removingFromEnvironment();
 		// Deregister in scripting api
-		m_script->removeObjectReference(obj);
+		m_script->removeObjectReference(dynamic_cast<ActiveObject *>(obj));
 
 		// Delete active object
 		if (obj->environmentDeletes())

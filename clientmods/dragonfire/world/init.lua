@@ -33,7 +33,7 @@ minetest.register_chatcommand("place", {
 minetest.register_chatcommand("screenshot", {
 	description = "asdf",
 	func = function()
-		minetest.take_screenshot()
+		minetest.make_screenshot()
 	end,
 })
 

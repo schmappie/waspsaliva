@@ -159,8 +159,11 @@ u8 MapNode::getWallMounted(const NodeDefManager *nodemgr) const
 {
 	const ContentFeatures &f = nodemgr->get(*this);
 	if (f.param_type_2 == CPT2_WALLMOUNTED ||
-			f.param_type_2 == CPT2_COLORED_WALLMOUNTED)
+			f.param_type_2 == CPT2_COLORED_WALLMOUNTED) {
 		return getParam2() & 0x07;
+	} else if (f.drawtype == NDT_SIGNLIKE || f.drawtype == NDT_TORCHLIKE) {
+		return 1;
+	}
 	return 0;
 }
 
@@ -175,6 +178,16 @@ v3s16 MapNode::getWallMountedDir(const NodeDefManager *nodemgr) const
 	case 4: return v3s16(0,0,1);
 	case 5: return v3s16(0,0,-1);
 	}
+}
+
+u8 MapNode::getDegRotate(const NodeDefManager *nodemgr) const
+{
+	const ContentFeatures &f = nodemgr->get(*this);
+	if (f.param_type_2 == CPT2_DEGROTATE)
+		return getParam2() % 240;
+	if (f.param_type_2 == CPT2_COLORED_DEGROTATE)
+		return 10 * ((getParam2() & 0x1F) % 24);
+	return 0;
 }
 
 void MapNode::rotateAlongYAxis(const NodeDefManager *nodemgr, Rotation rot)
@@ -230,6 +243,17 @@ void MapNode::rotateAlongYAxis(const NodeDefManager *nodemgr, Rotation rot)
 		Rotation oldrot = wallmounted_to_rot[wmountface - 2];
 		param2 &= ~7;
 		param2 |= rot_to_wallmounted[(oldrot - rot) & 3];
+	} else if (cpt2 == CPT2_DEGROTATE) {
+		int angle = param2; // in 1.5°
+		angle += 60 * rot; // don’t do that on u8
+		angle %= 240;
+		param2 = angle;
+	} else if (cpt2 == CPT2_COLORED_DEGROTATE) {
+		int angle = param2 & 0x1F; // in 15°
+		int color = param2 & 0xE0;
+		angle += 6 * rot;
+		angle %= 24;
+		param2 = color | angle;
 	}
 }
 
@@ -706,7 +730,7 @@ void MapNode::deSerialize(u8 *source, u8 version)
 }
 void MapNode::serializeBulk(std::ostream &os, int version,
 		const MapNode *nodes, u32 nodecount,
-		u8 content_width, u8 params_width, bool compressed)
+		u8 content_width, u8 params_width, int compression_level)
 {
 	if (!ser_ver_supported(version))
 		throw VersionMismatchException("ERROR: MapNode format not supported");
@@ -737,10 +761,7 @@ void MapNode::serializeBulk(std::ostream &os, int version,
 		Compress data to output stream
 	*/
 
-	if (compressed)
-		compressZlib(databuf, databuf_size, os);
-	else
-		os.write((const char*) &databuf[0], databuf_size);
+	compressZlib(databuf, databuf_size, os, compression_level);
 
 	delete [] databuf;
 }
@@ -748,7 +769,7 @@ void MapNode::serializeBulk(std::ostream &os, int version,
 // Deserialize bulk node data
 void MapNode::deSerializeBulk(std::istream &is, int version,
 		MapNode *nodes, u32 nodecount,
-		u8 content_width, u8 params_width, bool compressed)
+		u8 content_width, u8 params_width)
 {
 	if(!ser_ver_supported(version))
 		throw VersionMismatchException("ERROR: MapNode format not supported");
@@ -760,24 +781,13 @@ void MapNode::deSerializeBulk(std::istream &is, int version,
 
 	// Uncompress or read data
 	u32 len = nodecount * (content_width + params_width);
-	SharedBuffer<u8> databuf(len);
-	if(compressed)
-	{
-		std::ostringstream os(std::ios_base::binary);
-		decompressZlib(is, os);
-		std::string s = os.str();
-		if(s.size() != len)
-			throw SerializationError("deSerializeBulkNodes: "
-					"decompress resulted in invalid size");
-		memcpy(&databuf[0], s.c_str(), len);
-	}
-	else
-	{
-		is.read((char*) &databuf[0], len);
-		if(is.eof() || is.fail())
-			throw SerializationError("deSerializeBulkNodes: "
-					"failed to read bulk node data");
-	}
+	std::ostringstream os(std::ios_base::binary);
+	decompressZlib(is, os);
+	std::string s = os.str();
+	if(s.size() != len)
+		throw SerializationError("deSerializeBulkNodes: "
+				"decompress resulted in invalid size");
+	const u8 *databuf = reinterpret_cast<const u8*>(s.c_str());
 
 	// Deserialize content
 	if(content_width == 1)

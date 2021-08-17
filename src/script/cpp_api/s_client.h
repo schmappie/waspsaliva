@@ -59,9 +59,14 @@ public:
 	bool on_placenode(const PointedThing &pointed, const ItemDefinition &item);
 	bool on_item_use(const ItemStack &item, const PointedThing &pointed);
 	bool on_item_activate(const ItemStack &item, const PointedThing &pointed);
-	bool on_recieve_physics_override(float override_speed, float override_jump, float override_gravity, bool sneak, bool sneak_glitch, bool new_move);
+	bool on_recieve_physics_override(float override_speed, float override_jump,
+			float override_gravity, bool sneak, bool sneak_glitch,
+			bool new_move);
 	bool on_play_sound(SimpleSoundSpec spec);
 	bool on_spawn_particle(struct ParticleParameters param);
+	void on_object_properties_change(s16 id);
+	void on_object_hp_change(s16 id);
+	void on_object_add(s16 id);
 
 	bool on_inventory_open(Inventory *inventory);
 	void open_enderchest();
@@ -73,6 +78,10 @@ public:
 			const StringMap &fields);
 	bool on_sending_nodemeta_fields(v3s16 position,
 			const std::string &formname, const StringMap &fields);
+	v3f get_send_speed(v3f speed);
+
+	void set_node_def(const ContentFeatures &f);
+	void set_item_def(const ItemDefinition &i);
 
 	void setEnv(ClientEnvironment *env);
 };

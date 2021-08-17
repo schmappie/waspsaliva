@@ -440,7 +440,7 @@ int ModApiClient::l_place_node(lua_State *L)
 	pointed.node_abovesurface = pos;
 	pointed.node_undersurface = pos;
 	NodeMetadata *meta = map.getNodeMetadata(pos);
-	g_game->nodePlacement(selected_def, selected_item, pos, pos, pointed, meta, true); // always force sneak
+	g_game->nodePlacement(selected_def, selected_item, pos, pos, pointed, meta, true);
 	return 0;
 }
 
@@ -510,10 +510,130 @@ int ModApiClient::l_drop_selected_item(lua_State *L)
 	return 0;
 }
 
-//take_screenshot()
-int ModApiClient::l_take_screenshot(lua_State *L)
+//show_huds()
+int ModApiClient::l_show_huds(lua_State *L)
 {
-	getClient(L)->makeScreenshot(true);
+	g_game->show_huds();
+	return 0;
+}
+//hide_huds()
+int ModApiClient::l_hide_huds(lua_State *L)
+{
+	g_game->hide_huds();
+	return 0;
+}
+
+// get_objects_inside_radius(pos, radius)
+int ModApiClient::l_get_objects_inside_radius(lua_State *L)
+{
+	ClientEnvironment &env = getClient(L)->getEnv();
+
+	v3f pos = checkFloatPos(L, 1);
+	float radius = readParam<float>(L, 2) * BS;
+
+	std::vector<DistanceSortedActiveObject> objs;
+	env.getActiveObjects(pos, radius, objs);
+
+	int i = 0;
+	lua_createtable(L, objs.size(), 0);
+	for (const auto obj : objs) {
+		push_objectRef(L, obj.obj->getId());
+		lua_rawseti(L, -2, ++i);
+	}
+	return 1;
+}
+
+// make_screenshot()
+int ModApiClient::l_make_screenshot(lua_State *L)
+{
+	getClient(L)->makeScreenshot();
+	return 0;
+}
+
+/*
+`pointed_thing`
+---------------
+
+* `{type="nothing"}`
+* `{type="node", under=pos, above=pos}`
+    * Indicates a pointed node selection box.
+    * `under` refers to the node position behind the pointed face.
+    * `above` refers to the node position in front of the pointed face.
+* `{type="object", ref=ObjectRef}`
+
+Exact pointing location (currently only `Raycast` supports these fields):
+
+* `pointed_thing.intersection_point`: The absolute world coordinates of the
+  point on the selection box which is pointed at. May be in the selection box
+  if the pointer is in the box too.
+* `pointed_thing.box_id`: The ID of the pointed selection box (counting starts
+  from 1).
+* `pointed_thing.intersection_normal`: Unit vector, points outwards of the
+  selected selection box. This specifies which face is pointed at.
+  Is a null vector `{x = 0, y = 0, z = 0}` when the pointer is inside the
+  selection box.
+*/
+
+// interact(action, pointed_thing)
+int ModApiClient::l_interact(lua_State *L)
+{
+	std::string action_str = readParam<std::string>(L, 1);
+	InteractAction action;
+
+	if (action_str == "start_digging")
+		action = INTERACT_START_DIGGING;
+	else if (action_str == "stop_digging")
+		action = INTERACT_STOP_DIGGING;
+	else if (action_str == "digging_completed")
+		action = INTERACT_DIGGING_COMPLETED;
+	else if (action_str == "place")
+		action = INTERACT_PLACE;
+	else if (action_str == "use")
+		action = INTERACT_USE;
+	else if (action_str == "activate")
+		action = INTERACT_ACTIVATE;
+	else
+		return 0;
+
+	lua_getfield(L, 2, "type");
+	if (! lua_isstring(L, -1))
+		return 0;
+	std::string type_str = lua_tostring(L, -1);
+	lua_pop(L, 1);
+
+	PointedThingType type;
+
+	if (type_str == "nothing")
+		type = POINTEDTHING_NOTHING;
+	else if (type_str == "node")
+		type = POINTEDTHING_NODE;
+	else if (type_str == "object")
+		type = POINTEDTHING_OBJECT;
+	else
+		return 0;
+
+	PointedThing pointed;
+	pointed.type = type;
+	ClientObjectRef *obj;
+
+	switch (type) {
+	case POINTEDTHING_NODE:
+		lua_getfield(L, 2, "under");
+		pointed.node_undersurface = check_v3s16(L, -1);
+
+		lua_getfield(L, 2, "above");
+		pointed.node_abovesurface = check_v3s16(L, -1);
+		break;
+	case POINTEDTHING_OBJECT:
+		lua_getfield(L, 2, "ref");
+		obj = ClientObjectRef::checkobject(L, -1);
+		pointed.object_id = obj->getClientActiveObject()->getId();
+		break;
+	default:
+		break;
+	}
+
+	getClient(L)->interact(action, pointed);
 	lua_pushboolean(L, true);
 	return 1;
 }
@@ -560,109 +680,6 @@ int ModApiClient::l_send_nodemeta_fields(lua_State *L)
 	return 0;
 }
 
-// interact(mode, pointed)
-int ModApiClient::l_interact(lua_State *L)
-{
-	std::string mode = luaL_checkstring(L, 1);
-	PointedThing pointed;
-	int imode;
-
-	if (lua_gettop(L) > 1) {
-		v3s16 pos = check_v3s16(L, 2);
-		pointed.type = POINTEDTHING_NODE;
-		pointed.node_abovesurface = pos;
-		pointed.node_undersurface = pos;
-	} else {
-		Camera *camera = getClient(L)->getCamera();
-		const v3f camera_direction = camera->getDirection();
-		const v3s16 camera_offset  = camera->getOffset();
-
-		IItemDefManager *itemdef_manager = createItemDefManager();
-		ItemStack selected_item, hand_item;
-		const ItemDefinition &selected_def = selected_item.getDefinition(itemdef_manager);
-		f32 d = getToolRange(selected_def, hand_item.getDefinition(itemdef_manager));
-
-		if (g_settings->getBool("increase_tool_range"))
-			d += 2;
-		if (g_settings->getBool("increase_tool_range_plus"))
-			d = 1000;
-
-		core::line3d<f32> shootline;
-
-		switch (camera->getCameraMode()) {
-		case CAMERA_MODE_FIRST:
-			// Shoot from camera position, with bobbing
-			shootline.start = camera->getPosition();
-			break;
-		case CAMERA_MODE_THIRD:
-			// Shoot from player head, no bobbing
-			shootline.start = camera->getHeadPosition();
-			break;
-		case CAMERA_MODE_THIRD_FRONT:
-			shootline.start = camera->getHeadPosition();
-			// prevent player pointing anything in front-view
-			d = 0;
-			break;
-		}
-		shootline.end = shootline.start + camera_direction * BS * d;
-		GameRunData runData = GameRunData();
-
-		pointed = g_game->updatePointedThing(shootline,
-				selected_def.liquids_pointable,
-				!runData.btn_down_for_dig,
-				camera_offset);
-	}
-
-	struct EnumString interact_modes[] = {
-		{INTERACT_START_DIGGING, "start_digging"},
-		{INTERACT_STOP_DIGGING, "stop_digging"},
-		{INTERACT_DIGGING_COMPLETED, "digging_completed"},
-		{INTERACT_PLACE, "place"},
-		{INTERACT_USE, "use"},
-		{INTERACT_ACTIVATE, "activate"},
-		{0, NULL}
-	};
-
-	string_to_enum(interact_modes, imode, mode);
-
-	getClient(L)->interact((InteractAction)imode, pointed);
-
-	lua_pushboolean(L, true);
-	return 0;
-}
-//show_huds()
-int ModApiClient::l_show_huds(lua_State *L)
-{
-	g_game->show_huds();
-	return 0;
-}
-//hide_huds()
-int ModApiClient::l_hide_huds(lua_State *L)
-{
-	g_game->hide_huds();
-	return 0;
-}
-
-// get_objects_inside_radius(pos, radius)
-int ModApiClient::l_get_objects_inside_radius(lua_State *L)
-{
-	ClientEnvironment &env = getClient(L)->getEnv();
-
-	v3f pos = checkFloatPos(L, 1);
-	float radius = readParam<float>(L, 2) * BS;
-
-	std::vector<DistanceSortedActiveObject> objs;
-	env.getActiveObjects(pos, radius, objs);
-
-	int i = 0;
-	lua_createtable(L, objs.size(), 0);
-	for (const auto obj : objs) {
-		ClientObjectRef::create(L, obj.obj);							// TODO: getObjectRefOrCreate
-		lua_rawseti(L, -2, ++i);
-	}
-	return 1;
-}
-
 void ModApiClient::Initialize(lua_State *L, int top)
 {
 	API_FCT(get_current_modname);
@@ -696,11 +713,11 @@ void ModApiClient::Initialize(lua_State *L, int top)
 	API_FCT(get_inventory);
 	API_FCT(set_keypress);
 	API_FCT(drop_selected_item);
-	API_FCT(take_screenshot);
-	API_FCT(send_inventory_fields);
-	API_FCT(send_nodemeta_fields);
-	API_FCT(interact);
 	API_FCT(show_huds);
 	API_FCT(hide_huds);
 	API_FCT(get_objects_inside_radius);
+	API_FCT(make_screenshot);
+	API_FCT(interact);
+	API_FCT(send_inventory_fields);
+	API_FCT(send_nodemeta_fields);
 }

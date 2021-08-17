@@ -30,7 +30,7 @@ FontMode CheatMenu::fontStringToEnum(std::string str)
 	else if (str == "FM_Mono")
 		return FM_Mono;
 	else if (str == "FM_Fallback")
-		return FM_Fallback;
+		return _FM_Fallback;
 	else if (str == "FM_Simple")
 		return FM_Simple;
 	else if (str == "FM_SimpleMono")
@@ -68,6 +68,10 @@ CheatMenu::CheatMenu(Client *client) : m_client(client)
 			selected_font_color.X, selected_font_color.Y,
 			selected_font_color.Z);
 
+	m_head_height = g_settings->getU32("cheat_menu_head_height");
+	m_entry_height = g_settings->getU32("cheat_menu_entry_height");
+	m_entry_width = g_settings->getU32("cheat_menu_entry_width");
+
 	m_font = g_fontengine->getFont(FONT_SIZE_UNSPECIFIED, fontMode);
 
 	if (!m_font) {
@@ -95,15 +99,11 @@ void CheatMenu::drawRect(video::IVideoDriver *driver, std::string name,
 		fontcolor = &m_selected_font_color;
 
 	driver->draw2DRectangle(*bgcolor, core::rect<s32>(x, y, x + width, y + height));
-
 	if (selected)
 		driver->draw2DRectangleOutline(
 				core::rect<s32>(x - 1, y - 1, x + width, y + height),
 				*fontcolor);
-
-	int fx = x + 5,
-		fy = y + (height - m_fontsize.Y) / 2;
-
+	int fx = x + 5, fy = y + (height - m_fontsize.Y) / 2;
 	core::rect<s32> fontbounds(
 			fx, fy, fx + m_fontsize.X * name.size(), fy + m_fontsize.Y);
 	m_font->draw(name.c_str(), fontbounds, *fontcolor, false, false);

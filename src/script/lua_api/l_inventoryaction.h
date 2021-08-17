@@ -28,11 +28,13 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 		return 0; \
 	MoveAction *act = dynamic_cast<MoveAction *>(o->m_action);
 
-class LuaInventoryAction : public ModApiBase {
+class LuaInventoryAction : public ModApiBase
+{
 private:
 	InventoryAction *m_action;
 
-	static void readFullInventoryLocationInto(lua_State *L, InventoryLocation *loc, std::string *list, s16 *index);
+	static void readFullInventoryLocationInto(lua_State *L, InventoryLocation *loc,
+			std::string *list, s16 *index);
 
 	static const char className[];
 	static const luaL_Reg methods[];

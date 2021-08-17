@@ -77,15 +77,44 @@ int LuaLocalPlayer::l_set_velocity(lua_State *L)
 
 int LuaLocalPlayer::l_get_yaw(lua_State *L)
 {
-	lua_pushnumber(L, wrapDegrees_0_360(g_game->cam_view.camera_yaw));
-	return 1;
+    lua_pushnumber(L, wrapDegrees_0_360(g_game->cam_view.camera_yaw));
+    return 1;
+}
+
+int LuaLocalPlayer::l_set_yaw(lua_State *L)
+{
+	LocalPlayer *player = getobject(L, 1);
+
+	if (lua_isnumber(L, 2)) {
+		double yaw = lua_tonumber(L, 2);
+		player->setYaw(yaw);
+		g_game->cam_view.camera_yaw = yaw;
+		g_game->cam_view_target.camera_yaw = yaw;
+	}
+
+	return 0;
 }
 
 int LuaLocalPlayer::l_get_pitch(lua_State *L)
 {
-	lua_pushnumber(L, -wrapDegrees_180(g_game->cam_view.camera_pitch) );
-	return 1;
+    lua_pushnumber(L, -wrapDegrees_180(g_game->cam_view.camera_pitch) );
+    return 1;
 }
+
+int LuaLocalPlayer::l_set_pitch(lua_State *L)
+{
+	LocalPlayer *player = getobject(L, 1);
+
+	if (lua_isnumber(L, 2)) {
+		double pitch = lua_tonumber(L, 2);
+		player->setPitch(pitch);
+		g_game->cam_view.camera_pitch = pitch;
+		g_game->cam_view_target.camera_pitch = pitch;
+	}
+
+	return 0;
+}
+
 
 int LuaLocalPlayer::l_get_hp(lua_State *L)
 {
@@ -116,7 +145,6 @@ int LuaLocalPlayer::l_get_wield_index(lua_State *L)
 int LuaLocalPlayer::l_set_wield_index(lua_State *L)
 {
 	LocalPlayer *player = getobject(L, 1);
-
 	u32 index = luaL_checkinteger(L, 2) - 1;
 
 	player->setWieldIndex(index);
@@ -312,28 +340,6 @@ int LuaLocalPlayer::l_set_pos(lua_State *L)
 	return 0;
 }
 
-int LuaLocalPlayer::l_set_yaw(lua_State *L)
-{
-	LocalPlayer *player = getobject(L, 1);
-	f32 p = (float) luaL_checknumber(L, 2);
-	//* 0.01745329252f;
-	g_game->cam_view.camera_yaw = p;
-	g_game->cam_view_target.camera_yaw = p;
-	player->setYaw(p);
-	return 0;
-}
-
-int LuaLocalPlayer::l_set_pitch(lua_State *L)
-{
-	LocalPlayer *player = getobject(L, 1);
-	f32 p = (float) luaL_checknumber(L, 2);
-	//* 0.01745329252f ;
-	g_game->cam_view.camera_pitch = p;
-	g_game->cam_view_target.camera_pitch = p;
-	player->setPitch(p);
-	return 0;
-}
-
 // get_movement_acceleration(self)
 int LuaLocalPlayer::l_get_movement_acceleration(lua_State *L)
 {
@@ -472,36 +478,23 @@ int LuaLocalPlayer::l_hud_get(lua_State *L)
 	return 1;
 }
 
-// get_nearby_objects(self, radius)
-int LuaLocalPlayer::l_get_nearby_objects(lua_State *L)
-{
-	// should this be a double?
-	float radius = readParam<float>(L, 1) * BS;
-	std::vector<DistanceSortedActiveObject> objs;
-
-	ClientEnvironment &env = getClient(L)->getEnv();
-	v3f pos = env.getLocalPlayer()->getPosition();
-	env.getActiveObjects(pos, radius, objs);
-
-	lua_newtable(L);
-
-	int i = 0;
-	lua_createtable(L, objs.size(), 0);
-	for (const auto obj : objs) {
-		ClientObjectRef::create(L, obj.obj);
-		lua_rawseti(L, -2, ++i);
-	}
-
-	return 1;
-}
-
+// get_object(self)
 int LuaLocalPlayer::l_get_object(lua_State *L)
 {
 	LocalPlayer *player = getobject(L, 1);
 	ClientEnvironment &env = getClient(L)->getEnv();
 	ClientActiveObject *obj = env.getGenericCAO(player->getCAO()->getId());
 
-	ClientObjectRef::create(L, obj);
+	push_objectRef(L, obj->getId());
+
+	return 1;
+}
+
+// get_hotbar_size(self)
+int LuaLocalPlayer::l_get_hotbar_size(lua_State *L)
+{
+	LocalPlayer *player = getobject(L, 1);
+	lua_pushnumber(L, player->hud_hotbar_itemcount);
 
 	return 1;
 }
@@ -529,6 +522,29 @@ LocalPlayer *LuaLocalPlayer::getobject(lua_State *L, int narg)
 	LocalPlayer *player = getobject(ref);
 	assert(player);
 	return player;
+}
+
+// get_nearby_objects(self, radius)
+int LuaLocalPlayer::l_get_nearby_objects(lua_State *L)
+{
+	// should this be a double?
+	float radius = readParam<float>(L, 1) * BS;
+	std::vector<DistanceSortedActiveObject> objs;
+
+	ClientEnvironment &env = getClient(L)->getEnv();
+	v3f pos = env.getLocalPlayer()->getPosition();
+	env.getActiveObjects(pos, radius, objs);
+
+	lua_newtable(L);
+
+	int i = 0;
+	lua_createtable(L, objs.size(), 0);
+	for (const auto obj : objs) {
+		ClientObjectRef::create(L, obj.obj);
+		lua_rawseti(L, -2, ++i);
+	}
+
+	return 1;
 }
 
 int LuaLocalPlayer::l_set_override_speed(lua_State *L)
@@ -590,6 +606,10 @@ const char LuaLocalPlayer::className[] = "LocalPlayer";
 const luaL_Reg LuaLocalPlayer::methods[] = {
 		luamethod(LuaLocalPlayer, get_velocity),
 		luamethod(LuaLocalPlayer, set_velocity),
+		luamethod(LuaLocalPlayer, get_yaw),
+		luamethod(LuaLocalPlayer, set_yaw),
+		luamethod(LuaLocalPlayer, get_pitch),
+		luamethod(LuaLocalPlayer, set_pitch),
 		luamethod(LuaLocalPlayer, get_hp),
 		luamethod(LuaLocalPlayer, get_name),
 		luamethod(LuaLocalPlayer, get_wield_index),
@@ -614,10 +634,6 @@ const luaL_Reg LuaLocalPlayer::methods[] = {
 		luamethod(LuaLocalPlayer, get_breath),
 		luamethod(LuaLocalPlayer, get_pos),
 		luamethod(LuaLocalPlayer, set_pos),
-		luamethod(LuaLocalPlayer, get_yaw),
-		luamethod(LuaLocalPlayer, set_yaw),
-		luamethod(LuaLocalPlayer, get_pitch),
-		luamethod(LuaLocalPlayer, set_pitch),
 		luamethod(LuaLocalPlayer, get_movement_acceleration),
 		luamethod(LuaLocalPlayer, get_movement_speed),
 		luamethod(LuaLocalPlayer, get_movement),
@@ -627,9 +643,9 @@ const luaL_Reg LuaLocalPlayer::methods[] = {
 		luamethod(LuaLocalPlayer, hud_change),
 		luamethod(LuaLocalPlayer, hud_get),
 		luamethod(LuaLocalPlayer, get_object),
+		luamethod(LuaLocalPlayer, get_hotbar_size),
 
 		luamethod(LuaLocalPlayer, get_nearby_objects),
-		luamethod(LuaLocalPlayer, get_object),
 		luamethod(LuaLocalPlayer, set_override_speed),
 		luamethod(LuaLocalPlayer, set_speeds_from_server_settings),
 		luamethod(LuaLocalPlayer, set_speeds_from_local_settings),

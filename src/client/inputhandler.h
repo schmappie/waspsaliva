@@ -30,6 +30,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #endif
 
 class InputHandler;
+class TouchScreenGUI;
 
 /****************************************************************************
  Fast key cache for main game loop
@@ -200,7 +201,7 @@ public:
 	// The current state of keys
 	KeyList keyIsDown;
 
-	// Whether a key was down
+	// Like keyIsDown but only reset when that key is read
 	KeyList keyWasDown;
 
 	// Whether a key has just been pressed
@@ -289,7 +290,7 @@ public:
 	}
 	virtual bool wasKeyPressed(GameKeyType k)
 	{
-		return m_receiver->WasKeyPressed(keycache.key[k]) || joystick.wasKeyReleased(k);
+		return m_receiver->WasKeyPressed(keycache.key[k]) || joystick.wasKeyPressed(k);
 	}
 	virtual bool wasKeyReleased(GameKeyType k)
 	{

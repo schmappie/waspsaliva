@@ -68,6 +68,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "util/pointedthing.h"
 #include "util/quicktune_shortcutter.h"
 #include "irrlicht_changes/static_text.h"
+#include "irr_ptr.h"
 #include "version.h"
 #include "script/scripting_client.h"
 #include "hud.h"
@@ -75,7 +76,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <string>
 
 class InputHandler;
-class ChatBackend;  /* to avoid having to include chat.h */
+class ChatBackend;
+class RenderingEngine;
 struct SubgameSpec;
 struct GameStartData;
 
@@ -190,13 +192,7 @@ struct LocalFormspecHandler : public TextDest
 				return;
 			}
 
-			if (fields.find("quit") != fields.end()) {
-				return;
-			}
-
-			if (fields.find("btn_continue") != fields.end()) {
-				return;
-			}
+			return;
 		}
 
 		if (m_formname == "MT_DEATH_SCREEN") {
@@ -205,7 +201,7 @@ struct LocalFormspecHandler : public TextDest
 			return;
 		}
 
-		if (m_client && m_client->modsLoaded())
+		if (m_client->modsLoaded())
 			m_client->getScript()->on_formspec_input(m_formname, fields);
 	}
 
@@ -424,12 +420,7 @@ public:
 };
 
 
-// before 1.8 there isn't a "integer interface", only float
-#if (IRRLICHT_VERSION_MAJOR == 1 && IRRLICHT_VERSION_MINOR < 8)
-typedef f32 SamplerLayer_t;
-#else
 typedef s32 SamplerLayer_t;
-#endif
 
 
 class GameGlobalShaderConstantSetter : public IShaderConstantSetter
@@ -450,6 +441,7 @@ class GameGlobalShaderConstantSetter : public IShaderConstantSetter
 	CachedPixelShaderSetting<float, 3> m_camera_offset_pixel;
 	CachedPixelShaderSetting<float, 3> m_camera_offset_vertex;
 	CachedPixelShaderSetting<SamplerLayer_t> m_base_texture;
+	CachedPixelShaderSetting<SamplerLayer_t> m_normal_texture;
 	Client *m_client;
 
 public:
@@ -483,6 +475,7 @@ public:
 		m_camera_offset_pixel("cameraOffset"),
 		m_camera_offset_vertex("cameraOffset"),
 		m_base_texture("baseTexture"),
+		m_normal_texture("normalTexture"),
 		m_client(client)
 	{
 		g_settings->registerChangedCallback("enable_fog", settingsCallback, this);
@@ -494,12 +487,8 @@ public:
 		g_settings->deregisterChangedCallback("enable_fog", settingsCallback, this);
 	}
 
-	virtual void onSetConstants(video::IMaterialRendererServices *services,
-			bool is_highlevel)
+	void onSetConstants(video::IMaterialRendererServices *services) override
 	{
-		if (!is_highlevel)
-			return;
-
 		// Background color
 		video::SColor bgcolor = m_sky->getBgColor();
 		video::SColorf bgcolorf(bgcolor);
@@ -539,43 +528,26 @@ public:
 
 		float eye_position_array[3];
 		v3f epos = m_client->getEnv().getLocalPlayer()->getEyePosition();
-#if (IRRLICHT_VERSION_MAJOR == 1 && IRRLICHT_VERSION_MINOR < 8)
-		eye_position_array[0] = epos.X;
-		eye_position_array[1] = epos.Y;
-		eye_position_array[2] = epos.Z;
-#else
 		epos.getAs3Values(eye_position_array);
-#endif
 		m_eye_position_pixel.set(eye_position_array, services);
 		m_eye_position_vertex.set(eye_position_array, services);
 
 		if (m_client->getMinimap()) {
 			float minimap_yaw_array[3];
 			v3f minimap_yaw = m_client->getMinimap()->getYawVec();
-#if (IRRLICHT_VERSION_MAJOR == 1 && IRRLICHT_VERSION_MINOR < 8)
-			minimap_yaw_array[0] = minimap_yaw.X;
-			minimap_yaw_array[1] = minimap_yaw.Y;
-			minimap_yaw_array[2] = minimap_yaw.Z;
-#else
 			minimap_yaw.getAs3Values(minimap_yaw_array);
-#endif
 			m_minimap_yaw.set(minimap_yaw_array, services);
 		}
 
 		float camera_offset_array[3];
 		v3f offset = intToFloat(m_client->getCamera()->getOffset(), BS);
-#if (IRRLICHT_VERSION_MAJOR == 1 && IRRLICHT_VERSION_MINOR < 8)
-		camera_offset_array[0] = offset.X;
-		camera_offset_array[1] = offset.Y;
-		camera_offset_array[2] = offset.Z;
-#else
 		offset.getAs3Values(camera_offset_array);
-#endif
 		m_camera_offset_pixel.set(camera_offset_array, services);
 		m_camera_offset_vertex.set(camera_offset_array, services);
 
-		SamplerLayer_t base_tex = 0;
+		SamplerLayer_t base_tex = 0, normal_tex = 1;
 		m_base_texture.set(&base_tex, services);
+		m_normal_texture.set(&normal_tex, services);
 	}
 };
 
@@ -606,7 +578,7 @@ public:
 
 	virtual IShaderConstantSetter* create()
 	{
-		GameGlobalShaderConstantSetter *scs = new GameGlobalShaderConstantSetter(
+		auto *scs = new GameGlobalShaderConstantSetter(
 				m_sky, m_force_fog_off, m_fog_range, m_client);
 		if (!m_sky)
 			created_nosky.push_back(scs);
@@ -645,7 +617,6 @@ struct GameRunData {
 	bool btn_down_for_dig;
 	bool dig_instantly;
 	bool digging_blocked;
-	bool left_punch;
 	bool reset_jump_timer;
 	float nodig_delay_timer;
 	float dig_time;
@@ -673,6 +644,8 @@ struct ClientEventHandler
 	void (Game::*handler)(ClientEvent *, CameraOrientation *);
 };
 
+using PausedNodesList = std::vector<std::pair<irr_ptr<scene::IAnimatedMeshSceneNode>, float>>;
+
 class Game {
 public:
 	Game();
@@ -680,6 +653,7 @@ public:
 
 	bool startup(bool *kill,
 			InputHandler *input,
+			RenderingEngine *rendering_engine,
 			const GameStartData &game_params,
 			std::string &error_message,
 			bool *reconnect,
@@ -688,8 +662,6 @@ public:
 
 	void run();
 	void shutdown();
-
-	void extendedResourceCleanup();
 
 	// Basic initialisation
 	bool init(const std::string &map_dir, const std::string &address,
@@ -796,22 +768,10 @@ public:
 	static void updateAllMapBlocksCallback(const std::string &setting_name, void *data);
 	void readSettings();
 
-	inline bool isKeyDown(GameKeyType k)
-	{
-		return input->isKeyDown(k);
-	}
-	inline bool wasKeyDown(GameKeyType k)
-	{
-		return input->wasKeyDown(k);
-	}
-	inline bool wasKeyPressed(GameKeyType k)
-	{
-		return input->wasKeyPressed(k);
-	}
-	inline bool wasKeyReleased(GameKeyType k)
-	{
-		return input->wasKeyReleased(k);
-	}
+	bool isKeyDown(GameKeyType k);
+	bool wasKeyDown(GameKeyType k);
+	bool wasKeyPressed(GameKeyType k);
+	bool wasKeyReleased(GameKeyType k);
 
 #ifdef __ANDROID__
 	void handleAndroidChatInput();
@@ -824,6 +784,9 @@ public:
 
 	void showDeathFormspec();
 	void showPauseMenu();
+
+	void pauseAnimation();
+	void resumeAnimation();
 
 	// ClientEvent handlers
 	void handleClientEvent_None(ClientEvent *event, CameraOrientation *cam);
@@ -849,8 +812,10 @@ public:
 
 	bool nodePlacement(const ItemDefinition &selected_def, const ItemStack &selected_item,
 		const v3s16 &nodepos, const v3s16 &neighbourpos, const PointedThing &pointed,
-		const NodeMetadata *meta, bool force_sneak = false);
+		const NodeMetadata *meta, bool force = false);
 	static const ClientEventHandler clientEventHandler[CLIENTEVENT_MAX];
+
+	f32 getSensitivityScaleFactor() const;
 
 	InputHandler *input = nullptr;
 
@@ -886,6 +851,9 @@ public:
 	Hud *hud = nullptr;
 	Minimap *mapper = nullptr;
 
+	// Map server hud ids to client hud ids
+	std::unordered_map<u32, u32> m_hud_server_to_client;
+
 	GameRunData runData;
 	Flags m_flags;
 
@@ -894,12 +862,14 @@ public:
 	   these items (e.g. device)
 	*/
 	IrrlichtDevice *device;
+	RenderingEngine *m_rendering_engine;
 	video::IVideoDriver *driver;
 	scene::ISceneManager *smgr;
 	bool *kill;
 	std::string *error_message;
 	bool *reconnect_requested;
 	scene::ISceneNode *skybox;
+	PausedNodesList paused_animated_nodes;
 
 	bool simple_singleplayer_mode;
 	/* End 'cache' */
@@ -948,6 +918,7 @@ extern Game *g_game;
 
 void the_game(bool *kill,
 		InputHandler *input,
+		RenderingEngine *rendering_engine,
 		const GameStartData &start_data,
 		std::string &error_message,
 		ChatBackend &chat_backend,
