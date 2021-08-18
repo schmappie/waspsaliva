@@ -10,8 +10,6 @@ scaffold.constrain1 = false
 scaffold.constrain2 = false
 local hwps={}
 
-local storage=minetest.get_mod_storage()
-
 scaffold.wason = {}
 
 local nextact = {}
