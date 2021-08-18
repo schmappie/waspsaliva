@@ -130,6 +130,9 @@ local message_to = minetest.settings:get("tchat_prefix_send")
 local team_mode = minetest.settings:get_bool("tchat_team_mode")
 
 local use_wisp = minetest.settings:get_bool("tchat_use_wisp")
+if minetest.get_modpath('wisp') == nil then
+   use_wisp = false
+end
 
 local hide_sent = minetest.settings:get_bool("tchat_hide_sent")
 local blacklist = string.split(minetest.settings:get("tchat_blacklist"))
@@ -320,7 +323,7 @@ end
 
 
 local function dm(player, message)
-    if wisp == nil or not use_wisp then
+    if not use_wisp then
         minetest.send_chat_message("/msg " .. player .." " .. message)
     else
         wisp.send(player, message, true)
@@ -534,7 +537,7 @@ table.insert(minetest.registered_on_receiving_chat_message, 1, function(message)
     end
 end)
 
-if wisp ~= nil then
+if use_wisp then
     wisp.register_on_receive_split(function(player, message)
         if message:find(message_prefix) then
             tchat.chat_append("E " .. player .. ": " .. clean_message(message))

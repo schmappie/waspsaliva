@@ -148,7 +148,7 @@ end,function() --stopfunc
 end,{'afly_axissnap','continuous_forward','autorefill'}) --'scaffold_ltbm'
 
 ws.on_connect(function()
-        sdir=storage:get_string('BOTDIR')
+        local sdir=storage:get_string('BOTDIR')
         if sdir ~= "" then
             ws.set_dir(sdir)
         else
