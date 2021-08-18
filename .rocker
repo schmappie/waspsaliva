@@ -29,7 +29,7 @@ ROCKER_EXTRA_PACKAGES=(
     libogg-dev libvorbis-dev libopenal-dev libcurl4-gnutls-dev
     libfreetype6-dev zlib1g-dev libgmp-dev libjsoncpp-dev
     libluajit-5.1-dev gettext
-    git
+    git ccache
     # For waspsaliva
     libbz2-dev
 )
