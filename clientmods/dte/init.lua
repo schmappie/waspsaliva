@@ -372,6 +372,7 @@ end
 local function load_UI(name)  -- open/create a ui file
     current_ui_file = name
     modstorage:set_string("_GUI_editor_selected_file", current_ui_file)
+    local _
     _, widgets = pcall(loadstring("return "..modstorage:get_string("_GUI_editor_file_"..current_ui_file)))
     if widgets == nil then
         widgets = {{type="Display", name="", width=5, height=5, width_param=false, height_param=false, left=0.5, top=0.5,
