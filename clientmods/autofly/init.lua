@@ -296,7 +296,7 @@ function autofly.display_waypoint(name)
     local pos=name
     if type(name) ~= 'table' then pos=autofly.get_waypoint(name) end
     autofly.last_name = name
-    --autofly.last_coords = pos
+    autofly.last_coords = pos
     autofly.set_hud_info(name)
     autofly.aim(autofly.last_coords)
     autofly.display(pos,name)
