@@ -6,7 +6,6 @@
 local formspec_list = {}
 local selected_name = false
 
-local storage = minetest.get_mod_storage()
 local wpr=false;
 local twpname=nil
 local info=minetest.get_server_info()
