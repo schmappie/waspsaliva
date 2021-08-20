@@ -322,16 +322,33 @@ int ModApiClient::l_sound_fade(lua_State *L)
 int ModApiClient::l_get_server_info(lua_State *L)
 {
 	Client *client = getClient(L);
-	Address serverAddress = client->getServerAddress();
-	lua_newtable(L);
-	lua_pushstring(L, client->getAddressName().c_str());
-	lua_setfield(L, -2, "address");
-	lua_pushstring(L, serverAddress.serializeString().c_str());
-	lua_setfield(L, -2, "ip");
-	lua_pushinteger(L, serverAddress.getPort());
-	lua_setfield(L, -2, "port");
-	lua_pushinteger(L, client->getProtoVersion());
-	lua_setfield(L, -2, "protocol_version");
+        lua_newtable(L);
+        try {
+          Address serverAddress = client->getServerAddress();
+	} catch (const con::PeerNotFoundException &) {
+          // Local connection?
+          lua_pushstring(L, "unknown");
+          lua_setfield(L, -2, "address");
+          lua_pushstring(L, "unknown");
+          lua_setfield(L, -2, "ip");
+          lua_pushinteger(L, 0);
+          lua_setfield(L, -2, "port");
+          lua_pushinteger(L, 0);
+          lua_setfield(L, -2, "port");
+          lua_pushinteger(L, 0);
+          lua_setfield(L, -2, "protocol_version");
+          return 1;
+        }
+
+        lua_pushstring(L, client->getAddressName().c_str());
+        lua_setfield(L, -2, "address");
+        lua_pushstring(L, serverAddress.serializeString().c_str());
+        lua_setfield(L, -2, "ip");
+        lua_pushinteger(L, serverAddress.getPort());
+        lua_setfield(L, -2, "port");
+        lua_pushinteger(L, client->getProtoVersion());
+        lua_setfield(L, -2, "protocol_version");
+          
 	return 1;
 }
 
