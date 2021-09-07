@@ -584,6 +584,5 @@ void set_default_settings()
 		settings->setDefault("mono_font_size", "14");
 	}
 	// Tablets >= 6.0 use non-Android defaults for these settings
-	set_settingtypes();
 #endif
 }
